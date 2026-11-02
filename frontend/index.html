@@ -1,0 +1,1419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saarthi 2.0 - AI Farming Companion</title>
+<meta name="description" content="Saarthi 2.0: regional-language AI farmer advisory with conversational AI, RAG, 15 agricultural agents, soil sensor and feature-phone calling.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<!-- Leaflet draws the field boxes, the pins and every control on the map; Google
+     draws the ground underneath them (googlemap.js). There is no tile layer any
+     more - OpenStreetMap was removed on 2026-11-02 - so Leaflet here is geometry
+     and interaction only. It is pinned to an exact version, and the page still
+     works without it: the map area falls back to a form where the plot's location
+     can be typed in. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+        integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<link rel="stylesheet" href="styles.css">
+<script>
+/* Resolve the theme before the first paint, so the page never flashes light on the
+   way to dark - and so the stylesheet needs only one dark block instead of a second
+   @media copy that can drift out of step with it. */
+(function () {
+  try {
+    var choice = localStorage.getItem("saarthi.theme");
+    if (choice !== "light" && choice !== "dark" && choice !== "glass") {
+      choice = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", choice);
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+})();
+</script>
+</head>
+<body>
+<!-- The glass theme's photograph. Two layers so one picture can fade into the
+     next; empty and hidden in every other theme. -->
+<div class="glass-bg" id="glassBg" aria-hidden="true" data-assistant-ignore>
+  <div class="gb-layer" id="glassA"></div>
+  <div class="gb-layer" id="glassB"></div>
+  <div class="gb-wash"></div>
+</div>
+<div id="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 21c0-6 3-10 8-12-1 7-4 11-8 12Z" fill="#22a447"/><path d="M12 21c0-5-2.5-8.5-7-10 .8 6 3.4 9.3 7 10Z" fill="#3fbf63"/><path d="M12 21v-5" stroke="#2f7d3a" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-text">
+        <b>Saarthi</b>
+        <small>Your AI Farming Companion</small>
+      </span>
+    </div>
+
+
+    <!-- Grouped, because thirteen flat entries is a list you read rather than scan.
+         The order follows how the farm is actually worked: look, then act. -->
+    <nav id="nav" aria-label="Main">
+      <span class="nav-farmer" id="navFarmerTop">
+      <button class="active" data-page="overview"><i data-icon="grid"></i>Overview</button>
+      <button data-page="pipeline"><i data-icon="spark"></i>Pipeline Results</button>
+      </span>
+
+      <span class="nav-farmer" id="navFarmer">
+      <span class="nav-head">My field</span>
+      <button data-page="soil"><i data-icon="soil"></i>Soil Health</button>
+      <button data-page="weather"><i data-icon="sun"></i>Weather</button>
+      <button data-page="pests"><i data-icon="bug"></i>Pest &amp; Disease</button>
+
+      <span class="nav-head">Money and support</span>
+      <button data-page="schemes"><i data-icon="shield"></i>Govt Schemes</button>
+      <button data-page="finance"><i data-icon="chart"></i>Farm Finance</button>
+      <button data-page="help"><i data-icon="phone"></i>Farm Support</button>
+      <button data-page="market"><i data-icon="chart"></i>Market Prices</button>
+
+      <span class="nav-head">Ask Saarthi</span>
+      <!-- The typed assistant is no longer in the sidebar. There is one way to
+           talk to Saarthi now - the bot in the corner, which listens, answers
+           aloud and carries out what it is told. Two doors to the same room,
+           one of them worse, is a choice nobody wanted to make. The page itself
+           stays reachable, so the voice bot can still open it on request and
+           nothing that linked to it breaks. -->
+      <button data-page="assistant" hidden><i data-icon="chat"></i>AI Assistant</button>
+      <button data-page="calls"><i data-icon="phone"></i>Voice Calls</button>
+
+      <span class="nav-head">My farm</span>
+      <button data-page="fields"><i data-icon="map"></i>My Fields</button>
+      <button data-page="devices"><i data-icon="chip"></i>Sensor</button>
+      <button data-page="reports"><i data-icon="doc"></i>Reports</button>
+      <!-- The AI Agents page is gone. What each of the fifteen found is
+           already on Pipeline Results, where it is attached to a run the
+           farmer asked for; a second screen listing the same agents with
+           their internals showing was a tour of the machinery, not a
+           thing anybody needed twice. -->
+
+      </span>
+
+      <!-- Shown only to administrators. Hiding it is a courtesy; the API refuses a
+           farmer either way, which is where the rule actually lives.
+           An administrator account is for running the server, not for farming, so
+           when one signs in everything above is hidden and this is the whole menu. -->
+      <button data-page="admin" id="adminNav" hidden><i data-icon="shield"></i>Admin</button>
+      <!-- What the chatbot and the calling bot know. Its own page rather than a
+           card on Admin: feeding documents, watching the chain and reading the
+           query log are three different jobs and none of them fits in a tile. -->
+      <button data-page="knowledge" id="knowledgeNav" hidden><i data-icon="doc"></i>Knowledge</button>
+    </nav>
+
+    <div class="side-foot">
+      <label class="side-lang">
+        <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+        <!-- data-no-i18n: the options name each language in its own script, which is
+             the whole point of them. Translating this menu into the language the
+             farmer just picked would leave no readable way back. -->
+        <select id="langSidebar" aria-label="Language" data-no-i18n></select>
+      </label>
+      <!-- Identity only. The profile page is reached from the avatar in the top-right
+           corner, so there is one way in rather than two. -->
+      <div class="user">
+        <span class="avatar" id="userAvatar">RK</span>
+        <span><b id="userName">Ramesh Kumar</b><small id="userRole">Farmer</small></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <!-- Left: what the sky is doing, and the two switches. Right: the things that
+           act on this account. "My Farm" came out - the village is on the profile and
+           in the sidebar, and repeating it in a bar that never changes is noise. -->
+      <div class="top-left">
+        <span class="weather-pill" id="topWeather" title="Weather at your registered land">
+          <span class="wsun"></span><b>--&deg;C</b><small>Loading</small></span>
+        <!-- One button, three looks: light, dark, glass. The icon shows the one
+             in force and the title says what pressing it will do, because a
+             three-way switch that only says "switch theme" tells you nothing
+             about where you are going. -->
+        <button class="icon-btn" id="themeBtn" aria-label="Change the look"
+                title="Change the look" aria-pressed="false">
+          <svg class="ic-sun" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M5.6 5.6 4 4M18.4 18.4 20 20M18.4 5.6 20 4M5.6 18.4 4 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg class="ic-moon" viewBox="0 0 24 24" width="18" height="18"><path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <svg class="ic-glass" viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="4.5" width="18" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.6 16.2 8.4 11l4 4 2.8-2.6 4.8 4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.4" cy="9" r="1.5" fill="currentColor"/></svg>
+        </button>
+      <!-- Listening for "Saarthi". Off until switched on, and visibly on
+           while it is: a page that listens to a room has to say so. Hidden
+           entirely in a browser with no speech recognition. -->
+      <!-- Kept out of the top bar: the bot in the corner is the one control
+           for talking to Saarthi, and a second microphone up here competing
+           with it only raised the question of which one to press. The wake-word
+           switch itself still lives on the Ask page. -->
+      <button class="icon-btn wake-btn" id="wakeBtn" type="button" hidden data-retired
+              aria-pressed="false" aria-label="Listen for Saarthi">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"
+                fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor"
+                stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <span class="wake-dot" aria-hidden="true"></span>
+      </button>
+              <button class="icon-btn" id="bellBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2h15L18 16Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span class="dot" id="bellDot" hidden></span>
+        </button>
+        <div class="notif-panel" id="notifPanel" hidden>
+          <div class="notif-head">
+            <b>Notifications</b>
+            <button class="link" id="notifClear">Clear all</button>
+          </div>
+          <div class="notif-list" id="notifList"></div>
+        </div>
+      </div>
+      <div class="top-right">
+        <button class="btn primary run-pipe" id="runPipelineTop">
+          <span class="pulse"></span>Run pipeline
+        </button>
+        <button class="avatar sm" id="profileBtn" title="My profile">RK</button>
+        <button class="icon-btn" id="signOutBtn" aria-label="Sign out" title="Sign out">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19 12H9m10 0-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ 1. OVERVIEW ============ -->
+      <section class="page active" id="page-overview">
+        <div class="hero">
+          <div class="hero-text">
+            <h1 id="greeting">Good morning, Ramesh Kumar!</h1>
+            <p>Your farm looks good today.</p>
+            <div class="hero-actions">
+              <button class="btn primary run-pipe" id="runPipelineHero">
+                <span class="pulse"></span>Run full pipeline (15 agents)
+              </button>
+              <button class="btn" data-go="assistant">Ask Saarthi</button>
+            </div>
+            <p class="hint" id="pipelineHeroNote">All 15 agents over your live farm data.</p>
+            <div class="hero-actions">
+              <button class="btn" id="heroFetch">Fetch sensor data</button>
+              <label class="field inline"><span class="sr-only">Field</span>
+                <select id="heroField" class="mini-select" aria-label="Which field"></select>
+              </label>
+            </div>
+            <p class="hint" id="heroFetchNote"></p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <svg viewBox="0 0 320 150" width="100%" height="150">
+              <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfeaff"/><stop offset="1" stop-color="#eaf7e4"/></linearGradient></defs>
+              <rect width="320" height="150" rx="14" fill="url(#sky)"/>
+              <circle cx="266" cy="34" r="16" fill="#ffd34d"/>
+              <path d="M0 108c40-16 80-16 120 0s80 16 120 0 60-8 80 0v42H0Z" fill="#8fd08a"/>
+              <path d="M0 126c50-12 90-12 140 0s90 12 180 0v24H0Z" fill="#5fb06a"/>
+              <g fill="#3f8f4e"><circle cx="48" cy="92" r="14"/><rect x="45" y="98" width="6" height="16" rx="2"/></g>
+              <g fill="#2f7d3a"><circle cx="286" cy="96" r="11"/><rect x="283" y="101" width="5" height="13" rx="2"/></g>
+              <g transform="translate(150 96)"><rect x="0" y="6" width="34" height="14" rx="4" fill="#c0392b"/><rect x="26" y="-2" width="16" height="12" rx="3" fill="#e05545"/><circle cx="9" cy="22" r="7" fill="#2f3a33"/><circle cx="36" cy="22" r="9" fill="#2f3a33"/></g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="metrics" id="metricTiles"></div>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Your Fields</h2></div>
+              <button class="link" data-go="fields">Manage fields</button></div>
+            <!-- Same height as the illustration it replaced, so the overview grid does
+                 not reflow: only the contents changed, from a drawing to the real map. -->
+            <div class="map-wrap compact">
+              <div id="overviewLeaflet" class="leaflet-map compact"></div>
+              <div class="map-zoom">
+                <button class="icon-btn" data-map-zoom="in" data-map="overview" aria-label="Zoom in">+</button>
+                <button class="icon-btn" data-map-zoom="out" data-map="overview" aria-label="Zoom out">&minus;</button>
+                <button class="icon-btn" data-map-locate="overview" aria-label="Where I am now" title="Where I am now"><svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+                <button class="icon-btn" data-map-home="overview" aria-label="My registered land" title="My registered land"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20V10l8-6 8 6v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.5 20v-5.5h5V20" fill="none" stroke="currentColor" stroke-width="1.9"/></svg></button>
+                <button class="icon-btn" data-map-full="overview" aria-label="Full screen" title="Full screen">
+                  <svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="map-fallback" id="overviewMapFallback" hidden>
+                <b>The map could not load</b>
+                <small>Map tiles come from the internet.</small>
+              </div>
+            </div>
+            <p class="hint" id="overviewMapHint">Your mapped plots on a real map.</p>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Today's Recommendations</h2></div></div>
+            <div id="recoList" class="reco-list"></div>
+          </article>
+        </div>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Soil Moisture Trend</h2><p id="trendNote"></p></div></div>
+            <div id="overviewTrend" class="chart-box"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Recent Activity</h2></div></div>
+            <div id="activityList" class="reco-list"></div>
+          </article>
+        </div>
+
+        <!-- The chain lives here: this is the page the Run button is pressed from. -->
+        <article class="card flow-card" id="pipelineFlowCard">
+          <div class="card-head">
+            <div><h2>The chain, as it runs</h2><p id="flowStage">Starting...</p></div>
+            <div class="head-controls">
+              <button class="btn primary" id="flowShowResult" hidden>Show result</button>
+            </div>
+          </div>
+          <div class="agent-flow" id="agentFlow"></div>
+        </article>
+
+      </section>
+
+      <!-- ============ PIPELINE RESULTS ============ -->
+      <section class="page" id="page-pipeline">
+        <div class="page-head">
+          <div><h1>Pipeline Results</h1><p id="pipelineSubtitle"></p></div>
+          <div class="head-controls">
+            <button class="btn primary run-pipe" id="runPipelinePage"><span class="pulse"></span>Run pipeline</button>
+            <button class="btn danger" id="stopPipeline" hidden>Stop run</button>
+          </div>
+        </div>
+        <div id="pipelineEmpty" class="empty-state">
+          <b>No pipeline run yet</b>
+          <small>Press Run pipeline to see every agent, with its evidence and provenance.</small>
+        </div>
+        <div id="pipelineBody" hidden>
+          <!-- What to do, first. The charts are how it was worked out, and that is a
+               second question - it used to be the only thing the page answered. -->
+          <!-- Colour and one line per part of the farm. Readable at a glance, which
+               a list of eighteen sentences is not. -->
+          <article class="card">
+            <div class="card-head">
+              <div><h2>Your farm right now</h2><p id="scoreNote"></p></div>
+              <div class="head-controls">
+                <button class="btn ghost sm" data-report="advisory" data-format="pdf">Download PDF</button>
+              </div>
+            </div>
+            <div class="scorecard" id="scoreCard"></div>
+          </article>
+
+          <article class="card plan-card">
+            <div class="card-head">
+              <div><h2>Do these next</h2><p id="planSummary"></p></div>
+            </div>
+            <div id="planList" class="plan-list"></div>
+          </article>
+
+          <article class="card answer-card">
+            <div class="card-head"><div><h2>In full</h2>
+              <p id="pipelineAnswerMeta"></p></div>
+              <button class="btn ghost sm" id="toggleAnswer">Show full text</button></div>
+            <p class="answer-text clamped" id="pipelineAnswer"></p>
+            <div id="pipelineWarnings" class="flag-row"></div>
+          </article>
+
+          <!-- Agents that refused to guess asked for something. -->
+
+          <details class="card working-details">
+            <summary><b>How this was worked out</b>
+              <small>Every agent, its evidence, where each number came from and how long it took</small></summary>
+
+            <article class="card inner">
+              <div class="card-head"><div><h2>Every agent, in its own words</h2></div></div>
+              <div id="findingList" class="finding-list"></div>
+            </article>
+
+            <article class="card inner">
+              <div class="card-head">
+                <div><h2>Agent Status Matrix</h2><p id="matrixHint">Click any agent to read its findings</p></div>
+                <div class="head-controls">
+                  <span class="legend-chip ok">ok</span>
+                  <span class="legend-chip warn">needs input</span>
+                  <span class="legend-chip bad">unavailable</span>
+                </div>
+              </div>
+              <div class="agent-matrix" id="agentMatrix"></div>
+              <div class="agent-drawer" id="agentDrawer" hidden></div>
+            </article>
+
+            <div class="cols three">
+              <article class="card inner">
+                <div class="card-head"><div><h2>Agent Outcomes</h2></div></div>
+                <div id="chartStatus" class="chart-box"></div>
+              </article>
+              <article class="card inner">
+                <div class="card-head"><div><h2>Data Provenance</h2></div></div>
+                <div id="chartProvenance" class="chart-box"></div>
+              </article>
+              <article class="card inner">
+                <div class="card-head"><div><h2>Where Time Went</h2></div></div>
+                <div id="chartPhases" class="chart-box"></div>
+              </article>
+            </div>
+
+            <div class="cols">
+              <article class="card inner">
+                <div class="card-head"><div><h2>Confidence by Agent</h2>
+                  <p>Bar length is the agent's own stated confidence</p></div></div>
+                <div id="chartConfidence" class="chart-box"></div>
+              </article>
+              <article class="card inner">
+                <div class="card-head"><div><h2>Validation (Agent 15)</h2>
+                  <p>Automatic checks over the other 14</p></div></div>
+                <div class="check-grid" id="validationGrid"></div>
+              </article>
+            </div>
+
+            <article class="card inner">
+              <div class="card-head"><div><h2>Still Needed From You</h2>
+                <p>Answer any of these and the next run gets sharper</p></div></div>
+              <div class="question-chips" id="pipelineQuestions"></div>
+              <h3 class="mini-title">Knowledge used (RAG relevance)</h3>
+              <div id="chartSources" class="chart-box"></div>
+            </article>
+          </details>
+        </div>
+      </section>
+
+      <!-- ============ 2. SOIL HEALTH ============ -->
+      <section class="page" id="page-soil">
+        <div class="page-head">
+          <div><h1>Soil Health</h1><p>From your 7-in-1 probe</p></div>
+        </div>
+        <div class="cols soil-top">
+          <article class="card gauge-card">
+            <div class="card-head"><div><h2>Soil Health Index</h2><p id="soilUpdated">No reading yet</p></div></div>
+            <div id="soilGauge" class="gauge-wrap"></div>
+            <p class="hint" id="soilMethod"></p>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Soil Parameters (7-in-1)</h2><p>Screening values, not a lab test</p></div>
+              <button class="btn ghost" id="refreshSoil">Refresh</button></div>
+            <div class="param-grid" id="paramGrid"></div>
+          </article>
+        </div>
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Parameter Trends</h2></div>
+              <select id="trendParam" class="mini-select"></select></div>
+            <div id="soilTrend" class="chart-box"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Soil Condition</h2></div></div>
+            <ul class="check-list" id="soilChecks"></ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ 4. WEATHER ============ -->
+      <section class="page" id="page-weather">
+        <div class="page-head">
+          <div><h1>Weather &amp; Climate Risk</h1></div>
+          <div class="head-controls">
+            <select id="weatherWhere" class="mini-select" aria-label="Forecast location">
+              <option value="farm">At my registered land</option>
+              <option value="me">Where I am now</option>
+            </select>
+          </div>
+        </div>
+        <!-- A forecast only matters here because of what it stops or allows: spraying,
+             irrigating, sowing, harvesting. That verdict goes first. -->
+        <article class="card">
+          <div class="card-head"><div><h2>What this means for your field</h2></div></div>
+          <div id="weatherVerdict" class="verdict-list"></div>
+          <div id="weatherAlerts" class="alert-list"></div>
+        </article>
+
+        <div class="cols weather-top">
+          <article class="card weather-now" id="weatherNow"></article>
+          <article class="card">
+            <div class="card-head"><div><h2>Next 5 days</h2></div></div>
+            <div class="forecast" id="forecastRow"></div>
+          </article>
+        </div>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Temperature</h2></div></div>
+            <div id="tempChart" class="chart-box"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Chance of rain</h2></div></div>
+            <div id="rainChart" class="chart-box"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ 5. PEST & DISEASE ============ -->
+      <section class="page" id="page-pests">
+        <div class="page-head">
+          <div><h1>Pest &amp; Disease Diagnosis</h1>
+            <p>Upload a leaf photo - a trained model screens it, then agents 8 and 11 decide what it means</p></div>
+        </div>
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Upload Crop Photo</h2><p>JPG or PNG, up to 5 MB</p></div></div>
+            <label class="upload" id="uploadBox">
+              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 16V4m0 0 4 4m-4-4L8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <b>Drag &amp; drop or click to upload</b>
+              <small>The photo stays on this device and is attached to the advisory</small>
+              <input type="file" id="photoInput" accept="image/*" hidden>
+            </label>
+            <div id="photoPreview" class="preview"></div>
+            <label class="field"><span>Which crop is in the photo?</span>
+              <select id="cropSelect"></select></label>
+            <button class="btn primary" id="analyzeBtn">Check this leaf</button>
+            <p class="hint" id="analyzeHint">Pick the crop first. If the photo is not that
+              crop, the result says so instead of naming a disease.</p>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2>Result</h2><p id="screeningMeta">What the trained model found</p></div></div>
+            <div id="pestGraphic" class="pest-graphic" hidden></div>
+            <div id="pestResult" class="empty-state">
+              <svg viewBox="0 0 24 24" width="26" height="26"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <b>No photo checked yet</b>
+              <small>Upload a leaf photo and choose its crop.</small>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ 6. MARKET ============ -->
+      <section class="page" id="page-market">
+        <div class="page-head">
+          <div><h1>Market Prices</h1><p>Latest mandi prices from data.gov.in (Agmarknet)</p></div>
+          <div class="head-controls">
+            <select id="marketCrop" class="mini-select"></select>
+            <select id="marketState" class="mini-select"></select>
+            <select id="marketDistrict" class="mini-select" aria-label="District">
+              <option value="">All districts</option>
+            </select>
+          </div>
+        </div>
+        <!-- Where today's records are actually from. The selector said Punjab
+             while the districts underneath were Madhya Pradesh and West Bengal,
+             because the search found nothing in Punjab and widened to the whole
+             country without saying so. -->
+        <p class="scope-note" id="marketScopeNote" hidden></p>
+        <div class="cols">
+          <article class="card price-card" id="priceCard"></article>
+          <article class="card">
+            <div class="card-head"><div><h2>Price Comparison</h2><p>Modal price by market</p></div></div>
+            <div id="marketChart" class="chart-box"></div>
+          </article>
+        </div>
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Closest to your field</h2>
+              <p id="nearestNote"></p></div></div>
+            <div class="nearest-list" id="nearestList"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2>Market Records</h2><p>As reported, per quintal</p></div></div>
+            <div class="table" id="marketTable"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ 7. AI ASSISTANT ============ -->
+      <section class="page" id="page-assistant">
+        <div class="page-head">
+          <div><h1>Saarthi AI Assistant</h1><p>Ask any farming question in your language</p></div>
+          <div class="head-controls">
+            <label class="toggle"><input type="checkbox" id="convMode"><span>Conversation mode</span></label>
+            <label class="toggle"><input type="checkbox" id="useRag" checked><span>RAG</span></label>
+            <label class="toggle"><input type="checkbox" id="runAgents" checked><span>15 agents</span></label>
+            <label class="toggle"><input type="checkbox" id="speakReply"><span>Speak reply</span></label>
+          </div>
+        </div>
+        <!-- Registering a voice moved to the profile page, where the farmer's
+             own details live and where there is room to do it properly: three
+             prompted sentences, each one checked, and a way to test the result.
+             Two places to register one voice meant two flows to keep in step,
+             and the one here was the worse of them. -->
+
+        <!-- What Saarthi will DO rather than answer. Filled from
+             /api/voice/actions, so the list a farmer reads cannot drift away
+             from the phrases the parser actually recognises. -->
+        <div class="say-list" id="sayList" hidden></div>
+
+        <article class="card chat-card">
+          <div class="chat-head">
+            <span class="chat-avatar"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3 4 7v6c0 4.4 3.2 7.6 8 8 4.8-.4 8-3.6 8-8V7l-8-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <div><b>Saarthi</b><small id="chatMode">Conversational AI + RAG + 15 agents</small></div>
+          </div>
+          <div class="messages" id="messages"></div>
+          <div class="quick-row" id="quickPrompts"></div>
+          <form class="chat-form" id="chatForm">
+            <button type="button" class="icon-btn mic" id="micBtn" title="Speak your question">
+              <svg viewBox="0 0 24 24" width="18" height="18"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <input id="chatInput" placeholder="Type or speak your question..." autocomplete="off">
+            <button class="btn primary" type="submit">Send</button>
+          </form>
+          <p class="hint center" id="chatHint"></p>
+        </article>
+        <div id="traceBox"></div>
+      </section>
+
+      <!-- ============ 8. VOICE CALLS ============ -->
+      <!-- Two things a farmer does here and nothing else: get rung back, or
+           ring in. The keypad menu went - it listed the thirteen languages as
+           digits 1 to 13, which is the IVR's own script read out on a screen
+           that has a language picker at the bottom of it. The call log went to
+           the administrator, who is the one who needs to look across farms. -->
+      <section class="page" id="page-calls">
+        <div class="page-head">
+          <div><h1>Voice Calls</h1><p>Advisory over an ordinary phone call - no app, no internet</p></div>
+        </div>
+
+        <!-- The one that matters on a feature phone, so it leads. -->
+        <article class="card call-hero" id="helplineCard">
+          <div class="call-hero-text">
+            <h2>Ring Saarthi</h2>
+            <p>From any phone. It answers in your language and asks nothing else of you.</p>
+            <div class="call-hero-note" id="helplineNote"></div>
+          </div>
+          <div class="call-hero-number" id="helplineBox"></div>
+        </article>
+
+        <div class="cols call-cols">
+          <article class="card">
+            <div class="card-head">
+              <div><h2>Ask for a call back</h2>
+                <p>Saarthi rings the number on your account</p></div>
+            </div>
+            <div class="call-form">
+              <label class="field"><span>Phone number</span>
+                <input id="callPhone" placeholder="98XXXXXXXX" inputmode="tel"></label>
+              <label class="field"><span>Language</span>
+                <select id="callLang" data-no-i18n></select></label>
+            </div>
+            <label class="field"><span>What it should be about (optional)</span>
+              <input id="callTopic" placeholder="Irrigation for wheat"></label>
+            <div class="btn-row">
+              <button class="btn primary" id="callBtn">Request call</button>
+              <button class="btn ghost danger" id="callCancel">Force end call</button>
+            </div>
+            <p class="hint" id="callNote"></p>
+            <div class="pending-call" id="pendingCall" hidden></div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div><h2>Book it for later</h2>
+                <p>Say it the way you would on the phone</p></div>
+            </div>
+            <label class="field">
+              <span>What should the call be about, and when?</span>
+              <input id="taskSaid" placeholder="Tell me the wheat price in 30 minutes">
+            </label>
+            <div class="chip-row" id="taskExamples">
+              <button class="chip" type="button">Tell me the wheat price in 30 minutes</button>
+              <button class="chip" type="button">Remind me in 1 hour to irrigate field 1</button>
+              <button class="chip" type="button">Call me when wheat goes above 2400</button>
+              <button class="chip" type="button">Call me if rain is coming</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="taskBook">Book the call</button>
+              <span class="hint" id="taskCount"></span>
+            </div>
+            <p class="hint" id="taskNote"></p>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head"><div><h2>Calls you have booked</h2>
+            <p>What each one will say, and when it will ring</p></div></div>
+          <div class="table" id="taskTable"></div>
+        </article>
+      </section>
+
+      <!-- ============ 9. SENSOR DEVICES ============ -->
+      <!-- One decision at the top - device or simulation - and then only the controls
+           that decision needs. The page used to show both paths plus the register map
+           plus the ingest API at once, which is four ways to get a reading on screen
+           competing for attention when a farmer wants one. -->
+      <section class="page" id="page-devices">
+        <div class="page-head">
+          <div><h1>Sensor</h1></div>
+        </div>
+        <!-- One line: probe, board, radio, this page. Everything else that used to be
+             here - the register table, the ingest sample, the wiring note - was
+             reference for whoever flashes the Arduino, not for the farmer. -->
+        <div class="flow path-strip" id="deviceFlow"></div>
+
+
+        <!-- ---------------- real sensor path ---------------- -->
+        <article class="card" id="bleCard">
+          <div class="card-head">
+            <div><h2>Live BLE Link</h2></div>
+          </div>
+          <p class="hint" id="bleSupport"></p>
+          <div class="btn-row">
+            <button class="btn primary" id="bleConnect">Connect device</button>
+            <button class="btn primary big" id="bleFetch" disabled>Fetch values</button>
+            <button class="btn ghost" id="bleDisconnect" disabled>Disconnect</button>
+          </div>
+          <p class="hint" id="bleStatus">Pair with the HM-10, then press Fetch to take one reading.</p>
+          <p class="hint" id="bleFetchNote">Values change only when you press Fetch.</p>
+
+          <div class="table" id="bleValues"><p class="hint">Nothing fetched yet.</p></div>
+          <p class="hint" id="bleProvenanceNote"></p>
+
+          <details class="ble-sample">
+            <summary>Device settings, live stream and troubleshooting</summary>
+            <div class="ble-controls">
+              <label class="inline-check"><input type="checkbox" id="bleProbeAttached">
+                <span>A real soil probe is wired in</span></label>
+              <label class="inline-check"><input type="checkbox" id="bleAnyDevice">
+                <span>Show all nearby devices when connecting</span></label>
+              <label class="field compact"><span>Packet format</span>
+                <select id="bleFormat" class="mini-select">
+                  <option value="labelled">Labelled values (auto-detect)</option>
+                  <option value="ordered">Bare numbers, in the order below</option>
+                </select></label>
+              <label class="field compact" id="bleOrderWrap" hidden><span>Order of the numbers</span>
+                <input id="bleOrder" type="text" value="N,P,K,temp,moisture,EC,pH"></label>
+            </div>
+
+            <h3 class="mini-title">What each incoming key became</h3>
+            <div class="table" id="bleMapping"><p class="hint">Fetch a packet to see the mapping.</p></div>
+
+            <h3 class="mini-title">Live stream from the device</h3>
+            <pre class="code stream" id="bleStream">waiting for the device...</pre>
+            <div class="btn-row"><button class="btn ghost" id="bleClearStream">Clear stream</button></div>
+
+            <h3 class="mini-title">Test without the hardware</h3>
+            <p class="hint">Paste lines as the Serial Bluetooth Terminal app shows them.</p>
+            <textarea id="bleSampleText" rows="3" placeholder="N: 45 mg/kg
+P: 20 mg/kg
+K: 180 mg/kg"></textarea>
+            <div class="btn-row"><button class="btn ghost" id="bleSampleFeed">Feed these lines</button></div>
+          </details>
+        </article>
+
+        <!-- ---------------- simulation path ---------------- -->
+
+        <!-- ---------------- shared ---------------- -->
+        <div class="cols">
+          <article class="card" id="sensorLocationCard">
+            <div class="card-head">
+              <div><h2>Sensor Location</h2></div>
+            </div>
+            <label class="field compact"><span>Field the sensor is in</span>
+              <select id="sensorField" class="mini-select"></select></label>
+            <div class="btn-row">
+              <button class="btn ghost" id="sensorUseGps">Use the GPS fix</button>
+              <button class="btn ghost" id="sensorUseBrowser">Use my location</button>
+              <button class="btn ghost" id="sensorUseField">Use field centre</button>
+            </div>
+            <p class="hint" id="sensorLocNote">Attached to every reading you fetch.</p>
+            <div class="map-wrap">
+              <div id="sensorMap" class="leaflet-map compact"></div>
+              <div class="map-zoom">
+                <button class="icon-btn" data-map-zoom="in" data-map="sensor" aria-label="Zoom in">+</button>
+                <button class="icon-btn" data-map-zoom="out" data-map="sensor" aria-label="Zoom out">&minus;</button>
+                <button class="icon-btn" data-map-locate="sensor" aria-label="Where I am now" title="Where I am now"><svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+                <button class="icon-btn" data-map-home="sensor" aria-label="My registered land" title="My registered land"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20V10l8-6 8 6v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.5 20v-5.5h5V20" fill="none" stroke="currentColor" stroke-width="1.9"/></svg></button>
+                <button class="icon-btn" data-map-full="sensor" aria-label="Full screen" title="Full screen">
+                  <svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <details class="ble-sample">
+              <summary>Coordinates and GPS detail</summary>
+              <div class="ble-controls">
+                <label class="field compact"><span>Where they come from</span>
+                  <select id="sensorLocSource" class="mini-select">
+                    <option value="gps">GPS fix from the NEO-6M</option>
+                    <option value="browser">This phone or laptop</option>
+                    <option value="field_centre">Centre of the selected field</option>
+                    <option value="manual">Typed in by hand</option>
+                  </select></label>
+                <label class="field compact"><span>Latitude</span>
+                  <input id="sensorLat" type="number" step="0.000001" placeholder="27.176700"></label>
+                <label class="field compact"><span>Longitude</span>
+                  <input id="sensorLon" type="number" step="0.000001" placeholder="78.008100"></label>
+              </div>
+              <div class="status-list" id="gpsStatus"></div>
+            </details>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2>Latest packet</h2></div></div>
+            <div class="status-list" id="deviceStatus"></div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- ============ GOVT SCHEMES ============ -->
+      <section class="page" id="page-schemes">
+        <div class="page-head">
+          <div><h1>Government Schemes</h1></div>
+        </div>
+        <div class="chip-row" id="schemeFilters"></div>
+        <div class="scheme-grid" id="schemeGrid"></div>
+        <p class="hint" id="schemeNote"></p>
+      </section>
+
+      <!-- ============ FARM FINANCE ============ -->
+      <section class="page" id="page-finance">
+        <div class="page-head">
+          <div><h1>Farm Finance</h1></div>
+        </div>
+        <article class="card">
+          <div class="card-head">
+            <div><h2>What this season has cost</h2>
+              <p id="ledgerNote"></p></div>
+            <div class="head-controls">
+              <select id="ledgerField" class="mini-select" aria-label="Field"></select>
+              <select id="ledgerSeason" class="mini-select" aria-label="Season">
+                <option value="">All seasons</option>
+                <option value="rabi">Rabi</option>
+                <option value="kharif">Kharif</option>
+                <option value="zaid">Zaid</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ledger-totals" id="ledgerTotals"></div>
+          <div class="ledger-bars" id="ledgerBars"></div>
+
+          <h3 class="mini-title">Add what you spent or earned</h3>
+          <div class="ledger-form">
+            <label class="field compact"><span>This was</span>
+              <select id="ledEntryKind" class="mini-select">
+                <option value="expense">Money out</option>
+                <option value="income">Money in</option>
+              </select></label>
+            <label class="field compact"><span>On what</span>
+              <select id="ledCategory" class="mini-select"></select></label>
+            <label class="field compact"><span>Amount</span>
+              <input id="ledAmount" type="number" inputmode="decimal" placeholder="rupees"></label>
+            <label class="field compact"><span>Note</span>
+              <input id="ledNote" type="text" placeholder="2 bags of urea"></label>
+            <button class="btn primary" id="ledAdd">Add</button>
+          </div>
+          <p class="hint">You can also just tell Saarthi on a call - "I spent 4200 on
+            urea" - and it lands here.</p>
+
+          <h3 class="mini-title">Entries</h3>
+          <div class="table" id="ledgerTable"></div>
+        </article>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Will this season pay?</h2>
+              <p>Your own numbers - nothing is assumed</p></div></div>
+            <div class="ask-grid">
+              <label class="field"><span>What the crop has cost you so far</span>
+                <input id="finCost" type="number" placeholder="seed, fertiliser, water, labour"></label>
+              <label class="field"><span>Yield you expect (quintals)</span>
+                <input id="finYield" type="number" placeholder="from this plot"></label>
+              <label class="field"><span>Price per quintal</span>
+                <input id="finPrice" type="number" placeholder="blank uses the mandi price"></label>
+            </div>
+            <div class="btn-row"><button class="btn primary" id="finRun">Work it out</button></div>
+            <div id="finResult"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Borrowing and cover</h2></div></div>
+            <div id="finCredit"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ FARM SUPPORT ============ -->
+      <section class="page" id="page-help">
+        <div class="page-head">
+          <div><h1>Farm Support</h1></div>
+        </div>
+        <article class="card">
+          <div class="card-head"><div><h2>Who to ring</h2></div></div>
+          <div class="help-grid" id="helplineGrid"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><h2>Where to go</h2></div></div>
+          <div class="help-grid" id="portalGrid"></div>
+        </article>
+        <p class="hint" id="supportNote"></p>
+      </section>
+
+      <!-- ============ 10. AI AGENTS ============ -->
+      <section class="page" id="page-reports">
+        <div class="page-head">
+          <div><h1>Reports</h1><p>Download your farm records</p></div>
+          <div class="head-controls">
+            <!-- Which plot the two reports that are ABOUT a plot are built from.
+                 The other two are the farm's, and say so on their own card. -->
+            <select id="reportField" class="mini-select" aria-label="Which field"></select>
+            <button class="btn danger sm" id="reportsClear">Clear records</button>
+          </div>
+        </div>
+        <div class="report-grid" id="reportGrid"></div>
+      </section>
+
+      <!-- ============ 13. MY FIELDS (MAP) ============ -->
+      <section class="page" id="page-fields">
+        <div class="page-head">
+          <div><h1>My Fields</h1><p>Mark each plot on the map and record what grows there</p></div>
+        </div>
+        <div class="cols map-cols">
+          <article class="card">
+            <div class="card-head">
+              <div><h2>Field Map</h2><p id="mapNote">Press "Add field", then click the map where the plot is</p></div>
+              <div class="btn-row tight">
+                <button class="btn ghost sm" id="locateBtn" title="Centre on where I am">My location</button>
+                <button class="btn primary sm" id="addFieldBtn">Add field</button>
+              </div>
+            </div>
+            <!-- Type a village and the map goes there. Before this a farmer had
+                 to find their own field on an unlabelled map by dragging. -->
+            <div class="place-search">
+              <input id="placeQuery" type="search" placeholder="Find a village, town or district"
+                     aria-label="Find a place" autocomplete="off">
+              <button class="btn ghost sm" id="placeGo" type="button">Search</button>
+            </div>
+            <div class="place-results" id="placeResults" hidden></div>
+            <div class="map-wrap">
+              <div id="fieldLeaflet" class="leaflet-map"></div>
+              <div class="map-zoom">
+                <button class="icon-btn" data-map-zoom="in" data-map="fields" aria-label="Zoom in">+</button>
+                <button class="icon-btn" data-map-zoom="out" data-map="fields" aria-label="Zoom out">&minus;</button>
+                <button class="icon-btn" data-map-locate="fields" aria-label="Where I am now" title="Where I am now"><svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+                <button class="icon-btn" data-map-home="fields" aria-label="My registered land" title="My registered land"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20V10l8-6 8 6v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.5 20v-5.5h5V20" fill="none" stroke="currentColor" stroke-width="1.9"/></svg></button>
+                <button class="icon-btn" data-map-full="fields" aria-label="Full screen" title="Full screen">
+                  <svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="map-fallback" id="mapFallback" hidden>
+                <b>The map could not load</b>
+                <small>Map tiles come from the internet. You can still add a field by
+                  typing its location below.</small>
+              </div>
+            </div>
+            <p class="hint" id="mapHint">Each field is drawn as a fixed-size plot box at the
+              point you click. Drag the marker to move it.</p>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2 id="fieldFormTitle">Register a field</h2>
+              <p>What is this plot, and what is growing on it</p></div></div>
+            <form id="fieldForm" class="field-form">
+              <input type="hidden" id="fieldId">
+              <label class="field"><span>Field name</span>
+                <input id="fieldName" placeholder="North plot" required></label>
+              <div class="two-up">
+                <label class="field"><span>Size of land (acres)</span>
+                  <input id="fieldArea" type="number" step="0.1" min="0" placeholder="2.5"></label>
+                <label class="field"><span>Crop grown</span>
+                  <input id="fieldCrop" list="cropOptions" placeholder="wheat"></label>
+              </div>
+              <datalist id="cropOptions"></datalist>
+              <div class="two-up">
+                <label class="field"><span>Soil type</span>
+                  <select id="fieldSoil">
+                    <option value="">Not sure</option>
+                    <option>loam</option><option>clay</option><option>sandy</option>
+                    <option>silt</option><option>black cotton</option><option>alluvial</option>
+                  </select></label>
+                <label class="field"><span>Irrigation</span>
+                  <select id="fieldIrrigation">
+                    <option value="">Not sure</option>
+                    <option>drip</option><option>sprinkler</option><option>flood</option>
+                    <option>canal</option><option>rain-fed</option><option>tube well</option>
+                  </select></label>
+              </div>
+              <label class="field"><span>Sowing date</span>
+                <input id="fieldSowing" type="date"></label>
+              <div class="two-up">
+                <label class="field"><span>Latitude</span>
+                  <input id="fieldLat" type="number" step="0.000001" placeholder="27.4924"></label>
+                <label class="field"><span>Longitude</span>
+                  <input id="fieldLon" type="number" step="0.000001" placeholder="77.6737"></label>
+              </div>
+              <label class="field"><span>Notes</span>
+                <input id="fieldNotes" placeholder="Low-lying corner stays wet"></label>
+              <div class="btn-row">
+                <button class="btn primary" type="submit" id="fieldSave">Save field</button>
+                <button class="btn ghost" type="button" id="fieldCancel" hidden>Cancel</button>
+              </div>
+            </form>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head"><div><h2>Registered Fields</h2>
+            <p id="fieldsSummary">Plots being monitored</p></div></div>
+          <div class="field-cards" id="fieldList"></div>
+        </article>
+      </section>
+
+      <!-- ============ 15. ADMIN ============ -->
+      <section class="page" id="page-admin">
+        <div class="page-head">
+          <div><h1>Administrator</h1><p>Every account on this server, and what each one holds</p></div>
+        </div>
+        <div class="metrics" id="adminTiles"></div>
+
+        <!-- Is the server actually able to do its job right now? Each row is a
+             thing that can fail on its own, so each is reported on its own. -->
+        <article class="card">
+          <div class="card-head"><div><h2>Service health</h2>
+            <p>What the server can reach right now</p></div>
+            <button class="btn ghost sm" id="adminHealthRefresh">Check again</button></div>
+          <div class="admin-health" id="adminHealth"></div>
+        </article>
+
+        <div class="two-up">
+          <article class="card">
+            <div class="card-head"><div><h2>What the farms hold</h2>
+              <p>Across every account on this server</p></div></div>
+            <div class="status-list" id="adminFarmStats"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><h2>Knowledge base</h2>
+              <p>What the agents retrieve from</p></div>
+              <!-- Feeding it is a bigger job than reading it, so it has a page of
+                   its own: upload, who fed what, and the retrieval chain running
+                   live. Opens in a new tab because it is a different tool. -->
+              <button class="btn ghost sm" data-go="knowledge"
+                      type="button">Open the console</button></div>
+            <div class="status-list" id="adminRag"></div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head"><div><h2>Accounts</h2>
+            <p>Role, status, and how much farm data each one has</p></div>
+            <div class="admin-tools">
+              <input id="adminSearch" class="admin-search" type="search"
+                     placeholder="Find an account" aria-label="Find an account">
+              <button class="btn ghost sm" id="adminRefresh">Refresh</button>
+            </div></div>
+          <div class="table admin-table" id="adminTable"></div>
+        </article>
+        <article class="card" id="adminDetailCard" hidden>
+          <div class="card-head"><div><h2 id="adminDetailName">Account</h2>
+            <p>Profile, fields and calls</p></div>
+            <button class="btn ghost sm" id="adminCloseDetail">Close</button></div>
+          <div id="adminDetail"></div>
+        </article>
+        <!-- Every call on the server, across every account. It used to be on
+             the farmer's own Voice Calls page, listing their calls back to
+             them; the person who needs to look across farms is this one. -->
+        <article class="card">
+          <div class="card-head"><div><h2>Call log</h2>
+            <p>Every call this server has placed or answered</p></div>
+            <div class="admin-tools">
+              <input id="adminCallSearch" class="admin-search" type="search"
+                     placeholder="Find a number or a farmer" aria-label="Find a call">
+              <button class="btn ghost sm" id="adminCallRefresh" type="button">Refresh</button>
+            </div></div>
+          <p class="hint" id="adminCallCount"></p>
+          <div class="table admin-table" id="adminCallTable"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div><h2>One-time code delivery</h2>
+            <p>Where sign-up and reset codes are sent from</p></div></div>
+          <div class="status-list" id="adminOtp"></div>
+        </article>
+
+        <!-- The picture behind the glass theme, for EVERY account on this
+             server. A farmer chooses whether they want the glass theme; an
+             administrator chooses what it looks like, the way a letterhead is
+             chosen once. -->
+        <article class="card">
+          <div class="card-head"><div><h2>Glass theme backdrop</h2>
+            <p>The picture every account sees behind the glass theme</p></div>
+            <button class="btn ghost sm" id="bgRefresh" type="button">Reload</button></div>
+          <div class="bg-grid" id="bgGrid"></div>
+          <div class="bg-tools">
+            <label class="btn ghost sm" for="bgUpload">Upload a picture</label>
+            <input id="bgUpload" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            <input id="bgLink" class="admin-search" type="url"
+                   placeholder="or paste an https:// image link" aria-label="Image link">
+            <button class="btn ghost sm" id="bgAddLink" type="button">Add link</button>
+          </div>
+          <div class="bg-slide">
+            <label for="bgInterval">Change picture every</label>
+            <input id="bgInterval" type="range" min="0" max="300" step="5" value="45">
+            <b id="bgIntervalLabel">45 seconds</b>
+          </div>
+          <p class="hint">Zero turns the slideshow off and leaves the first picture up.
+            One picture means there is nothing to change to, whatever this says.</p>
+          <div class="btn-row">
+            <button class="btn primary" id="bgSave" type="button">Save for everyone</button>
+            <span class="hint" id="bgNote"></span>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============ KNOWLEDGE BASE (administrators) ============
+           The console is a page of its own, served from /kb/ by the same server
+           and behind the same administrator session. It is embedded here rather
+           than rebuilt here: two copies of an upload form and a live chain
+           diagram would drift apart within a week, and the one that drifted
+           would be the one somebody was looking at. -->
+      <section class="page" id="page-knowledge">
+        <div class="page-head">
+          <div><h1>Knowledge base</h1>
+            <p>What the chatbot and the calling bot are allowed to say. Feed in a
+               document and both can quote it, with citations, within seconds.</p></div>
+          <a class="btn ghost" id="kbNewTab" href="/kb/" target="_blank" rel="noopener">
+            Open full screen</a>
+        </div>
+        <div class="kb-frame" id="kbFrame">
+          <div class="kb-frame-loading" id="kbLoading">Loading the console...</div>
+        </div>
+      </section>
+
+      <!-- ============ 14. MY PROFILE ============ -->
+      <section class="page" id="page-profile">
+        <div class="page-head">
+          <div><h1>My Profile</h1></div>
+        </div>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Personal Details</h2></div></div>
+            <div class="two-up">
+              <label class="field"><span>Name used on calls</span>
+                <input id="pfName" placeholder="Ramesh"></label>
+              <label class="field"><span>Full name</span>
+                <input id="pfFullName" placeholder="Ramesh Kumar Yadav"></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>Phone number</span>
+                <input id="pfPhone" inputmode="tel" placeholder="98XXXXXXXX"></label>
+              <label class="field"><span>Alternate phone</span>
+                <input id="pfAltPhone" inputmode="tel" placeholder="Optional"></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>Age</span>
+                <input id="pfAge" type="number" min="14" max="110" placeholder="47"></label>
+              <label class="field"><span>Preferred language</span>
+                <select id="pfLang" data-no-i18n></select></label>
+            </div>
+            <label class="field"><span>Email address <i class="opt">optional</i></span>
+              <input id="pfEmail" type="email" placeholder="you@example.com"
+                     autocomplete="email"></label>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2>Village Details</h2><p>Where the farm is</p></div></div>
+            <!-- Search once instead of typing four boxes. The district decides
+                 which mandi prices this farmer is shown, so a typo here is a
+                 wrong price later - looking it up is more accurate than asking
+                 somebody to spell their own district the way our data does. -->
+            <div class="place-search">
+              <input id="pfPlaceQuery" type="search" autocomplete="off"
+                     placeholder="Find your village and fill these in"
+                     aria-label="Find your village">
+              <button class="btn ghost sm" id="pfPlaceGo" type="button">Search</button>
+            </div>
+            <div class="place-results" id="pfPlaceResults" hidden></div>
+            <div class="two-up">
+              <label class="field"><span>Village</span>
+                <input id="pfVillage" placeholder="Rampur"></label>
+              <label class="field"><span>Tehsil / Block</span>
+                <input id="pfTehsil" placeholder="Chhata"></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>District</span>
+                <input id="pfDistrict" placeholder="Mathura"></label>
+              <label class="field"><span>State</span>
+                <input id="pfState" placeholder="Uttar Pradesh"></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>PIN code</span>
+                <input id="pfPincode" inputmode="numeric" placeholder="281401"></label>
+              <label class="field"><span>Landmark</span>
+                <input id="pfLandmark" placeholder="Near the canal bridge"></label>
+            </div>
+          </article>
+        </div>
+
+        <div class="cols">
+          <article class="card">
+            <div class="card-head"><div><h2>Farming Details</h2><p>What the agents assume about your land</p></div></div>
+            <div class="two-up">
+              <label class="field"><span>Total land (acres)</span>
+                <input id="pfAcres" type="number" step="0.1" min="0" placeholder="4.5"></label>
+              <label class="field"><span>Number of fields</span>
+                <input id="pfFieldCount" readonly title="Taken from the fields you mapped"></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>Main soil type</span>
+                <select id="pfSoil">
+                  <option value="">Not sure</option>
+                  <option>loam</option><option>clay</option><option>sandy</option>
+                  <option>silt</option><option>black cotton</option><option>alluvial</option>
+                </select></label>
+              <label class="field"><span>Main irrigation</span>
+                <select id="pfIrrigation">
+                  <option value="">Not sure</option>
+                  <option>drip</option><option>sprinkler</option><option>flood</option>
+                  <option>canal</option><option>rain-fed</option><option>tube well</option>
+                </select></label>
+            </div>
+            <div class="two-up">
+              <label class="field"><span>Farming since (year)</span>
+                <input id="pfSince" type="number" min="1940" max="2030" placeholder="2003"></label>
+              <label class="field"><span>Farmer type</span>
+                <select id="pfType">
+                  <option value="">Not stated</option>
+                  <option>marginal (under 1 ha)</option>
+                  <option>small (1-2 ha)</option>
+                  <option>semi-medium (2-4 ha)</option>
+                  <option>medium (4-10 ha)</option>
+                  <option>large (over 10 ha)</option>
+                </select></label>
+            </div>
+            <p class="hint" id="pfMissing"></p>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><h2>Call Preferences</h2><p>How Saarthi rings you back</p></div></div>
+            <label class="field"><span>Call me this long after I ask</span>
+              <select id="pfCallDelay">
+                <option value="0">Straight away</option>
+                <option value="2">After 2 minutes</option>
+                <option value="5">After 5 minutes</option>
+                <option value="15">After 15 minutes</option>
+                <option value="30">After 30 minutes</option>
+                <option value="60">After 1 hour</option>
+                <option value="180">After 3 hours</option>
+              </select></label>
+            <p class="hint">Only one call-back can be waiting at a time. Until it finishes,
+              asking again is refused rather than queued.</p>
+            <div class="status-list" id="pfPending"></div>
+          </article>
+        </div>
+
+        <!-- Locked until Edit is pressed, and saved only with a code sent to
+             this account. A profile edit is not cosmetic: the phone number
+             decides which account a caller reaches, and the village and
+             district decide whose weather and whose mandi prices are shown. -->
+        <div class="btn-row sticky-save">
+          <button class="btn primary" id="pfEdit">Edit profile</button>
+          <button class="btn primary" id="pfSave" hidden>Save profile</button>
+          <button class="btn ghost" id="pfCancel" hidden>Cancel</button>
+          <span class="hint" id="pfSaveNote"></span>
+        </div>
+        <!-- The code is asked for when the farmer is ready to SAVE, not when
+             they press Edit. Sending one the moment the form unlocks means a
+             code goes out every time somebody opens the page to look at it -
+             and by the time they have finished typing, it has expired. -->
+        <div class="pf-code" id="pfCodeRow" hidden>
+          <button class="btn" id="pfSendCode" type="button">Send code to save</button>
+          <label class="field" id="pfCodeField" hidden>
+            <span>Code sent to your phone and email</span>
+            <input id="pfCode" inputmode="numeric" maxlength="6" placeholder="6 digits"></label>
+          <button class="btn ghost sm" id="pfResend" type="button" hidden>Send again</button>
+          <span class="hint" id="pfCodeNote"></span>
+        </div>
+
+        <article class="card danger-card">
+          <div class="card-head"><div><h2>What Saarthi Remembers</h2>
+            <p>From your calls, not what you typed</p></div>
+            <button class="btn ghost sm" id="pfRefreshMemory">Refresh</button></div>
+          <div class="fact-list" id="pfFacts"></div>
+          <div class="erase-row">
+            <div>
+              <b>Erase conversation memory</b>
+              <small>Deletes every remembered fact and every call transcript, A to Z.
+                Your name is kept so calls still greet you; everything you typed above
+                stays. This cannot be undone.</small>
+            </div>
+            <label class="toggle sm"><input type="checkbox" id="pfKeepName" checked><span>Keep my name</span></label>
+            <button class="btn danger" id="pfErase">Erase memory</button>
+          </div>
+        </article>
+        <!-- How the dashboard looks. The same three the top-bar button cycles,
+             spelled out here: the button is quick once you know it exists, and
+             this is where somebody looks for a setting. The choice is this
+             browser's - nothing about it is sent to the server. -->
+        <article class="card">
+          <div class="card-head"><div><h2>How it looks</h2>
+            <p>Your choice, remembered in this browser</p></div></div>
+          <div class="look-row" id="lookRow">
+            <button class="look" type="button" data-look="light">
+              <span class="look-swatch look-light"></span>
+              <b>Light</b><small>Daylight. The default.</small></button>
+            <button class="look" type="button" data-look="dark">
+              <span class="look-swatch look-dark"></span>
+              <b>Dark</b><small>Black panels, easy at night.</small></button>
+            <button class="look" type="button" data-look="glass">
+              <span class="look-swatch look-glass"></span>
+              <b>Glass</b><small>A photograph behind frosted panels.</small></button>
+          </div>
+          <p class="hint" id="lookNote"></p>
+        </article>
+
+        <!-- Registering a voice, on the page where the farmer's own details
+             live. This is biometric data about a person, so the card says what
+             it is and what it is not, consent is asked for before anything is
+             recorded, and removing it is one button away. -->
+        <article class="card vx-card" id="vxCard" hidden>
+          <div class="card-head">
+            <div><h2>Your voice</h2><p id="vxNote"></p></div>
+            <!-- Whether the check RUNS. Separate from whether a voice is
+                 registered: switching it off deletes nothing, so a farmer can
+                 turn it off for a week without recording three clips again. -->
+            <label class="vx-switch" for="vxAuth">
+              <input type="checkbox" id="vxAuth">
+              <span class="vx-slider"></span>
+              <b>Check my voice before acting</b>
+            </label>
+          </div>
+
+          <ol class="vx-how">
+            <li>Saarthi shows you three short sentences.</li>
+            <li>You read each one aloud while it records.</li>
+            <li>It checks each recording and says if one needs doing again.</li>
+          </ol>
+
+          <!-- One row per person. A farm is worked by more than one. -->
+          <div class="vx-voices" id="vxVoices"></div>
+
+          <div class="vx-actions">
+            <button class="btn" id="vxStart" type="button">Register my voice</button>
+            <button class="btn ghost" id="vxAdd" type="button" hidden>Add another voice</button>
+          </div>
+
+          <div class="vx-steps" id="vxSteps" hidden></div>
+          <p class="vx-result" id="vxResult" hidden></p>
+          <p class="hint" id="vxExplain"></p>
+          <p class="hint vx-limit">A voice match helps Saarthi know it is you. It
+            is not a password: it never opens your account, authorises money or
+            unlocks your data on its own, and two similar voices can be confused.
+            Only numbers are stored - no recording is kept, and nothing can be
+            played back.</p>
+        </article>
+
+        <!-- The agent board and the System Status card are gone from here. They
+             were a tour of the machinery sitting under a farmer's own details,
+             and the "Architecture" button on the first one pointed at a page
+             that no longer exists. What the fifteen agents found lives on
+             Pipeline Results, with the run that produced it. -->
+      </section>
+
+      <footer class="foot">
+        <span>Saarthi 2.0 - VisionCoders</span>
+        <span>InduX 5.0 - Problem Statement 16 - Team ID InduX5-26VU-404</span>
+      </footer>
+    </div>
+  </main>
+
+  <!-- ===================== FLOATING CHATBOT ===================== -->
+  <button class="fab" id="fabBtn" aria-label="Open Saarthi chatbot" data-assistant-ignore>
+    <svg viewBox="0 0 24 24" width="22" height="22"><path d="M21 12a8 8 0 1 1-3.2-6.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M8 11h8M8 15h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+  </button>
+  <div class="chatbot" id="chatbot" hidden data-assistant-ignore>
+    <div class="chatbot-head">
+      <span class="chat-avatar sm"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M12 3 4 7v6c0 4.4 3.2 7.6 8 8 4.8-.4 8-3.6 8-8V7l-8-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+      <div><b>Saarthi Assistant</b><small id="fabMode">Ask me about your farm</small></div>
+      <select id="fabLang" aria-label="Chatbot language" data-no-i18n></select>
+      <button class="icon-btn" id="fabClose" aria-label="Close">&times;</button>
+    </div>
+    <!-- The three switches are gone from the face of it, not from the
+         behaviour: retrieval and the agents are ON for every question, which is
+         what anybody would want and what nobody was going to turn off on
+         purpose. Voice stays off here because the voice bot below is the thing
+         that talks. They remain as hidden inputs so the code that reads them
+         does not have to care that they are no longer drawn. -->
+    <div class="chatbot-toggles" hidden>
+      <label class="toggle sm"><input type="checkbox" id="fabRag" checked><span>RAG</span></label>
+      <label class="toggle sm"><input type="checkbox" id="fabAgents" checked><span>Agents</span></label>
+      <label class="toggle sm"><input type="checkbox" id="fabSpeak"><span>Voice</span></label>
+    </div>
+    <div class="messages sm" id="fabMessages"></div>
+    <form class="chat-form sm" id="fabForm">
+      <button type="button" class="icon-btn mic" id="fabMic" aria-label="Speak"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <input id="fabInput" placeholder="Ask Saarthi..." autocomplete="off">
+      <button class="btn primary sm" type="submit">Send</button>
+    </form>
+  </div>
+
+  <div id="toast" data-assistant-ignore></div>
+  <audio id="player" hidden></audio>
+</div>
+<script src="ble-parse.js"></script>
+  <script src="ble.js"></script>
+  <script src="googlemap.js"></script>
+  <script src="app.js"></script>
+  <!-- After app.js: it reads that script's API and go(). -->
+  <script src="voiceid.js"></script>
+  <!-- When to open the microphone again after a silent window. Before
+       agent.js, which uses it: see listen-backoff.test.js for why it is its
+       own file. -->
+  <script src="listen-backoff.js"></script>
+  <!-- Before wake.js: the wake word hands over to it. -->
+  <script src="voiceturn.js"></script>
+  <script src="agent.js"></script>
+  <!-- Filling a form by speaking it. Independent of agent mode: it fills
+       boxes, it does not hold a conversation. -->
+  <script src="formvoice.js"></script>
+  <!-- After voiceid.js, whose microphone capture it uses. -->
+  <script src="voiceenrol.js"></script>
+  <!-- Asking about something Saarthi has to SEE. Loaded after agent.js so a
+       spoken "what does this chart show" can reach it. -->
+  <script src="vision.js"></script>
+  <!-- The page as a bounded snapshot, and the one narrow function that carries
+       out an action the server approved. pagecontext issues the element ids
+       that actions resolves, so it has to load first. -->
+  <script src="pagecontext.js"></script>
+  <script src="actions.js"></script>
+  <script src="wake.js"></script>
+<!-- Answer one agent, from anywhere it is shown as waiting. -->
+<div class="modal-back" id="askModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="askModalTitle">
+    <div class="modal-head">
+      <div><h2 id="askModalTitle">Agent needs an answer</h2>
+        <p id="askModalSub"></p></div>
+      <!-- Say the whole form in one breath instead of tapping eleven boxes.
+           Hidden in a browser that cannot listen. -->
+      <button class="btn ghost sm ask-voice" id="askModalVoice" type="button" hidden>
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+          <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" fill="currentColor"/>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor"
+                stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+        <span>Fill by voice</span>
+      </button>
+      <button class="icon-btn" id="askModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ask-grid" id="askModalGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="askModalCancel">Cancel</button>
+      <button class="btn primary" id="askModalRun">Save and run the chain</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
