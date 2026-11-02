@@ -8,6 +8,8 @@
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
+#define BUTTON_PIN 12
+#define BUZZER_PIN 13
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
@@ -34,6 +36,9 @@ void setup() {
 
   digitalWrite(RE, LOW);
   digitalWrite(DE, LOW);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUZZER_PIN, OUTPUT);
+
 
   Serial.println(F("--- 7-in-1 Soil Sensor ---"));
 
@@ -46,7 +51,9 @@ void setup() {
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0, 20);
-    display.println(F("Soil Sensor Ready"));
+    display.println("PRESS BUTTON");
+    display.setCursor(10,35);
+    display.println("TO SCAN");
     display.display();
 
     delay(2000);
@@ -59,70 +66,17 @@ void setup() {
   testAlternativeAddresses();
 }
 
-void loop() {
+void loop()
+{
+  if(digitalRead(BUTTON_PIN)==LOW)
+  {
+    startScan();
 
-  memset(response, 0, sizeof(response));
-
-  digitalWrite(DE, HIGH);
-  digitalWrite(RE, HIGH);
-
-  delay(10);
-
-  if (useAlternate) {
-    mod.write(requestAlternate, sizeof(requestAlternate));
-  }
-  else {
-    mod.write(requestAll, sizeof(requestAll));
-  }
-
-  mod.flush();
-
-  delay(2);
-
-  digitalWrite(DE, LOW);
-  digitalWrite(RE, LOW);
-
-  unsigned long startTime = millis();
-
-  responseLength = 0;
-
-  int expectedLen = useAlternate ? 13 : 19;
-
-  while (millis() - startTime < 1000 && responseLength < expectedLen) {
-
-    if (mod.available()) {
-
-      response[responseLength++] = mod.read();
+    while(digitalRead(BUTTON_PIN)==LOW)
+    {
+      delay(10);
     }
   }
-
-  if (responseLength < 9) {
-
-    Serial.println(F("ERROR: No response"));
-
-    display.clearDisplay();
-    display.setCursor(0, 20);
-    display.println(F("No Sensor Response"));
-    display.display();
-
-    delay(2000);
-    return;
-  }
-
-  if (useAlternate) {
-    parseAlternateData();
-  }
-  else {
-    parseStandardData();
-  }
-
-  if (n == 0 && p == 0 && k == 0 && ec > 20) {
-    estimateNPKfromEC();
-  }
-
-  printResults();
-
-  delay(5000);
 }
 
 void parseStandardData() {
@@ -250,6 +204,127 @@ void testAlternativeAddresses() {
     }
   }
 }
+void startScan()
+{
+  float moistureSum = 0;
+  float temperatureSum = 0;
+  float phSum = 0;
+
+  long ecSum = 0;
+  long nSum = 0;
+  long pSum = 0;
+  long kSum = 0;
+
+  int samples = 0;
+
+  unsigned long scanStart = millis();
+
+  while(millis() - scanStart < 10000)
+  {
+    tone(BUZZER_PIN,1000);
+    delay(100);
+    noTone(BUZZER_PIN);
+
+    memset(response,0,sizeof(response));
+
+    digitalWrite(DE,HIGH);
+    digitalWrite(RE,HIGH);
+
+    delay(10);
+
+    if(useAlternate)
+      mod.write(requestAlternate,sizeof(requestAlternate));
+    else
+      mod.write(requestAll,sizeof(requestAll));
+
+    mod.flush();
+
+    delay(2);
+
+    digitalWrite(DE,LOW);
+    digitalWrite(RE,LOW);
+
+    unsigned long startTime = millis();
+
+    responseLength = 0;
+
+    int expectedLen = useAlternate ? 13 : 19;
+
+    while(millis()-startTime < 1000 &&
+          responseLength < expectedLen)
+    {
+      if(mod.available())
+      {
+        response[responseLength++] = mod.read();
+      }
+    }
+
+    if(responseLength >= 9)
+    {
+      if(useAlternate)
+        parseAlternateData();
+      else
+        parseStandardData();
+
+      if(n==0 && p==0 && k==0 && ec>20)
+      {
+        estimateNPKfromEC();
+      }
+
+      moistureSum += moisture;
+      temperatureSum += temperature;
+      phSum += ph;
+
+      ecSum += ec;
+      nSum += n;
+      pSum += p;
+      kSum += k;
+
+      samples++;
+    }
+
+    int progress =
+      map(millis()-scanStart,
+          0,
+          10000,
+          0,
+          120);
+
+    display.clearDisplay();
+
+    display.setTextSize(1);
+
+    display.setCursor(15,5);
+    display.println("SCANNING");
+
+    display.drawRect(4,25,120,12,WHITE);
+
+    display.fillRect(4,25,progress,12,WHITE);
+
+    display.setCursor(40,45);
+    display.print((millis()-scanStart)/1000);
+    display.print("/10 s");
+
+    display.display();
+
+    delay(900);
+  }
+
+  moisture = moistureSum / samples;
+  temperature = temperatureSum / samples;
+  ph = phSum / samples;
+
+  ec = ecSum / samples;
+  n = nSum / samples;
+  p = pSum / samples;
+  k = kSum / samples;
+
+  tone(BUZZER_PIN,1500);
+  delay(1000);
+  noTone(BUZZER_PIN);
+
+  printResults();
+}
 
 void printResults() {
 
@@ -296,33 +371,35 @@ void printResults() {
 
   display.setTextSize(1);
 
-  display.setCursor(0, 0);
+  display.setCursor(0,0);
   display.print("N:");
   display.print(n);
-  display.print(" P:");
+
+  display.setCursor(64,0);
+  display.print("P:");
   display.print(p);
 
-  display.setCursor(0, 10);
+  display.setCursor(0,12);
   display.print("K:");
   display.print(k);
 
-  display.setCursor(0, 20);
+  display.setCursor(64,12);
   display.print("pH:");
-  display.print(ph, 1);
+  display.print(ph,1);
 
-  display.setCursor(64, 20);
+  display.setCursor(0,24);
   display.print("EC:");
   display.print(ec);
 
-  display.setCursor(0, 40);
+  display.setCursor(0,36);
   display.print("M:");
-  display.print(moisture, 1);
+  display.print(moisture,1);
   display.print("%");
 
-  display.setCursor(64, 40);
+  display.setCursor(0,48);
   display.print("T:");
-  display.print(temperature, 1);
+  display.print(temperature,1);
   display.print("C");
 
-  display.display();
+  display.display(); 
 }
