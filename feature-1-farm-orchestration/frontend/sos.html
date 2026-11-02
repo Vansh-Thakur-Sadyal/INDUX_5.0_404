@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emergency SOS – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="sos.css"/>
+</head>
+<body class="sos-page">
+  <header class="topnav">
+    <div class="topnav-left">
+      <span class="brand">Farm Emergency SOS</span>
+      <nav class="top-tabs" aria-label="Main navigation">
+        <a href="index.html" class="tab">Farm Dashboard</a>
+        <a href="sos.html" class="tab active" aria-current="page">Emergency SOS</a>
+      </nav>
+    </div>
+    <a class="btn-outline" href="index.html">Back to dashboard</a>
+  </header>
+
+  <div class="layout sos-layout">
+    <aside class="sidebar sos-sidebar">
+      <div class="sos-sidebar-title">EMERGENCY HELP</div>
+      <p>If someone is in immediate danger, call emergency services directly. Do not wait for an app response.</p>
+      <a class="sos-call-button" href="tel:112">Call 112</a>
+      <small>India emergency response number</small>
+      <hr/>
+      <strong>Prototype notice</strong>
+      <p>This locally running prototype stores reports on this computer only. Other farmers on separate devices cannot receive them until the app is deployed to a shared server. It does not contact emergency services, verify accounts, or guarantee push delivery.</p>
+    </aside>
+
+    <main class="main sos-main">
+      <section class="sos-hero">
+        <div>
+          <div class="page-eyebrow">FARM COMMUNITY SAFETY</div>
+          <h1 class="page-title">Emergency SOS</h1>
+          <p class="page-desc">Record an incident and voice note for this app instance. The 5 km feed works only for clients connected to the same reachable server. Use this only for emergencies such as fire, flooding, animal intrusion, or immediate danger.</p>
+        </div>
+        <a class="sos-call-button sos-hero-call" href="tel:112">Call 112 now</a>
+      </section>
+
+      <div class="sos-safety-notice" role="note">
+        <strong>In immediate danger? Call 112 first.</strong>
+        This app does not contact emergency services. The local prototype cannot alert other phones or guarantee that anyone receives your report. Do not put yourself at risk to help.
+      </div>
+
+      <section class="sos-card" aria-labelledby="createSosHeading">
+        <div class="sos-section-heading">
+          <div>
+            <div class="page-eyebrow">SEND A COMMUNITY ALERT</div>
+            <h2 id="createSosHeading">Report an incident</h2>
+          </div>
+          <span class="sos-radius-badge">5 km feed filter</span>
+        </div>
+
+        <form id="sosForm">
+          <label for="incidentType">Incident type</label>
+          <select id="incidentType" required>
+            <option value="">Choose an incident</option>
+            <option>Fire</option>
+            <option>Flooding</option>
+            <option>Animal intrusion</option>
+            <option>Injury or medical emergency</option>
+            <option>Other</option>
+          </select>
+
+          <label for="incidentDescription">Short details</label>
+          <textarea id="incidentDescription" rows="3" maxlength="1000" required placeholder="What happened, when, and what immediate help is needed? Avoid sharing personal details that are not needed."></textarea>
+
+          <div class="sos-location-row">
+            <div>
+              <strong>Incident location</strong>
+              <p id="locationStatus">Location not shared. Sync GPS to continue.</p>
+            </div>
+            <button type="button" class="btn-outline" id="syncLocationButton">Sync GPS</button>
+          </div>
+
+          <div class="sos-voice-panel">
+            <div>
+              <strong>Voice report</strong>
+              <p>Record up to 2 minutes or select an audio file. Users connected to the same reachable server and within 5 km can listen.</p>
+            </div>
+            <div class="sos-record-controls">
+              <button type="button" class="sos-record-button" id="startRecordingButton">Start recording</button>
+              <button type="button" class="btn-outline" id="stopRecordingButton" disabled>Stop</button>
+              <span id="recordingStatus" aria-live="polite"></span>
+            </div>
+            <label class="sos-file-label" for="voiceFile">Or upload a voice note</label>
+            <input id="voiceFile" type="file" accept="audio/*"/>
+            <audio id="voicePreview" controls hidden></audio>
+          </div>
+
+          <label class="sos-consent">
+            <input id="shareConsent" type="checkbox" required/>
+            <span>I understand my voice note and exact incident coordinates will be stored on this app instance for up to 7 days and can be accessed by clients within 5 km of the incident. This prototype does not verify users or guarantee delivery.</span>
+          </label>
+
+          <div class="sos-submit-row">
+            <button type="submit" class="sos-submit-button" id="submitSosButton" disabled>Share SOS on this app</button>
+            <span id="submitStatus" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="sos-card nearby-card" aria-labelledby="nearbyHeading">
+        <div class="sos-section-heading">
+          <div>
+            <div class="page-eyebrow">LOCAL COMMUNITY FEED</div>
+            <h2 id="nearbyHeading">Nearby SOS reports</h2>
+            <p class="sos-muted">Refreshes every 15 seconds while this page is open. Audio and exact incident location are only available within 5 km on the same reachable server.</p>
+          </div>
+          <div class="sos-feed-controls">
+            <button type="button" class="btn-outline" id="enableNotificationsButton">Enable browser alerts</button>
+            <button type="button" class="btn-outline" id="refreshReportsButton">Refresh</button>
+          </div>
+        </div>
+        <div id="nearbyReports" class="nearby-reports" aria-live="polite">
+          <p class="sos-empty-state">Sync your GPS to see nearby community alerts.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="sos.js?v=2"></script>
+</body>
+</html>

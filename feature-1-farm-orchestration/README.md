@@ -30,6 +30,16 @@ for those records. Farm Support uses your browser location when available and
 falls back to the regional sample location. Its current provider cards are
 sample listings, not a live business directory.
 
+Emergency SOS is a local prototype for recording or uploading incident voice
+notes, attaching GPS coordinates, and showing reports within a 5 km radius.
+Reports and audio are stored in the ignored `sos_data` folder and automatically
+expire after seven days. The local launcher binds the API to `127.0.0.1`, so
+other devices cannot receive these reports. A shared deployment would need
+verified farmer accounts, access controls, and a real notification service.
+The prototype does not contact emergency services; call 112 directly in an
+emergency. Users must consent before sharing exact incident coordinates and
+voice recordings.
+
 The text assistant is available across all feature pages shown in the
 navigation. It retrieves relevant entries from a local feature knowledge
 index using sparse TF-IDF vectors and BM25, then grounds its answer in those

@@ -422,6 +422,7 @@ class ChatAssistantTests(unittest.TestCase):
             "soil sensor dashboard": "index.html",
             "mandi crop price": "market.html",
             "nearby fertilizer supplier": "farm_support.html",
+            "emergency SOS voice report fire incident nearby farmers": "sos.html",
             "calculate harvest yield per acre": "yield_calculator.html",
             "track plant height growth": "plant_growth.html",
             "farmer government subsidies": "subsidies.html",

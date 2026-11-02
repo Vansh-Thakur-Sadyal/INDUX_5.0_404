@@ -10,3 +10,4 @@ memory.json
 **/memory.json
 backend/agents/agent2/Dataset/
 logs/
+sos_data/

@@ -26,6 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from agents.orchestrator import AgentOrchestrator
 from assistant_knowledge import list_feature_knowledge, retrieve_feature_knowledge
 from llm_client import mistral_chat
+from api.sos import router as sos_router, start_sos_cleanup, stop_sos_cleanup
 import progress
 
 app = FastAPI(title="Agritech Farm API", version="2.5.0")
@@ -36,6 +37,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(sos_router)
+
+
+@app.on_event("startup")
+def start_sos_retention_cleanup():
+    start_sos_cleanup()
+
+
+@app.on_event("shutdown")
+def stop_sos_retention_cleanup():
+    stop_sos_cleanup()
 
 orchestrator = AgentOrchestrator()
 

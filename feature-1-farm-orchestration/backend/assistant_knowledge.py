@@ -24,6 +24,12 @@ FEATURE_KNOWLEDGE = [
         "content": "Farm Support shows nearby categories such as markets, fertilizer suppliers, and machinery using browser location when allowed. The provider cards in this project are sample listings, not a verified live business directory. Confirm a business and contact details before travelling.",
     },
     {
+        "name": "Emergency SOS",
+        "route": "sos.html",
+        "terms": "emergency SOS fire flood flooding animal intrusion incident voice recording voice note upload nearby farmer community alert emergency call 112",
+        "content": "Emergency SOS lets a farmer record or upload an incident voice note and share it with this app instance along with GPS coordinates. The local prototype stores reports for up to seven days and filters the feed/audio to five kilometres. It does not notify other devices unless they can reach the same deployed backend, does not verify users, and does not contact emergency services. Call 112 directly in an emergency.",
+    },
+    {
         "name": "Yield calculator",
         "route": "yield_calculator.html",
         "terms": "yield calculator harvest previous latest crop kg kilograms per acre change revenue growth production",
