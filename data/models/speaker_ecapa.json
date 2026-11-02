@@ -1,0 +1,30 @@
+{
+  "model": "speechbrain/spkrec-ecapa-voxceleb",
+  "architecture": "ECAPA-TDNN",
+  "trained_on": "VoxCeleb 1 + VoxCeleb 2 (7205 speakers)",
+  "published_eer_voxceleb1_test_percent": 0.8,
+  "embedding_dims": 192,
+  "sample_rate": 16000,
+  "input": "raw mono waveform, float32, shape (1, samples)",
+  "includes": [
+    "80-channel log-mel filterbank",
+    "sentence-level mean-variance normalisation",
+    "ECAPA-TDNN encoder"
+  ],
+  "opset": 18,
+  "onnx_vs_pytorch_cosine": 1.0,
+  "measured_on_synthetic_voices": {
+    "same_speaker_lowest": 0.9883,
+    "same_speaker_mean": 0.991,
+    "different_speaker_highest": 0.9743,
+    "different_speaker_mean": 0.9476,
+    "margin": 0.0139,
+    "pairs": {
+      "same": 9,
+      "different": 27
+    }
+  },
+  "limitation": "The margin above was measured on synthesised voices, not on telephone audio. It is a floor, not a promise: real recordings carry room, handset and codec differences this synthesiser does not reproduce.",
+  "bytes": 84094861,
+  "exported_at": "2026-10-27T14:40:59+00:00"
+}

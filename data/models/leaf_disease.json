@@ -1,0 +1,378 @@
+{
+  "name": "saarthi-leaf-disease",
+  "architecture": "efficientnet_b0",
+  "input": {
+    "size": 224,
+    "layout": "NCHW",
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "range": "0-1 before normalisation"
+  },
+  "selected_run": "federated_boosted",
+  "selection_metric": "validation macro recall",
+  "temperature": 0.7918,
+  "confidence_threshold": 0.9,
+  "threshold_rationale": {
+    "min_precision_required": 0.95,
+    "coverage_at_threshold": 0.6871,
+    "accuracy_when_shown": 0.9614
+  },
+  "classes": [
+    "apple__frog_eye_leaf_spot",
+    "apple__healthy",
+    "apple__powdery_mildew",
+    "apple__rust",
+    "apple__scab",
+    "bell_pepper__bacterial_spot",
+    "bell_pepper__healthy",
+    "blueberry__healthy",
+    "cassava__bacterial_blight",
+    "cassava__brown_streak_disease",
+    "cassava__green_mottle",
+    "cassava__healthy",
+    "cassava__mosaic_disease",
+    "grape__black_rot",
+    "grape__healthy",
+    "maize__gray_leaf_spot",
+    "maize__leaf_blight",
+    "maize__rust",
+    "peach__healthy",
+    "potato__early_blight",
+    "potato__late_blight",
+    "raspberry__healthy",
+    "soybean__healthy",
+    "squash__powdery_mildew",
+    "strawberry__healthy",
+    "tomato__bacterial_spot",
+    "tomato__early_blight",
+    "tomato__healthy",
+    "tomato__late_blight",
+    "tomato__leaf_mold",
+    "tomato__septoria_leaf_spot",
+    "tomato__yellow_leaf_curl_virus"
+  ],
+  "class_display": {
+    "apple__frog_eye_leaf_spot": "Apple - frog eye leaf spot",
+    "apple__healthy": "Apple - healthy",
+    "apple__powdery_mildew": "Apple - powdery mildew",
+    "apple__rust": "Apple - rust",
+    "apple__scab": "Apple - scab",
+    "bell_pepper__bacterial_spot": "Bell Pepper - bacterial spot",
+    "bell_pepper__healthy": "Bell Pepper - healthy",
+    "blueberry__healthy": "Blueberry - healthy",
+    "cassava__bacterial_blight": "Cassava - bacterial blight",
+    "cassava__brown_streak_disease": "Cassava - brown streak disease",
+    "cassava__green_mottle": "Cassava - green mottle",
+    "cassava__healthy": "Cassava - healthy",
+    "cassava__mosaic_disease": "Cassava - mosaic disease",
+    "grape__black_rot": "Grape - black rot",
+    "grape__healthy": "Grape - healthy",
+    "maize__gray_leaf_spot": "Maize - gray leaf spot",
+    "maize__leaf_blight": "Maize - leaf blight",
+    "maize__rust": "Maize - rust",
+    "peach__healthy": "Peach - healthy",
+    "potato__early_blight": "Potato - early blight",
+    "potato__late_blight": "Potato - late blight",
+    "raspberry__healthy": "Raspberry - healthy",
+    "soybean__healthy": "Soybean - healthy",
+    "squash__powdery_mildew": "Squash - powdery mildew",
+    "strawberry__healthy": "Strawberry - healthy",
+    "tomato__bacterial_spot": "Tomato - bacterial spot",
+    "tomato__early_blight": "Tomato - early blight",
+    "tomato__healthy": "Tomato - healthy",
+    "tomato__late_blight": "Tomato - late blight",
+    "tomato__leaf_mold": "Tomato - leaf mold",
+    "tomato__septoria_leaf_spot": "Tomato - septoria leaf spot",
+    "tomato__yellow_leaf_curl_virus": "Tomato - yellow leaf curl virus"
+  },
+  "metrics": {
+    "central": {
+      "val_accuracy": 0.8916,
+      "val_macro_recall": 0.7437,
+      "test_accuracy": 0.8898,
+      "test_macro_recall": 0.7356
+    },
+    "federated": {
+      "val_accuracy": 0.7602,
+      "val_macro_recall": 0.2368,
+      "test_accuracy": 0.7458,
+      "test_macro_recall": 0.2325
+    },
+    "federated_boosted": {
+      "val_accuracy": 0.8686,
+      "val_macro_recall": 0.7495,
+      "test_accuracy": 0.8639,
+      "test_macro_recall": 0.7512
+    }
+  },
+  "confidence_table": [
+    {
+      "threshold": 0.5,
+      "coverage": 0.9559,
+      "accuracy_when_shown": 0.8845,
+      "shown": 5698,
+      "wrong_shown": 658
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.9109,
+      "accuracy_when_shown": 0.9037,
+      "shown": 5430,
+      "wrong_shown": 523
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.8643,
+      "accuracy_when_shown": 0.9204,
+      "shown": 5152,
+      "wrong_shown": 410
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.8024,
+      "accuracy_when_shown": 0.9402,
+      "shown": 4783,
+      "wrong_shown": 286
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.6871,
+      "accuracy_when_shown": 0.9614,
+      "shown": 4096,
+      "wrong_shown": 158
+    }
+  ],
+  "per_class_test": {
+    "apple__frog_eye_leaf_spot": {
+      "support": 478,
+      "recall": 0.9686,
+      "precision": 0.983
+    },
+    "apple__healthy": {
+      "support": 708,
+      "recall": 0.952,
+      "precision": 0.9754
+    },
+    "apple__powdery_mildew": {
+      "support": 179,
+      "recall": 0.9497,
+      "precision": 0.977
+    },
+    "apple__rust": {
+      "support": 293,
+      "recall": 0.9693,
+      "precision": 0.9562
+    },
+    "apple__scab": {
+      "support": 739,
+      "recall": 0.9675,
+      "precision": 0.9508
+    },
+    "bell_pepper__bacterial_spot": {
+      "support": 12,
+      "recall": 0.75,
+      "precision": 0.5625
+    },
+    "bell_pepper__healthy": {
+      "support": 10,
+      "recall": 0.7,
+      "precision": 0.5833
+    },
+    "blueberry__healthy": {
+      "support": 18,
+      "recall": 0.7778,
+      "precision": 0.7368
+    },
+    "cassava__bacterial_blight": {
+      "support": 164,
+      "recall": 0.6951,
+      "precision": 0.5089
+    },
+    "cassava__brown_streak_disease": {
+      "support": 329,
+      "recall": 0.7112,
+      "precision": 0.7524
+    },
+    "cassava__green_mottle": {
+      "support": 359,
+      "recall": 0.8412,
+      "precision": 0.5698
+    },
+    "cassava__healthy": {
+      "support": 388,
+      "recall": 0.6675,
+      "precision": 0.6395
+    },
+    "cassava__mosaic_disease": {
+      "support": 1975,
+      "recall": 0.8562,
+      "precision": 0.973
+    },
+    "grape__black_rot": {
+      "support": 11,
+      "recall": 0.8182,
+      "precision": 0.75
+    },
+    "grape__healthy": {
+      "support": 11,
+      "recall": 0.6364,
+      "precision": 0.875
+    },
+    "maize__gray_leaf_spot": {
+      "support": 11,
+      "recall": 0.8182,
+      "precision": 0.4091
+    },
+    "maize__leaf_blight": {
+      "support": 30,
+      "recall": 0.5333,
+      "precision": 1.0
+    },
+    "maize__rust": {
+      "support": 18,
+      "recall": 0.8889,
+      "precision": 0.7273
+    },
+    "peach__healthy": {
+      "support": 18,
+      "recall": 0.8889,
+      "precision": 0.7619
+    },
+    "potato__early_blight": {
+      "support": 18,
+      "recall": 0.3889,
+      "precision": 0.5
+    },
+    "potato__late_blight": {
+      "support": 17,
+      "recall": 0.4118,
+      "precision": 0.3889
+    },
+    "raspberry__healthy": {
+      "support": 19,
+      "recall": 0.9474,
+      "precision": 0.9
+    },
+    "soybean__healthy": {
+      "support": 11,
+      "recall": 0.8182,
+      "precision": 0.8182
+    },
+    "squash__powdery_mildew": {
+      "support": 20,
+      "recall": 0.95,
+      "precision": 0.9048
+    },
+    "strawberry__healthy": {
+      "support": 15,
+      "recall": 0.9333,
+      "precision": 0.8235
+    },
+    "tomato__bacterial_spot": {
+      "support": 17,
+      "recall": 0.4118,
+      "precision": 0.4375
+    },
+    "tomato__early_blight": {
+      "support": 14,
+      "recall": 0.2143,
+      "precision": 0.25
+    },
+    "tomato__healthy": {
+      "support": 10,
+      "recall": 0.7,
+      "precision": 0.7778
+    },
+    "tomato__late_blight": {
+      "support": 18,
+      "recall": 0.7222,
+      "precision": 0.619
+    },
+    "tomato__leaf_mold": {
+      "support": 15,
+      "recall": 0.4,
+      "precision": 0.5
+    },
+    "tomato__septoria_leaf_spot": {
+      "support": 24,
+      "recall": 0.8333,
+      "precision": 0.6061
+    },
+    "tomato__yellow_leaf_curl_virus": {
+      "support": 12,
+      "recall": 0.9167,
+      "precision": 0.6875
+    }
+  },
+  "training_data": {
+    "images": 39531,
+    "classes": 32,
+    "splits": {
+      "train": 27656,
+      "val": 5914,
+      "test": 5961
+    },
+    "by_dataset": {
+      "plant_pathology": 15675,
+      "plantdoc": 2459,
+      "cassava": 21397
+    },
+    "sources": [
+      "PlantDoc",
+      "Cassava Leaf Disease (Kaggle)",
+      "Plant Pathology 2021 FGVC8 (Kaggle)"
+    ],
+    "excluded": {
+      "multi_label_or_complex": {
+        "multi_label_or_complex": 2957
+      },
+      "classes_under_60_images": {
+        "cherry__healthy": 57,
+        "tomato__mosaic_virus": 54,
+        "tomato__spider_mites": 2
+      }
+    }
+  },
+  "onnx_check": {
+    "max_logit_difference": 1.0728836059570312e-06,
+    "argmax_agreement": 4
+  },
+  "exported_at": "2026-10-14T08:08:59.298093+00:00",
+  "limits": [
+    "Screening aid only. It reports a likely condition from one photo; it is not a diagnosis and it has not been validated on Indian field conditions.",
+    "It only knows the 32 classes listed here; anything else will be forced into one of them, which is why the confidence threshold exists.",
+    "Trained mostly on apple and cassava leaves, so other crops have far less support - check per_class_test before trusting a specific class."
+  ],
+  "crop_gate": {
+    "value": 0.5,
+    "meaning": "minimum share of the model's confidence that must sit on the crop the farmer selected, or the photo is rejected as a crop mismatch",
+    "measured_on": 1500,
+    "crop_mass_when_correct_p5": 0.9046,
+    "crop_mass_when_wrong_p99": 0.0375,
+    "kept_when_correct_at_0.5": 0.988,
+    "caught_when_wrong_at_0.5": 0.999
+  },
+  "crops": [
+    "apple",
+    "bell_pepper",
+    "blueberry",
+    "cassava",
+    "grape",
+    "maize",
+    "peach",
+    "potato",
+    "raspberry",
+    "soybean",
+    "squash",
+    "strawberry",
+    "tomato"
+  ]
+}
