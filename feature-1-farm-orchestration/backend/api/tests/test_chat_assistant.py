@@ -55,22 +55,69 @@ class AgriNewsTests(unittest.TestCase):
         self.assertNotIn("news", result)
 
 
+class WebSearchTests(unittest.TestCase):
+    @patch.object(server.requests, "get")
+    def test_web_search_uses_google_news_when_duckduckgo_has_no_results(self, get):
+        duckduckgo = Mock()
+        duckduckgo.raise_for_status.return_value = None
+        duckduckgo.text = "<html><body>No result entries</body></html>"
+        google_news = Mock()
+        google_news.raise_for_status.return_value = None
+        google_news.content = b"""<?xml version="1.0"?>
+            <rss><channel><item>
+              <title>New farmer subsidy update</title>
+              <link>https://news.google.com/rss/articles/example</link>
+              <source>PIB</source>
+              <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+            </item></channel></rss>"""
+        get.side_effect = [duckduckgo, google_news]
+
+        results = server._search_web("India farmer subsidies", limit=3)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "New farmer subsidy update")
+        self.assertIn("PIB", results[0]["snippet"])
+        self.assertEqual(
+            results[0]["url"],
+            "https://news.google.com/rss/articles/example"
+        )
+        self.assertEqual(get.call_count, 2)
+
+
 class ChatAssistantTests(unittest.TestCase):
     def test_market_request_requires_a_crop(self):
         response = server.chat({"message": "What is the mandi price today?"})
 
         self.assertIn("Which crop", response["reply"])
 
-    @patch.object(server, "mistral_chat")
-    def test_best_subsidies_question_opens_subsidies_directory(self, mistral_chat):
+    @patch.object(server, "_search_web", return_value=[
+        {
+            "title": "Current government farmer support update",
+            "snippet": "Published by Press Information Bureau on Nov 2, 2026",
+            "url": "https://news.google.com/rss/articles/subsidy-update"
+        }
+    ])
+    def test_best_subsidies_question_includes_live_search_results(self, search_web):
         response = server.chat({"message": "tell me best subsidies for me"})
 
         self.assertEqual(response["action_link"], "subsidies.html")
         self.assertEqual(response["action_text"], "Open Farmer Subsidies")
-        self.assertIn("state, crop", response["reply"])
+        self.assertIn("PM-KUSUM", response["reply"])
         self.assertIn("not live-verified", response["reply"])
-        self.assertNotIn("example.gov", response["reply"])
-        mistral_chat.assert_not_called()
+        self.assertIn("I searched online just now", response["reply"])
+        self.assertIn("[Current government farmer support update]", response["reply"])
+        self.assertIn("https://news.google.com/rss/articles/subsidy-update", response["reply"])
+        self.assertIn("your state, crop", response["reply"])
+        search_web.assert_called_once()
+
+    @patch.object(server, "_search_web", return_value=[])
+    def test_subsidy_question_discloses_when_online_search_has_no_results(self, search_web):
+        response = server.chat({"message": "tell me good subsidies"})
+
+        self.assertIn("couldn't retrieve useful online results", response["reply"])
+        self.assertNotIn("recent search results", response["reply"])
+        self.assertEqual(response["action_link"], "subsidies.html")
+        search_web.assert_called_once()
 
     @patch.object(server, "get_market_prices", return_value={
         "source": "Agmarknet National Crop Database",

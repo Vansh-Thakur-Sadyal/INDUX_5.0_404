@@ -1639,27 +1639,74 @@ class _DuckDuckGoResults(HTMLParser):
 
 def _search_web(query: str, limit: int = 3) -> List[Dict[str, str]]:
     """Fetch a few public web search excerpts for fallback answers."""
-    response = requests.get(
-        "https://html.duckduckgo.com/html/",
-        params={"q": query},
-        headers={"User-Agent": "Mozilla/5.0 (compatible; FarmAssistant/1.0)"},
-        timeout=10,
-    )
-    response.raise_for_status()
-    parser = _DuckDuckGoResults()
-    parser.feed(response.text)
-
     results = []
-    for result in parser.results:
-        href = result["url"]
-        wrapped_url = parse_qs(urlparse(href).query).get("uddg", [None])[0]
-        destination = unquote(wrapped_url or href)
-        if urlparse(destination).scheme not in ("http", "https"):
+    try:
+        response = requests.get(
+            "https://html.duckduckgo.com/html/",
+            params={"q": query},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; FarmAssistant/1.0)"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        parser = _DuckDuckGoResults()
+        parser.feed(response.text)
+
+        for result in parser.results:
+            href = result["url"]
+            wrapped_url = parse_qs(urlparse(href).query).get("uddg", [None])[0]
+            destination = unquote(wrapped_url or href)
+            if urlparse(destination).scheme not in ("http", "https"):
+                continue
+            title = " ".join(result["title"].split())
+            snippet = " ".join(result["snippet"].split())
+            if title and snippet:
+                results.append({"title": title[:180], "snippet": snippet[:500], "url": destination})
+            if len(results) >= limit:
+                return results
+    except requests.RequestException as error:
+        print(f"[WARN] DuckDuckGo search unavailable: {type(error).__name__}")
+
+    if results:
+        return results
+
+    try:
+        response = requests.get(
+            "https://news.google.com/rss/search",
+            params={"q": query, "hl": "en-IN", "gl": "IN", "ceid": "IN:en"},
+            headers={"User-Agent": "INDUXFarmDashboard/5.0"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        root = ET.fromstring(response.content)
+    except (requests.RequestException, ET.ParseError) as error:
+        print(f"[WARN] Google News search unavailable: {type(error).__name__}")
+        return []
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=30)
+    for item in root.findall("./channel/item"):
+        title = " ".join((item.findtext("title") or "").split())
+        url = (item.findtext("link") or "").strip()
+        source = " ".join((item.findtext("source") or "Google News").split())
+        published = (item.findtext("pubDate") or "").strip()
+        if not title or urlparse(url).scheme not in ("http", "https"):
             continue
-        title = " ".join(result["title"].split())
-        snippet = " ".join(result["snippet"].split())
-        if title and snippet:
-            results.append({"title": title[:180], "snippet": snippet[:500], "url": destination})
+        try:
+            published_at = parsedate_to_datetime(published)
+            if published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
+            published_at = published_at.astimezone(timezone.utc)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if published_at < cutoff or published_at > now:
+            continue
+        snippet = f"Published by {source} on {published_at.strftime('%b %d, %Y')}"
+        results.append({
+            "title": title[:180],
+            "snippet": snippet[:500],
+            "url": url,
+            "published_at": published_at.isoformat(),
+        })
         if len(results) >= limit:
             break
     return results
@@ -2144,14 +2191,54 @@ def chat(body: dict):
         }
 
     if _is_subsidy_question(msg):
+        state = str(body.get("state") or body.get("location") or "").strip()[:100]
+        crop = str(body.get("crop") or "").strip()[:100]
+        support = str(body.get("support") or "").strip()[:100]
+        search_terms = " ".join(part for part in (msg, state, crop, support) if part)
+        search_query = (
+            f"India farmer subsidy schemes agriculture official when:30d {search_terms}"
+        )
+        try:
+            web_results = _search_web(search_query, limit=4)
+        except requests.RequestException as error:
+            print(f"[WARN] Subsidy web search failed: {type(error).__name__}")
+            web_results = []
+        subsidy_terms = (
+            "subsid", "scheme", "pm-kisan", "pm kusum", "pm-kusum", "pmksy",
+            "kisan credit", "farmer support", "agricultural machinery", "crop insurance"
+        )
+        web_results = [
+            item for item in web_results
+            if any(term in f"{item['title']} {item['snippet']}".casefold() for term in subsidy_terms)
+        ]
+
+        reply_lines = [
+            "Good options to check depend on your state and what support you need. "
+            "The app's bundled directory lists PMKSY micro-irrigation, PM-KUSUM solar pumps, "
+            "SMAM farm machinery, PM-KISAN income support, Kisan Credit Card (KCC) loans, "
+            "and PMFBY crop insurance. These entries are not live-verified, so I can't confirm "
+            "that applications are open or that you qualify.",
+        ]
+        if web_results:
+            reply_lines.append(
+                "\nI searched online just now. These are recent search results, not confirmation "
+                "of current eligibility or open applications:"
+            )
+            reply_lines.extend(
+                f"- [{item['title']}]({item['url']}) — {item['snippet']}"
+                for item in web_results
+            )
+        else:
+            reply_lines.append(
+                "\nI couldn't retrieve useful online results right now, so I can't verify current "
+                "scheme status. Please try again later or check the official portals."
+            )
+        reply_lines.append(
+            "\nTell me your state, crop, and whether you need irrigation, solar, machinery, "
+            "income support, credit, or insurance, and I can narrow down the options."
+        )
         return {
-            "reply": (
-                "Open Farmer Subsidies to browse and filter the app's scheme directory by irrigation, solar, "
-                "machinery, income support, loans, or insurance. The directory is bundled in the app and is "
-                "not live-verified; eligibility, amounts, and deadlines can change, so confirm details with "
-                "the official scheme portal before applying. To narrow down options for you, tell me your "
-                "state, crop, and the type of support you need."
-            ),
+            "reply": "\n".join(reply_lines),
             "action_link": "subsidies.html",
             "action_text": "Open Farmer Subsidies"
         }

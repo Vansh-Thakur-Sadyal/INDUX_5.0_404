@@ -88,6 +88,32 @@ body {
 .brand-name { font-size: 10px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.3px; }
 .brand-sub { font-size: 9px; color: var(--green-primary); font-weight: 600; margin-top: 2px; }
 .sidebar-nav { flex: 1; padding: 0 8px; }
+.sidebar-nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 0 10px;
+  width: 100%;
+}
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text-dark);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-nav-item:hover,
+.sidebar-nav-item.active {
+  background: var(--green-pale);
+  color: var(--green-primary);
+  font-weight: 700;
+}
 .nav-item {
   display: flex; align-items: center; gap: 9px; padding: 9px 10px;
   border-radius: 8px; color: var(--text-mid); text-decoration: none;
