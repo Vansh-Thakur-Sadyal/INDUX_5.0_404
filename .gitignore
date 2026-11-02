@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+data/storage/
+config/api_keys.env
+.pytest_cache/
+.DS_Store
+.venv-train/
+ml/artifacts/
+*.pt
+deploy/generated/

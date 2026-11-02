@@ -1,0 +1,28 @@
+# Saarthi 2.0 - backend dependencies (Python 3.10+)
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+httpx>=0.27
+python-multipart>=0.0.9
+numpy>=1.26
+
+# Crop-disease screening: the model is trained with PyTorch in ml/ and
+# exported to ONNX, so the server needs a ~50 MB runtime, not a 2 GB one.
+onnxruntime>=1.17
+pillow>=10.0
+
+# Knowledge console: reading what people upload. All pure-Python and small -
+# pypdf for the text layer of a PDF, python-docx for Word, openpyxl for workbooks
+# (it was already here for report export). A scanned PDF is reported as needing
+# OCR rather than indexed as nothing; no OCR engine is pulled in for that.
+pypdf>=5.0
+python-docx>=1.1
+
+# Reports out, spreadsheets in. Both are runtime dependencies, not test ones -
+# they were under "tests" before, which would have broken a lean install.
+reportlab==4.2.5
+openpyxl==3.1.5
+
+# tests
+pytest>=8.0
+pytest-asyncio>=0.23
