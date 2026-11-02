@@ -109,29 +109,34 @@ window.onload = function () {
         try {
             const url = `${API_URL}/api/market-prices?lat=${userLat}&lon=${userLon}`;
             const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`Market API returned HTTP ${res.status}`);
+            }
             const data = await res.json();
 
-            if (data.status === "success") {
-                allMarketData = data.data || [];
-                const kpiSource = document.getElementById("kpiSource");
-                const kpiSourceSub = document.getElementById("kpiSourceSub");
-                if (kpiSource) kpiSource.textContent = data.source;
-                if (kpiSourceSub) {
-                    kpiSourceSub.textContent = data.api_key_configured ? "Live Key Configured" : "Paste Key in api_keys.txt";
-                }
-                const cropSuggestions = document.getElementById("cropSuggestions");
-                if (cropSuggestions) {
-                    const crops = [...new Set(allMarketData.map(item => item.commodity).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-                    cropSuggestions.innerHTML = crops.map(crop => `<option value="${crop}"></option>`).join("");
-                }
-                const marketRecordNote = document.getElementById("marketRecordNote");
-                if (marketRecordNote) marketRecordNote.textContent = `Showing all ${allMarketData.length.toLocaleString()} crop and commodity records returned by ${data.source}.`;
-                updateKPIs(allMarketData);
-                renderCards(allMarketData);
+            if (data.status !== "success") {
+                throw new Error(data.message || data.detail || "Market data is unavailable.");
             }
+
+            allMarketData = data.data || [];
+            const kpiSource = document.getElementById("kpiSource");
+            const kpiSourceSub = document.getElementById("kpiSourceSub");
+            if (kpiSource) kpiSource.textContent = data.source;
+            if (kpiSourceSub) {
+                kpiSourceSub.textContent = data.api_key_configured ? "Live Key Configured" : "Using built-in market data";
+            }
+            const cropSuggestions = document.getElementById("cropSuggestions");
+            if (cropSuggestions) {
+                const crops = [...new Set(allMarketData.map(item => item.commodity).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+                cropSuggestions.innerHTML = crops.map(crop => `<option value="${crop}"></option>`).join("");
+            }
+            const marketRecordNote = document.getElementById("marketRecordNote");
+            if (marketRecordNote) marketRecordNote.textContent = `Showing all ${allMarketData.length.toLocaleString()} crop and commodity records returned by ${data.source}.`;
+            updateKPIs(allMarketData);
+            renderCards(allMarketData);
         } catch (err) {
             console.error("Market fetch error:", err);
-            grid.innerHTML = '<div class="loading-state">Error loading market data. Ensure backend is running.</div>';
+            grid.innerHTML = '<div class="loading-state">Market prices could not be loaded. Please try again later.</div>';
         }
     }
 

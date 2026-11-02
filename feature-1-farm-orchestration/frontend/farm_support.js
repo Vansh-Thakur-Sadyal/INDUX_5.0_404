@@ -124,14 +124,18 @@ window.onload = function () {
 
         try {
             const res = await fetch(`${API_URL}/api/farm-support?type=${currentCategory}&lat=${userLat}&lon=${userLon}`);
+            if (!res.ok) {
+                throw new Error(`Farm support API returned HTTP ${res.status}`);
+            }
             const data = await res.json();
 
-            if (data.status === "success") {
-                renderSupportCards(data.results || []);
+            if (data.status !== "success") {
+                throw new Error(data.message || data.detail || "Farm support locations are unavailable.");
             }
+            renderSupportCards(data.results || []);
         } catch (err) {
             console.error("Support fetch error:", err);
-            grid.innerHTML = '<div class="loading-state">Error fetching support locations. Ensure backend API is active.</div>';
+            grid.innerHTML = '<div class="loading-state">Farm support locations could not be loaded. Please try again later.</div>';
         }
     }
 
