@@ -24,7 +24,7 @@ when available and falls back to the regional sample location. Its current
 provider cards are sample listings, not a live business directory.
 
 Plant Growth tracks crop measurements, compares uploaded photos, and keeps
-recent analysis history in the browser.
+recent analysis history in the browser. The navigation also includes the Government Subsidies portal, Water Stress analysis, and Farm Photo Inspector.
 
 Copy `.env.example` to `.env` and add a Mistral API key to enable LLM-powered
 chat and recommendations. The dashboard and rule-based analysis can be opened
