@@ -1,0 +1,18 @@
+# Anchor every runtime exclude to its real path. A blanket "**/storage" once
+# stripped a real Python package (storage.json_storage) from an image and left
+# the app half-dead, so do not use bare globs here.
+.venv/
+.git/
+.vscode/
+.pytest_cache/
+**/__pycache__/
+*.pyc
+data/storage/
+config/api_keys.env
+docs/
+deploy/
+README.md
+run.bat
+run.sh
+.venv-train/
+ml/artifacts/
