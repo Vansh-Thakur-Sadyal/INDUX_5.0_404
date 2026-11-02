@@ -1,0 +1,93 @@
+[
+  {
+    "id": "sub_pmksy",
+    "title": "PM Krishi Sinchayee Yojana (PMKSY) - Micro-Irrigation",
+    "category": "Irrigation & Water",
+    "category_tag": "Water & Irrigation",
+    "subsidy_percent": "55% - 80%",
+    "financial_benefit": "Up to ₹85,000 / hectare for Drip & Sprinkler Systems",
+    "objective": "Prevents up to 40% water wastage, lowers pumping electricity costs, and boosts crop yield with precise root-zone fertigation.",
+    "eligibility": "All farmers owning cultivable land (small & marginal farmers get up to 80% subsidy).",
+    "documents": "Aadhaar Card, Land Revenue Receipt (7/12 & 8A), Bank Passbook, Soil & Water Test Report.",
+    "portal_url": "https://pmksy.gov.in",
+    "portal_name": "Official PMKSY Portal"
+  },
+  {
+    "id": "sub_kusum",
+    "title": "PM-KUSUM Yojana - Solar Water Pump Subsidy",
+    "category": "Solar & Energy",
+    "category_tag": "Solar & Green Energy",
+    "subsidy_percent": "60%",
+    "financial_benefit": "60% direct subsidy + 30% bank loan for Off-Grid & Grid-Connected Solar Pumps",
+    "objective": "Zero electricity bills and reliable daytime irrigation power without dependence on diesel generators.",
+    "eligibility": "Farmers, Water User Associations, Panchayats, Farmer Producer Organizations (FPOs).",
+    "documents": "Aadhaar Card, Land Ownership Document, Electricity Bill (if applicable), Bank Account details.",
+    "portal_url": "https://pmkusum.mnre.gov.in",
+    "portal_name": "Official PM-KUSUM Portal"
+  },
+  {
+    "id": "sub_smam",
+    "title": "Sub-Mission on Agricultural Mechanization (SMAM)",
+    "category": "Machinery & Equipment",
+    "category_tag": "Machinery & Implements",
+    "subsidy_percent": "40% - 50%",
+    "financial_benefit": "Subsidy on Tractors, Rotavators, Combine Harvesters, Spray Drones & Laser Land Levelers",
+    "objective": "Lowers operational labor costs, speeds up field preparation, and promotes high-tech farm machinery.",
+    "eligibility": "Individual Farmers, Custom Hiring Centers (CHCs), Cooperative Societies, FPOs.",
+    "documents": "Aadhaar, Land Registry Record, Passport Photo, Bank Passbook copy, Machinery Quote.",
+    "portal_url": "https://agrimachinery.nic.in",
+    "portal_name": "AgriMachinery SMAM Portal"
+  },
+  {
+    "id": "sub_pmkisan",
+    "title": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    "category": "Income Support",
+    "category_tag": "Direct Income Transfer",
+    "subsidy_percent": "100% Direct Cash",
+    "financial_benefit": "₹6,000 / year in 3 equal installments directly into bank account",
+    "objective": "Provides direct financial support for procuring high-quality seeds, fertilizers, and pesticide inputs.",
+    "eligibility": "All landholding farmer families across India (subject to exclusion criteria).",
+    "documents": "Aadhaar Card, Land Record Details, Active Bank Account linked with Aadhaar.",
+    "portal_url": "https://pmkisan.gov.in",
+    "portal_name": "Official PM-KISAN Portal"
+  },
+  {
+    "id": "sub_kcc",
+    "title": "Kisan Credit Card (KCC) Scheme - Concessional Farm Loan",
+    "category": "Loan & Credit",
+    "category_tag": "Low-Interest Credit",
+    "subsidy_percent": "Interest Subvention @ 3%",
+    "financial_benefit": "Concessional Crop Loan up to ₹3.0 Lakh at effective 4% interest rate per annum",
+    "objective": "Ensures affordable, hassle-free credit to meet working capital requirements for crop cultivation and inputs.",
+    "eligibility": "Farmers, Tenant Farmers, Oral Lessees, Sharecroppers, Self Help Groups (SHGs).",
+    "documents": "KCC Application Form, Land Record, ID & Address Proof, Passport size photo.",
+    "portal_url": "https://www.myscheme.gov.in/schemes/kcc",
+    "portal_name": "myScheme KCC Portal"
+  },
+  {
+    "id": "sub_pmfby",
+    "title": "Pradhan Mantri Fasal Bima Yojana (PMFBY) - Crop Insurance",
+    "category": "Insurance",
+    "category_tag": "Crop Risk Protection",
+    "subsidy_percent": "Premium Subsidy up to 90%",
+    "financial_benefit": "Farmers pay only 1.5% premium for Kharif crops, 2% for Rabi crops, and 5% for Commercial/Horticultural crops",
+    "objective": "Provides complete financial security against crop loss due to drought, floods, unseasonal rains, or pest attack.",
+    "eligibility": "All farmers including sharecroppers & tenant farmers growing notified crops in notified areas.",
+    "documents": "Land Ownership/Tenancy Proof, Sowing Certificate, Aadhaar Card, Bank Passbook.",
+    "portal_url": "https://pmfby.gov.in",
+    "portal_name": "Official PMFBY Portal"
+  },
+  {
+    "id": "sub_soil",
+    "title": "Soil Health Card Scheme & Fertilizer Subsidy",
+    "category": "Seeds & Fertilizer",
+    "category_tag": "Nutrients & Soil Health",
+    "subsidy_percent": "100% Free Testing",
+    "financial_benefit": "Free Soil NPK/Micronutrient testing + Subsidized Urea & DAP fertilizers",
+    "objective": "Prevents excessive chemical fertilizer usage, restores soil microbial balance, and lowers input costs.",
+    "eligibility": "All farmers in every district across India.",
+    "documents": "Aadhaar Card, Soil Sample from Field Plot.",
+    "portal_url": "https://soilhealth.dac.gov.in",
+    "portal_name": "Soil Health Card Portal"
+  }
+]
