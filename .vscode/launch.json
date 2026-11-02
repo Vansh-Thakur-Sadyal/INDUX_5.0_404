@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Saarthi: run dashboard + API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--host", "127.0.0.1", "--port", "8010", "--reload"],
+      "cwd": "${workspaceFolder}/backend",
+      "env": { "PYTHONIOENCODING": "utf-8" },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Saarthi: run tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-v"],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal"
+    }
+  ]
+}
