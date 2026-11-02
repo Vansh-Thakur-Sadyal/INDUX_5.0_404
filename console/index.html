@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saarthi Knowledge Console</title>
+<meta name="description" content="Feed the Saarthi chatbot and calling bot, and watch the retrieval chain run.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315803d'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============================================================ sign in ==== -->
+<!-- The console can change what every farmer is told, so it is administrator
+     only and has its own sign-in: on its own hostname the dashboard's cookie
+     does not reach it. Same two steps as the dashboard - password, then code. -->
+<div id="gate" class="gate" hidden>
+  <form id="gateForm" class="gate-card" autocomplete="on">
+    <div class="gate-brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div><b>Saarthi Knowledge Console</b>
+        <small>What the chatbot and the calling bot know</small></div>
+    </div>
+
+    <div id="gateStep1">
+      <label class="field"><span>Email or phone</span>
+        <input id="gateUser" name="username" autocomplete="username" required></label>
+      <label class="field"><span>Password</span>
+        <input id="gatePass" name="password" type="password"
+               autocomplete="current-password" required></label>
+      <label class="field"><span id="gateCaptchaQ">Loading the question...</span>
+        <input id="gateCaptcha" inputmode="numeric" autocomplete="off" required></label>
+    </div>
+
+    <div id="gateStep2" hidden>
+      <p class="gate-note" id="gateSentTo"></p>
+      <label class="field"><span>6-digit code</span>
+        <input id="gateCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>
+    </div>
+
+    <p class="gate-error" id="gateError" role="alert" hidden></p>
+    <button class="btn primary wide" id="gateSubmit" type="submit">Continue</button>
+    <p class="gate-foot">Administrator accounts only. Farmers use the
+      <a id="gateDashLink" href="/app/">Saarthi dashboard</a>.</p>
+  </form>
+</div>
+
+<!-- ============================================================== console === -->
+<div id="shell" class="shell" hidden>
+
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div><b>Knowledge Console</b><small>Saarthi RAG</small></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <button class="active" data-tab="feed">Feed data</button>
+      <button data-tab="library">Library</button>
+      <button data-tab="chain">Live chain</button>
+      <button data-tab="traffic">What was asked</button>
+      <button data-tab="health">Health</button>
+    </nav>
+    <div class="who">
+      <span id="whoName">-</span>
+      <button class="btn ghost sm" id="signOut">Sign out</button>
+    </div>
+  </header>
+
+  <!-- ====================================================== 1. FEED DATA ==== -->
+  <section class="panel active" id="tab-feed">
+    <div class="head">
+      <div><h1>Feed the bots</h1>
+        <p>Anything added here is retrievable by the dashboard chatbot and the
+           phone line within seconds of the job finishing.</p></div>
+    </div>
+
+    <div class="metrics" id="feedTiles"></div>
+
+    <div class="two">
+      <!-- The upload card. Drop target and button both, because a file manager
+           and a keyboard are both reasonable ways to do this. -->
+      <article class="card">
+        <div class="card-head"><div><h2>Upload a file</h2>
+          <p>PDF, Word, spreadsheet, CSV, text, JSON or a saved web page</p></div></div>
+
+        <div class="drop" id="drop" tabindex="0" role="button"
+             aria-label="Choose files to upload">
+          <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+            <path d="M24 32V12m0 0-7 7m7-7 7 7" fill="none" stroke="currentColor"
+                  stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 30v6a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2v-6" fill="none"
+                  stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+          <b>Drop files here, or choose</b>
+          <small id="dropHint">Up to 25 MB each. Several at once is fine.</small>
+          <input type="file" id="file" multiple hidden
+                 accept=".pdf,.docx,.txt,.md,.markdown,.rst,.csv,.tsv,.xlsx,.xlsm,.json,.html,.htm">
+        </div>
+
+        <div class="row">
+          <label class="field"><span>Who may use it</span>
+            <select id="upAudience"></select></label>
+          <label class="field"><span>Topics <i>comma separated</i></span>
+            <input id="upTopics" placeholder="irrigation, soil-moisture"></label>
+        </div>
+        <div class="row">
+          <label class="field"><span>Crops <i>optional</i></span>
+            <input id="upCrops" placeholder="wheat, mustard"></label>
+          <label class="field"><span>Note <i>why this was added</i></span>
+            <input id="upNotes" placeholder="District KVK advisory, Oct 2026"></label>
+        </div>
+        <div class="formats" id="formats"></div>
+      </article>
+
+      <div class="stack">
+        <article class="card">
+          <div class="card-head"><div><h2>Paste a note</h2>
+            <p>The quickest way to correct one wrong answer</p></div></div>
+          <label class="field"><span>Title</span>
+            <input id="txTitle" placeholder="Urea top-dressing for wheat in Mathura"></label>
+          <label class="field"><span>Text</span>
+            <textarea id="txBody" rows="6"
+              placeholder="Write what the bot should know. A short paragraph is enough."></textarea></label>
+          <div class="row">
+            <label class="field"><span>Who may use it</span>
+              <select id="txAudience"></select></label>
+            <label class="field"><span>Topics</span>
+              <input id="txTopics" placeholder="nutrient"></label>
+          </div>
+          <button class="btn primary" id="txAdd">Add this note</button>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div><h2>Fetch a page</h2>
+            <p>An advisory or a scheme page, read and indexed</p></div></div>
+          <label class="field"><span>Address</span>
+            <input id="urlInput" type="url" placeholder="https://..."></label>
+          <div class="row">
+            <label class="field"><span>Who may use it</span>
+              <select id="urlAudience"></select></label>
+            <label class="field"><span>Topics</span>
+              <input id="urlTopics" placeholder="scheme"></label>
+          </div>
+          <button class="btn primary" id="urlAdd">Fetch and index</button>
+        </article>
+      </div>
+    </div>
+
+    <!-- The ongoing process, and whose it is. -->
+    <article class="card">
+      <div class="card-head"><div><h2>Processing now</h2>
+        <p>Every stage of every ingestion, and who started it</p></div>
+        <span class="badge" id="jobsBadge">idle</span></div>
+      <div id="jobs" class="jobs"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><div><h2>Recent activity</h2>
+        <p>Who changed what</p></div></div>
+      <div id="activity" class="trail"></div>
+    </article>
+  </section>
+
+  <!-- ======================================================== 2. LIBRARY ==== -->
+  <section class="panel" id="tab-library">
+    <div class="head">
+      <div><h1>What has been fed in</h1>
+        <p>Every document the bots can quote, what state it is in, and who added it.</p></div>
+      <div class="tools">
+        <input id="libSearch" type="search" placeholder="Find a document">
+        <select id="libState">
+          <option value="">Any state</option>
+          <option value="indexed">Indexed</option>
+          <option value="queued">Queued</option>
+          <option value="failed">Failed</option>
+          <option value="disabled">Disabled</option>
+        </select>
+        <select id="libAudience">
+          <option value="">Both bots</option>
+          <option value="chat">Chatbot</option>
+          <option value="call">Calling bot</option>
+        </select>
+      </div>
+    </div>
+    <div class="metrics" id="libTiles"></div>
+    <article class="card">
+      <div id="library" class="table"></div>
+    </article>
+    <article class="card" id="docCard" hidden>
+      <div class="card-head"><div><h2 id="docTitle">Document</h2>
+        <p id="docSub"></p></div>
+        <button class="btn ghost sm" id="docClose">Close</button></div>
+      <div id="docDetail"></div>
+    </article>
+  </section>
+
+  <!-- ====================================================== 3. LIVE CHAIN ==== -->
+  <section class="panel" id="tab-chain">
+    <div class="head">
+      <div><h1>Live chain</h1>
+        <p>Ask the knowledge base a question and watch each stage of the pipeline
+           run against it. This is the same retrieval the chatbot and the phone
+           line use - not a copy of it.</p></div>
+    </div>
+
+    <article class="card">
+      <div class="ask">
+        <input id="q" placeholder="Ask what the documents should be able to answer"
+               autocomplete="off">
+        <button class="btn primary" id="run">Run the chain</button>
+      </div>
+      <div class="row wrap">
+        <label class="field sm"><span>Audience</span><select id="qAudience"></select></label>
+        <label class="field sm"><span>Query rewrite</span><select id="qStrategy"></select></label>
+        <label class="field sm"><span>Passages</span>
+          <input id="qTopK" type="number" min="1" max="12" value="5"></label>
+        <label class="check"><input type="checkbox" id="qJudge">
+          <span>Rerank with the model <i>slower, more accurate</i></span></label>
+        <label class="check"><input type="checkbox" id="qGenerate" checked>
+          <span>Write an answer <i>off = retrieval only</i></span></label>
+      </div>
+    </article>
+
+    <!-- The block diagram. Each block lights as its stage runs and keeps its
+         timing afterwards, so a slow stage is visible rather than inferred. -->
+    <article class="card">
+      <div class="card-head"><div><h2>The pipeline</h2>
+        <p id="chainSummary">Ask something to see it run.</p></div></div>
+      <div class="chain" id="chain"></div>
+    </article>
+
+    <div class="two">
+      <article class="card">
+        <div class="card-head"><div><h2>Answer</h2>
+          <p>Written only from the passages below, with citations</p></div>
+          <span class="badge" id="verifyBadge" hidden></span></div>
+        <div class="answer" id="answer">
+          <span class="muted">Nothing asked yet.</span></div>
+        <div id="notes" class="notes"></div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Passages retrieved</h2>
+          <p id="passSub">What the answer was allowed to use</p></div></div>
+        <div id="passages" class="passages"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ======================================================== 4. TRAFFIC ==== -->
+  <section class="panel" id="tab-traffic">
+    <div class="head">
+      <div><h1>What was asked</h1>
+        <p>Every question put to the knowledge base, from the console, the
+           chatbot and the phone line. The rows that found nothing are the
+           useful ones: each is a gap one upload would close.</p></div>
+      <button class="btn ghost sm" id="trafficRefresh">Refresh</button>
+    </div>
+    <div class="metrics" id="trafficTiles"></div>
+    <article class="card"><div id="traffic" class="table"></div></article>
+  </section>
+
+  <!-- ========================================================= 5. HEALTH ==== -->
+  <section class="panel" id="tab-health">
+    <div class="head">
+      <div><h1>Health</h1>
+        <p>The index, the embedder, and whether retrieval is finding anything.</p></div>
+      <button class="btn ghost sm" id="healthRefresh">Check again</button>
+    </div>
+    <div class="metrics" id="healthTiles"></div>
+    <div class="two">
+      <article class="card">
+        <div class="card-head"><div><h2>Index</h2></div></div>
+        <div id="healthIndex" class="status-list"></div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Who has contributed</h2></div></div>
+        <div id="healthOwners" class="status-list"></div>
+      </article>
+    </div>
+    <article class="card">
+      <div class="card-head"><div><h2>Which model does which job</h2>
+        <p>Two models, each on the work it measurably does better</p></div></div>
+      <div id="healthModels" class="stage-notes"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><div><h2>How the pipeline is built</h2>
+        <p>Each stage, and what it is there to prevent</p></div></div>
+      <div id="healthStages" class="stage-notes"></div>
+    </article>
+  </section>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
