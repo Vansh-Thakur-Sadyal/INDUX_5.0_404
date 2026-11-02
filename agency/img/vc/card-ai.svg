@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" role="img" aria-label="Documents feeding a vector index and a model that returns a grounded answer">
+  <defs>
+    <linearGradient id="aGround" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A1030"/><stop offset="1" stop-color="#050818"/>
+    </linearGradient>
+    <radialGradient id="aGlow" cx="0.52" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#FF2E86" stop-opacity="0.34"/><stop offset="1" stop-color="#FF2E86" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aGlow2" cx="0.05" cy="0.9" r="0.6">
+      <stop offset="0" stop-color="#3D8BFF" stop-opacity="0.30"/><stop offset="1" stop-color="#3D8BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="aWire" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3D8BFF" stop-opacity="0.15"/>
+      <stop offset="0.5" stop-color="#3D8BFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FF2E86" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="aCore" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3D8BFF"/><stop offset="1" stop-color="#FF2E86"/>
+    </linearGradient>
+    <pattern id="aGrid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="760" height="400" fill="url(#aGround)"/>
+  <rect width="760" height="400" fill="url(#aGrid)"/>
+  <rect width="760" height="400" fill="url(#aGlow2)"/>
+  <rect width="760" height="400" fill="url(#aGlow)"/>
+
+  <!-- wires: docs -> index -> core -> answer -->
+  <g fill="none" stroke="url(#aWire)" stroke-width="2">
+    <path d="M158 116 C 218 116, 218 200, 268 200"/>
+    <path d="M158 200 H 268"/>
+    <path d="M158 284 C 218 284, 218 200, 268 200"/>
+    <path d="M352 200 H 424"/>
+    <path d="M508 200 H 578"/>
+  </g>
+
+  <!-- source documents -->
+  <g>
+    <g transform="translate(72,92)">
+      <rect width="86" height="48" rx="8" fill="#0D1438" stroke="#ffffff" stroke-opacity="0.16"/>
+      <rect x="14" y="14" width="46" height="6" rx="3" fill="#ffffff" fill-opacity="0.30"/>
+      <rect x="14" y="28" width="58" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+    </g>
+    <g transform="translate(72,176)">
+      <rect width="86" height="48" rx="8" fill="#0D1438" stroke="#ffffff" stroke-opacity="0.16"/>
+      <rect x="14" y="14" width="58" height="6" rx="3" fill="#ffffff" fill-opacity="0.30"/>
+      <rect x="14" y="28" width="38" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+    </g>
+    <g transform="translate(72,260)">
+      <rect width="86" height="48" rx="8" fill="#0D1438" stroke="#ffffff" stroke-opacity="0.16"/>
+      <rect x="14" y="14" width="40" height="6" rx="3" fill="#ffffff" fill-opacity="0.30"/>
+      <rect x="14" y="28" width="60" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+    </g>
+  </g>
+
+  <!-- vector index: a lattice of embeddings -->
+  <g transform="translate(268,140)">
+    <rect width="84" height="120" rx="12" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.14"/>
+    <g fill="#16C79A">
+      <circle cx="22" cy="26" r="4.5" fill-opacity="0.9"/><circle cx="42" cy="26" r="4.5" fill-opacity="0.45"/><circle cx="62" cy="26" r="4.5" fill-opacity="0.7"/>
+      <circle cx="22" cy="50" r="4.5" fill-opacity="0.5"/><circle cx="42" cy="50" r="4.5" fill-opacity="0.95"/><circle cx="62" cy="50" r="4.5" fill-opacity="0.35"/>
+      <circle cx="22" cy="74" r="4.5" fill-opacity="0.75"/><circle cx="42" cy="74" r="4.5" fill-opacity="0.3"/><circle cx="62" cy="74" r="4.5" fill-opacity="0.85"/>
+      <circle cx="22" cy="98" r="4.5" fill-opacity="0.4"/><circle cx="42" cy="98" r="4.5" fill-opacity="0.65"/><circle cx="62" cy="98" r="4.5" fill-opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- model core -->
+  <g transform="translate(424,132)">
+    <rect width="84" height="136" rx="20" fill="url(#aCore)" fill-opacity="0.18" stroke="url(#aCore)" stroke-opacity="0.85" stroke-width="1.6"/>
+    <g stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.6" fill="none">
+      <circle cx="30" cy="42" r="7"/><circle cx="58" cy="30" r="7"/>
+      <circle cx="26" cy="76" r="7"/><circle cx="60" cy="68" r="7"/>
+      <circle cx="42" cy="106" r="7"/>
+      <path d="M37 42 L51 32 M31 49 L28 69 M64 37 L60 61 M33 80 L37 99 M55 74 L47 100"/>
+    </g>
+  </g>
+
+  <!-- grounded answer -->
+  <g transform="translate(578,140)">
+    <rect width="112" height="120" rx="12" fill="#0D1438" stroke="#ffffff" stroke-opacity="0.16"/>
+    <rect x="18" y="22" width="76" height="7" rx="3.5" fill="#ffffff" fill-opacity="0.34"/>
+    <rect x="18" y="40" width="60" height="7" rx="3.5" fill="#ffffff" fill-opacity="0.20"/>
+    <rect x="18" y="58" width="70" height="7" rx="3.5" fill="#ffffff" fill-opacity="0.20"/>
+    <g>
+      <rect x="18" y="80" width="46" height="20" rx="10" fill="#16C79A" fill-opacity="0.16" stroke="#16C79A" stroke-opacity="0.7"/>
+      <path d="M28 90.5 l4.5 4.5 L44 84" fill="none" stroke="#16C79A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <rect x="72" y="80" width="22" height="20" rx="10" fill="#ffffff" fill-opacity="0.08"/>
+  </g>
+
+  <!-- travelling packets -->
+  <g fill="#ffffff">
+    <circle cx="212" cy="200" r="3.2" fill-opacity="0.85"/>
+    <circle cx="388" cy="200" r="3.2" fill-opacity="0.85"/>
+    <circle cx="543" cy="200" r="3.2" fill-opacity="0.85"/>
+  </g>
+</svg>

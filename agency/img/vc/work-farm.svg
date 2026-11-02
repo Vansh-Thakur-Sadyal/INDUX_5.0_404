@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" role="img" aria-label="A farm marketplace dashboard with fields, a catalogue and an order tracker">
+  <defs>
+    <linearGradient id="g2Ground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A1030"/><stop offset="1" stop-color="#050818"/>
+    </linearGradient>
+    <radialGradient id="g2Glow" cx="0.85" cy="0.1" r="0.7">
+      <stop offset="0" stop-color="#3D8BFF" stop-opacity="0.36"/><stop offset="1" stop-color="#3D8BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2Glow2" cx="0.1" cy="0.95" r="0.65">
+      <stop offset="0" stop-color="#FF6A2B" stop-opacity="0.28"/><stop offset="1" stop-color="#FF6A2B" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="g2Grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="760" height="400" fill="url(#g2Ground)"/>
+  <rect width="760" height="400" fill="url(#g2Grid)"/>
+  <rect width="760" height="400" fill="url(#g2Glow2)"/>
+  <rect width="760" height="400" fill="url(#g2Glow)"/>
+
+  <!-- field map -->
+  <g transform="translate(66,60)">
+    <rect width="256" height="188" rx="14" fill="#0C1234" stroke="#ffffff" stroke-opacity="0.14"/>
+    <g transform="translate(18,20)">
+      <path d="M0 44 L74 12 L128 34 L96 74 L20 84 Z" fill="#16C79A" fill-opacity="0.28" stroke="#16C79A" stroke-opacity="0.7"/>
+      <path d="M132 22 L214 4 L220 58 L142 72 Z" fill="#3D8BFF" fill-opacity="0.22" stroke="#3D8BFF" stroke-opacity="0.6"/>
+      <path d="M12 96 L104 84 L128 128 L36 144 Z" fill="#FF6A2B" fill-opacity="0.20" stroke="#FF6A2B" stroke-opacity="0.55"/>
+      <path d="M140 84 L220 70 L218 138 L142 140 Z" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.20"/>
+      <circle cx="60" cy="48" r="6" fill="#16C79A"/>
+      <circle cx="178" cy="34" r="6" fill="#3D8BFF"/>
+    </g>
+  </g>
+
+  <!-- weather and soil tiles -->
+  <g transform="translate(66,268)">
+    <rect width="120" height="72" rx="12" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.09"/>
+    <circle cx="34" cy="30" r="11" fill="#FFC24B" fill-opacity="0.8"/>
+    <path d="M22 46a12 12 0 0 1 12-10 13 13 0 0 1 24 4 9 9 0 0 1-2 18H32a10 10 0 0 1-10-12z" fill="#ffffff" fill-opacity="0.16"/>
+    <rect x="76" y="24" width="30" height="8" rx="4" fill="#ffffff" fill-opacity="0.28"/>
+    <rect x="76" y="40" width="22" height="6" rx="3" fill="#ffffff" fill-opacity="0.14"/>
+
+    <rect x="136" y="0" width="120" height="72" rx="12" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.09"/>
+    <rect x="154" y="18" width="52" height="8" rx="4" fill="#ffffff" fill-opacity="0.24"/>
+    <rect x="154" y="40" width="84" height="6" rx="3" fill="#ffffff" fill-opacity="0.10"/>
+    <rect x="154" y="40" width="56" height="6" rx="3" fill="#16C79A"/>
+    <rect x="154" y="54" width="66" height="6" rx="3" fill="#ffffff" fill-opacity="0.10"/>
+    <rect x="154" y="54" width="30" height="6" rx="3" fill="#FF6A2B"/>
+  </g>
+
+  <!-- catalogue -->
+  <g transform="translate(354,60)">
+    <rect width="340" height="148" rx="14" fill="#0C1234" stroke="#ffffff" stroke-opacity="0.14"/>
+    <rect x="20" y="18" width="88" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.28"/>
+    <rect x="256" y="14" width="64" height="18" rx="9" fill="#3D8BFF" fill-opacity="0.2" stroke="#3D8BFF" stroke-opacity="0.55"/>
+    <g>
+      <rect x="20" y="44" width="94" height="86" rx="10" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.09"/>
+      <rect x="32" y="56" width="70" height="38" rx="7" fill="#16C79A" fill-opacity="0.24"/>
+      <rect x="32" y="102" width="52" height="6" rx="3" fill="#ffffff" fill-opacity="0.24"/>
+      <rect x="32" y="114" width="32" height="6" rx="3" fill="#3D8BFF" fill-opacity="0.8"/>
+
+      <rect x="124" y="44" width="94" height="86" rx="10" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.09"/>
+      <rect x="136" y="56" width="70" height="38" rx="7" fill="#FF6A2B" fill-opacity="0.24"/>
+      <rect x="136" y="102" width="60" height="6" rx="3" fill="#ffffff" fill-opacity="0.24"/>
+      <rect x="136" y="114" width="26" height="6" rx="3" fill="#3D8BFF" fill-opacity="0.8"/>
+
+      <rect x="228" y="44" width="94" height="86" rx="10" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.09"/>
+      <rect x="240" y="56" width="70" height="38" rx="7" fill="#FF2E86" fill-opacity="0.22"/>
+      <rect x="240" y="102" width="44" height="6" rx="3" fill="#ffffff" fill-opacity="0.24"/>
+      <rect x="240" y="114" width="34" height="6" rx="3" fill="#3D8BFF" fill-opacity="0.8"/>
+    </g>
+  </g>
+
+  <!-- order tracker -->
+  <g transform="translate(354,244)">
+    <rect width="340" height="96" rx="14" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.09"/>
+    <rect x="20" y="18" width="72" height="8" rx="4" fill="#ffffff" fill-opacity="0.24"/>
+    <g>
+      <line x1="34" y1="58" x2="306" y2="58" stroke="#ffffff" stroke-opacity="0.12" stroke-width="4" stroke-linecap="round"/>
+      <line x1="34" y1="58" x2="238" y2="58" stroke="#16C79A" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="34" cy="58" r="9" fill="#050818" stroke="#16C79A" stroke-width="2.4"/>
+      <circle cx="102" cy="58" r="9" fill="#050818" stroke="#16C79A" stroke-width="2.4"/>
+      <circle cx="170" cy="58" r="9" fill="#050818" stroke="#16C79A" stroke-width="2.4"/>
+      <circle cx="238" cy="58" r="10" fill="#16C79A"/>
+      <circle cx="306" cy="58" r="9" fill="#050818" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2.4"/>
+    </g>
+    <rect x="20" y="76" width="46" height="6" rx="3" fill="#ffffff" fill-opacity="0.12"/>
+    <rect x="262" y="76" width="46" height="6" rx="3" fill="#ffffff" fill-opacity="0.12"/>
+  </g>
+</svg>

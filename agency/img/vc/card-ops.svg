@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" role="img" aria-label="Containers moving through a build pipeline into a monitored running service">
+  <defs>
+    <linearGradient id="oGround" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A1030"/><stop offset="1" stop-color="#050818"/>
+    </linearGradient>
+    <radialGradient id="oGlow" cx="0.85" cy="0.15" r="0.7">
+      <stop offset="0" stop-color="#FF6A2B" stop-opacity="0.34"/><stop offset="1" stop-color="#FF6A2B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="oGlow2" cx="0.1" cy="0.85" r="0.65">
+      <stop offset="0" stop-color="#3D8BFF" stop-opacity="0.32"/><stop offset="1" stop-color="#3D8BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="oRail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3D8BFF"/><stop offset="0.55" stop-color="#16C79A"/><stop offset="1" stop-color="#FF6A2B"/>
+    </linearGradient>
+    <pattern id="oGrid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="760" height="400" fill="url(#oGround)"/>
+  <rect width="760" height="400" fill="url(#oGrid)"/>
+  <rect width="760" height="400" fill="url(#oGlow2)"/>
+  <rect width="760" height="400" fill="url(#oGlow)"/>
+
+  <!-- container stack -->
+  <g transform="translate(62,104)">
+    <rect y="0" width="132" height="52" rx="9" fill="#0D1438" stroke="#3D8BFF" stroke-opacity="0.55"/>
+    <rect x="16" y="18" width="52" height="7" rx="3.5" fill="#3D8BFF" fill-opacity="0.85"/>
+    <rect x="16" y="32" width="80" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+    <rect y="66" width="132" height="52" rx="9" fill="#0D1438" stroke="#16C79A" stroke-opacity="0.55"/>
+    <rect x="16" y="84" width="66" height="7" rx="3.5" fill="#16C79A" fill-opacity="0.85"/>
+    <rect x="16" y="98" width="58" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+    <rect y="132" width="132" height="52" rx="9" fill="#0D1438" stroke="#FF2E86" stroke-opacity="0.5"/>
+    <rect x="16" y="150" width="44" height="7" rx="3.5" fill="#FF2E86" fill-opacity="0.8"/>
+    <rect x="16" y="164" width="72" height="6" rx="3" fill="#ffffff" fill-opacity="0.16"/>
+  </g>
+
+  <!-- pipeline rail -->
+  <g>
+    <path d="M194 196 H 660" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="6" stroke-linecap="round"/>
+    <path d="M194 196 H 560" fill="none" stroke="url(#oRail)" stroke-width="6" stroke-linecap="round"/>
+    <g>
+      <circle cx="252" cy="196" r="15" fill="#050818" stroke="#3D8BFF" stroke-width="2"/>
+      <path d="M245 196 l5 5 l10 -11" fill="none" stroke="#3D8BFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="356" cy="196" r="15" fill="#050818" stroke="#16C79A" stroke-width="2"/>
+      <path d="M349 196 l5 5 l10 -11" fill="none" stroke="#16C79A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="460" cy="196" r="15" fill="#050818" stroke="#16C79A" stroke-width="2"/>
+      <path d="M453 196 l5 5 l10 -11" fill="none" stroke="#16C79A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="564" cy="196" r="17" fill="#050818" stroke="#FF6A2B" stroke-width="2.4"/>
+      <circle cx="564" cy="196" r="6" fill="#FF6A2B"/>
+    </g>
+    <g fill="#ffffff" fill-opacity="0.34" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" text-anchor="middle" letter-spacing="1">
+      <text x="252" y="238">BUILD</text>
+      <text x="356" y="238">TEST</text>
+      <text x="460" y="238">STAGE</text>
+      <text x="564" y="238">LIVE</text>
+    </g>
+  </g>
+
+  <!-- monitor panel -->
+  <g transform="translate(452,74)">
+    <rect width="238" height="96" rx="12" fill="#0C1234" stroke="#ffffff" stroke-opacity="0.14"/>
+    <circle cx="22" cy="24" r="5" fill="#16C79A"/>
+    <rect x="38" y="19" width="70" height="8" rx="4" fill="#ffffff" fill-opacity="0.26"/>
+    <rect x="188" y="18" width="34" height="12" rx="6" fill="#16C79A" fill-opacity="0.18" stroke="#16C79A" stroke-opacity="0.6"/>
+    <polyline points="20,74 46,60 72,68 98,44 124,56 150,38 176,52 202,32 222,44"
+              fill="none" stroke="#3D8BFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="202" cy="32" r="4" fill="#FF2E86"/>
+  </g>
+
+  <!-- log strip -->
+  <g transform="translate(452,278)">
+    <rect width="238" height="64" rx="10" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.09"/>
+    <rect x="18" y="18" width="8" height="6" rx="3" fill="#16C79A"/>
+    <rect x="34" y="18" width="120" height="6" rx="3" fill="#ffffff" fill-opacity="0.20"/>
+    <rect x="18" y="34" width="8" height="6" rx="3" fill="#3D8BFF"/>
+    <rect x="34" y="34" width="164" height="6" rx="3" fill="#ffffff" fill-opacity="0.20"/>
+    <rect x="18" y="50" width="8" height="6" rx="3" fill="#FF6A2B"/>
+    <rect x="34" y="50" width="92" height="6" rx="3" fill="#ffffff" fill-opacity="0.20"/>
+  </g>
+</svg>
