@@ -1,6 +1,79 @@
 const API_URL = "http://127.0.0.1:8001";
 let activeIngestionMode = "manual";
 
+function renderAssistantInlineMarkdown(parent, source) {
+    const pattern = /(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|\*\*[^*]+\*\*|__[^_]+__|\*[^*\n]+\*|_[^_\n]+_|`[^`]+`)/g;
+    let cursor = 0;
+    let match;
+    while ((match = pattern.exec(source)) !== null) {
+        if (match.index > cursor) parent.appendChild(document.createTextNode(source.slice(cursor, match.index)));
+        const token = match[0];
+        const linkMatch = token.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+        if (linkMatch) {
+            const link = document.createElement("a");
+            link.href = linkMatch[2];
+            link.textContent = linkMatch[1];
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            parent.appendChild(link);
+            cursor = pattern.lastIndex;
+            continue;
+        }
+        const code = token.startsWith("`");
+        const strong = token.startsWith("**") || token.startsWith("__");
+        const element = document.createElement(code ? "code" : strong ? "strong" : "em");
+        element.textContent = token.slice(strong || code ? 2 : 1, -(strong || code ? 2 : 1));
+        parent.appendChild(element);
+        cursor = pattern.lastIndex;
+    }
+    if (cursor < source.length) parent.appendChild(document.createTextNode(source.slice(cursor)));
+}
+
+function renderAssistantMarkdown(container, source) {
+    let paragraph = [];
+    let list = null;
+    const flushParagraph = () => {
+        if (!paragraph.length) return;
+        const p = document.createElement("p");
+        paragraph.forEach((line, index) => {
+            if (index) p.appendChild(document.createElement("br"));
+            renderAssistantInlineMarkdown(p, line);
+        });
+        container.appendChild(p);
+        paragraph = [];
+    };
+    const normalized = String(source).replace(/\\([*_`\[\]()])/g, "$1");
+    const lines = normalized.replace(/\r\n?/g, "\n").split("\n");
+    for (const line of lines) {
+        const heading = line.match(/^\s{0,3}(#{1,3})\s+(.+)$/);
+        const item = line.match(/^\s*(?:[-*+]\s+|\d+[.)]\s+)(.*)$/);
+        if (!line.trim()) {
+            flushParagraph();
+            list = null;
+        } else if (heading) {
+            flushParagraph();
+            list = null;
+            const h = document.createElement(`h${heading[1].length}`);
+            renderAssistantInlineMarkdown(h, heading[2]);
+            container.appendChild(h);
+        } else if (item) {
+            flushParagraph();
+            const tag = /^\s*\d+[.)]\s+/.test(line) ? "ol" : "ul";
+            if (!list || list.tagName.toLowerCase() !== tag) {
+                list = document.createElement(tag);
+                container.appendChild(list);
+            }
+            const li = document.createElement("li");
+            renderAssistantInlineMarkdown(li, item[1]);
+            list.appendChild(li);
+        } else {
+            list = null;
+            paragraph.push(line);
+        }
+    }
+    flushParagraph();
+}
+
 window.onload = function () {
     // Chatbot setup
     const openChat = document.getElementById("openChatbotBtn");
@@ -26,7 +99,8 @@ window.onload = function () {
 
         const bubble = document.createElement("div");
         bubble.className = `chat-bubble ${sender === "user" ? "user-bubble" : "bot-bubble"}`;
-        bubble.innerHTML = text.replace(/\n/g, "<br>");
+        if (sender === "bot") renderAssistantMarkdown(bubble, text);
+        else bubble.textContent = text;
 
         if (actionLink && actionText) {
             const btn = document.createElement("a");
@@ -53,7 +127,7 @@ window.onload = function () {
             const res = await fetch(`${API_URL}/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, ...window.getFarmAssistantContext() })
             });
             const data = await res.json();
             appendMessage("bot", data.reply || "Processing...", data.action_link, data.action_text);

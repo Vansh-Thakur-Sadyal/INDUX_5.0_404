@@ -1,7 +1,21 @@
 const API_URL = "http://127.0.0.1:8001";
 let allMarketData = [];
-let userLat = 30.9010;
-let userLon = 75.8573;
+let userLat = null;
+let userLon = null;
+let marketLocationNote = "";
+let filteredMarketData = [];
+let currentMarketPage = 1;
+const marketPageSize = 24;
+
+try {
+    const savedLocation = JSON.parse(localStorage.getItem("farm_assistant_location") || "null");
+    if (Number.isFinite(savedLocation?.lat) && Number.isFinite(savedLocation?.lon)) {
+        userLat = savedLocation.lat;
+        userLon = savedLocation.lon;
+    }
+} catch (error) {
+    console.warn("Saved farm location could not be read.", error);
+}
 
 window.onload = function () {
     // Chatbot toggles
@@ -12,6 +26,8 @@ window.onload = function () {
     const chatInput = document.getElementById("chatInput");
     const chatBox = document.getElementById("chatMessages");
     const refreshGpsBtn = document.getElementById("refreshGpsBtn");
+    const previousPageBtn = document.getElementById("previousMarketPage");
+    const nextPageBtn = document.getElementById("nextMarketPage");
 
     if (openChat && chatPopup) {
         openChat.addEventListener("click", () => chatPopup.classList.remove("hidden"));
@@ -29,7 +45,11 @@ window.onload = function () {
 
         const bubble = document.createElement("div");
         bubble.className = `chat-bubble ${sender === "user" ? "user-bubble" : "bot-bubble"}`;
-        bubble.innerHTML = text.replace(/\n/g, "<br>");
+        if (sender === "bot" && window.renderFarmAssistantMarkdown) {
+            window.renderFarmAssistantMarkdown(bubble, text);
+        } else {
+            bubble.textContent = text;
+        }
 
         if (actionLink && actionText) {
             const btn = document.createElement("a");
@@ -56,7 +76,7 @@ window.onload = function () {
             const res = await fetch(`${API_URL}/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, ...window.getFarmAssistantContext() })
             });
             const data = await res.json();
             appendMessage("bot", data.reply || "Sorry, I couldn't process that.", data.action_link, data.action_text);
@@ -81,18 +101,23 @@ window.onload = function () {
                 (pos) => {
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
+                    localStorage.setItem("farm_assistant_location", JSON.stringify({ lat: userLat, lon: userLon }));
                     gpsCoords.textContent = `${userLat.toFixed(4)}° N, ${userLon.toFixed(4)}° E`;
                     fetchMarketData();
                 },
                 (err) => {
                     console.warn("GPS Permission denied or unavailable:", err.message);
-                    gpsCoords.textContent = "30.9010° N, 75.8573° E (Default Punjab Mandi)";
+                    gpsCoords.textContent = userLat !== null && userLon !== null
+                        ? `Using saved location: ${userLat.toFixed(4)}°, ${userLon.toFixed(4)}°`
+                        : "GPS unavailable — search by crop, mandi, district, or state";
                     fetchMarketData();
                 },
                 { timeout: 8000 }
             );
         } else {
-            gpsCoords.textContent = "GPS Unavailable (Using Regional Mandi)";
+            gpsCoords.textContent = userLat !== null && userLon !== null
+                ? `Using saved location: ${userLat.toFixed(4)}°, ${userLon.toFixed(4)}°`
+                : "GPS unavailable — search by crop, mandi, district, or state";
             fetchMarketData();
         }
     }
@@ -107,7 +132,12 @@ window.onload = function () {
         grid.innerHTML = '<div class="loading-state">⚡ Synchronizing Agmarknet Mandi Prices...</div>';
 
         try {
-            const url = `${API_URL}/api/market-prices?lat=${userLat}&lon=${userLon}`;
+            const params = new URLSearchParams();
+            if (Number.isFinite(userLat) && Number.isFinite(userLon)) {
+                params.set("lat", userLat);
+                params.set("lon", userLon);
+            }
+            const url = `${API_URL}/api/market-prices${params.size ? `?${params}` : ""}`;
             const res = await fetch(url);
             if (!res.ok) {
                 throw new Error(`Market API returned HTTP ${res.status}`);
@@ -119,11 +149,14 @@ window.onload = function () {
             }
 
             allMarketData = data.data || [];
+            marketLocationNote = data.location_note || "";
             const kpiSource = document.getElementById("kpiSource");
             const kpiSourceSub = document.getElementById("kpiSourceSub");
             if (kpiSource) kpiSource.textContent = data.source;
             if (kpiSourceSub) {
-                kpiSourceSub.textContent = data.api_key_configured ? "Live Key Configured" : "Using built-in market data";
+                kpiSourceSub.textContent = data.api_key_configured
+                    ? "Live feed configured; verify arrival date"
+                    : "Sample/reference data — not live prices";
             }
             const cropSuggestions = document.getElementById("cropSuggestions");
             if (cropSuggestions) {
@@ -131,7 +164,12 @@ window.onload = function () {
                 cropSuggestions.innerHTML = crops.map(crop => `<option value="${crop}"></option>`).join("");
             }
             const marketRecordNote = document.getElementById("marketRecordNote");
-            if (marketRecordNote) marketRecordNote.textContent = `Showing all ${allMarketData.length.toLocaleString()} crop and commodity records returned by ${data.source}.`;
+            if (marketRecordNote) {
+                const count = `${allMarketData.length.toLocaleString()} crop and commodity records`;
+                marketRecordNote.textContent = [marketLocationNote, `Loaded ${count} from ${data.source}.`]
+                    .filter(Boolean)
+                    .join(" ");
+            }
             updateKPIs(allMarketData);
             renderCards(allMarketData);
         } catch (err) {
@@ -141,16 +179,23 @@ window.onload = function () {
     }
 
     function updateKPIs(data) {
-        if (!data || data.length === 0) return;
+        if (!data || data.length === 0) {
+            document.getElementById("kpiAvgPrice").textContent = "—";
+            document.getElementById("kpiTopGainer").textContent = "—";
+            document.getElementById("kpiLowestMin").textContent = "—";
+            document.getElementById("kpiTopGainer").nextElementSibling.textContent = "No matching records";
+            document.getElementById("kpiLowestMin").nextElementSibling.textContent = "No matching records";
+            return;
+        }
 
         // Calculate average expected price
         const totalExpected = data.reduce((acc, curr) => acc + curr.modal_price, 0);
         const avg = totalExpected / data.length;
         document.getElementById("kpiAvgPrice").textContent = `₹${avg.toFixed(2)} / kg`;
 
-        // Find top gainer
+        // The feed does not include verified price history for calculating a trend.
         const top = data[0] || {};
-        document.getElementById("kpiTopGainer").textContent = `${top.commodity} (${top.trend || "+3.5%"})`;
+        document.getElementById("kpiTopGainer").textContent = top.commodity || "—";
         document.getElementById("kpiTopGainer").nextElementSibling.textContent = `${top.market}`;
 
         // Find lowest min price
@@ -163,24 +208,44 @@ window.onload = function () {
 
     function renderCards(items) {
         const grid = document.getElementById("marketGrid");
+        const pagination = document.getElementById("marketPagination");
+        const pageInfo = document.getElementById("marketPageInfo");
+        filteredMarketData = items;
         grid.innerHTML = "";
 
         if (items.length === 0) {
             grid.innerHTML = '<div class="loading-state">No commodity prices found matching your filter.</div>';
+            if (pagination) pagination.hidden = true;
             return;
         }
 
-        items.forEach(item => {
+        const pageCount = Math.ceil(items.length / marketPageSize);
+        currentMarketPage = Math.min(currentMarketPage, pageCount);
+        const pageStart = (currentMarketPage - 1) * marketPageSize;
+        const visibleItems = items.slice(pageStart, pageStart + marketPageSize);
+        if (pagination) pagination.hidden = pageCount <= 1;
+        if (pageInfo) {
+            const firstItem = pageStart + 1;
+            const lastItem = Math.min(pageStart + marketPageSize, items.length);
+            pageInfo.textContent = `Page ${currentMarketPage} of ${pageCount} · Showing ${firstItem}–${lastItem} of ${items.length.toLocaleString()}`;
+        }
+        if (previousPageBtn) previousPageBtn.disabled = currentMarketPage <= 1;
+        if (nextPageBtn) nextPageBtn.disabled = currentMarketPage >= pageCount;
+
+        visibleItems.forEach(item => {
             const card = document.createElement("div");
             card.className = "market-card";
 
             const trendClass = item.trend_type || (item.trend && item.trend.includes("-") ? "down" : "up");
+            const locationBadge = Number.isFinite(item.distance_km)
+                ? `${item.distance_km} km away`
+                : item.location_match || (userLat !== null ? "GPS area unavailable" : "Set GPS to match area");
 
             card.innerHTML = `
                 <div class="card-img-wrap">
                     <img src="${item.image}" alt="${item.commodity}" loading="lazy"/>
                     <span class="trend-badge ${trendClass}">${item.trend || "Stable"}</span>
-                    <span class="distance-badge">📍 ${item.distance_km} km away</span>
+                    <span class="distance-badge">📍 ${locationBadge}</span>
                 </div>
                 <div class="card-body">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -225,14 +290,27 @@ window.onload = function () {
         const sortVal = sortSelect ? sortSelect.value : "distance";
 
         let filtered = allMarketData.filter(item => {
-            const matchesQuery = item.commodity.toLowerCase().includes(query) || item.market.toLowerCase().includes(query) || (item.category && item.category.toLowerCase().includes(query));
+            const matchesQuery = item.commodity.toLowerCase().includes(query)
+                || item.market.toLowerCase().includes(query)
+                || item.district.toLowerCase().includes(query)
+                || item.state.toLowerCase().includes(query)
+                || (item.category && item.category.toLowerCase().includes(query));
             const matchesCategory = categoryVal === "all" || (item.category && item.category.toLowerCase().includes(categoryVal));
             const matchesState = stateVal === "all" || item.state.toLowerCase().includes(stateVal);
             return matchesQuery && matchesCategory && matchesState;
         });
 
         if (sortVal === "distance") {
-            filtered.sort((a, b) => a.distance_km - b.distance_km);
+            filtered.sort((a, b) => {
+                const localityOrder = (item) => item.location_match === "District match" ? 0
+                    : item.location_match === "State match" ? 1 : 2;
+                const areaDifference = localityOrder(a) - localityOrder(b);
+                if (areaDifference) return areaDifference;
+                if (Number.isFinite(a.distance_km) && Number.isFinite(b.distance_km)) {
+                    return a.distance_km - b.distance_km;
+                }
+                return a.commodity.localeCompare(b.commodity);
+            });
         } else if (sortVal === "expected_high") {
             filtered.sort((a, b) => b.modal_price - a.modal_price);
         } else if (sortVal === "expected_low") {
@@ -241,9 +319,31 @@ window.onload = function () {
             filtered.sort((a, b) => a.commodity.localeCompare(b.commodity));
         }
 
+        currentMarketPage = 1;
         renderCards(filtered);
         const marketRecordNote = document.getElementById("marketRecordNote");
-        if (marketRecordNote) marketRecordNote.textContent = `Showing ${filtered.length.toLocaleString()} of ${allMarketData.length.toLocaleString()} crop and commodity records.`;
+        if (marketRecordNote) {
+            const count = `Available ${filtered.length.toLocaleString()} of ${allMarketData.length.toLocaleString()} crop and commodity records.`;
+            marketRecordNote.textContent = [marketLocationNote, count].filter(Boolean).join(" ");
+        }
+    }
+
+    if (previousPageBtn) {
+        previousPageBtn.addEventListener("click", () => {
+            if (currentMarketPage > 1) {
+                currentMarketPage -= 1;
+                renderCards(filteredMarketData);
+            }
+        });
+    }
+    if (nextPageBtn) {
+        nextPageBtn.addEventListener("click", () => {
+            const pageCount = Math.ceil(filteredMarketData.length / marketPageSize);
+            if (currentMarketPage < pageCount) {
+                currentMarketPage += 1;
+                renderCards(filteredMarketData);
+            }
+        });
     }
 
     if (searchInput) searchInput.addEventListener("input", applyFilters);

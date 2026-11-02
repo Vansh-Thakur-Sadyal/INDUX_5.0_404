@@ -13,6 +13,9 @@
   box-shadow: var(--shadow);
 }
 
+.gps-attribution{margin:6px 0 16px;color:var(--text-muted);font-size:10px;line-height:1.45}
+.gps-attribution a{color:var(--green-primary)}
+
 .gps-icon {
   font-size: 20px;
 }
@@ -222,6 +225,30 @@
   border-radius: 6px;
   font-size: 10px;
   font-family: var(--font-mono);
+}
+
+.market-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 32px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.pagination-button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--green-dark);
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .card-body {

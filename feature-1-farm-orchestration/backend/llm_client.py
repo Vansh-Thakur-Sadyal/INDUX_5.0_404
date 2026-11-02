@@ -16,6 +16,30 @@ try:
 except ImportError:
     pass
 
+
+def _load_mistral_key_file():
+    """Load the optional Mistral key from the project's ignored key file."""
+    if os.getenv("MISTRAL_API_KEY", "").strip():
+        return
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    key_file = os.path.join(project_root, "api_keys", "api_keys.txt")
+    try:
+        with open(key_file, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    name, value = line.split("=", 1)
+                    if name.strip() == "MISTRAL_API_KEY" and value.strip():
+                        os.environ["MISTRAL_API_KEY"] = value.strip().strip("\"'")
+                        return
+    except FileNotFoundError:
+        pass
+    except OSError as error:
+        print(f"[WARN] Could not read Mistral key file: {error}")
+
+
+_load_mistral_key_file()
+
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
 # ── CHANGE THE MODEL HERE ─────────────────────────────
 # This one line controls the model for the entire project
@@ -43,9 +67,9 @@ def mistral_chat(messages, temperature=0.3, max_tokens=1024, json_mode=False, re
     api_key = os.getenv("MISTRAL_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError(
-            "MISTRAL_API_KEY is not set. Add it to a .env file at the "
-            "project root (MISTRAL_API_KEY=your-key) or set it as an "
-            "environment variable."
+            "MISTRAL_API_KEY is not set. Add MISTRAL_API_KEY=your-key to "
+            "api_keys/api_keys.txt or to a .env file in the project root, "
+            "then restart the backend."
         )
 
     headers = {

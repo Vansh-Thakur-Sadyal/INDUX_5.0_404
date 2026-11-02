@@ -75,7 +75,7 @@
       <div class="page-header-left">
         <div class="page-eyebrow">AGRICULTURE INTELLIGENCE FEED</div>
         <h1 class="page-title">Latest News, Trends & Market Signals</h1>
-        <p class="page-desc">Stay updated with live agricultural news, government policy announcements, MSP updates, technology trends, seasonal alerts, and crop-specific advisories from trusted sources.</p>
+        <p class="page-desc">Recent agricultural headlines from live news search results. Each article links to its publisher; headlines and dates are shown as supplied by the feed.</p>
       </div>
       <div class="system-health-badge">
         <div>
@@ -86,32 +86,27 @@
       </div>
     </div>
 
-    <!-- QUICK STATS ROW -->
+    <!-- LIVE FEED SUMMARY -->
     <div class="news-stats-row" id="newsStatsRow">
       <div class="ns-card">
-        <div class="ns-label">MONSOON PROGRESS</div>
-        <div class="ns-value" id="statMonsoon">82%</div>
-        <div class="ns-trend up">↑ Normal Season</div>
+        <div class="ns-label">RECENT HEADLINES</div>
+        <div class="ns-value" id="statNewsCount">—</div>
+        <div class="ns-trend neutral">From the current feed</div>
       </div>
       <div class="ns-card">
-        <div class="ns-label">WHEAT MSP 2025–26</div>
-        <div class="ns-value">₹2,425</div>
-        <div class="ns-trend up">↑ +5.9% from last year</div>
+        <div class="ns-label">PUBLISHERS</div>
+        <div class="ns-value" id="statSourceCount">—</div>
+        <div class="ns-trend neutral">Represented in these headlines</div>
       </div>
       <div class="ns-card">
-        <div class="ns-label">PADDY MSP 2025–26</div>
-        <div class="ns-value">₹2,300</div>
-        <div class="ns-trend up">↑ +5.4% from last year</div>
+        <div class="ns-label">NEWEST ARTICLE</div>
+        <div class="ns-value" id="statLatestDate">—</div>
+        <div class="ns-trend neutral">Publication date from feed</div>
       </div>
       <div class="ns-card">
-        <div class="ns-label">UREA PRICE</div>
-        <div class="ns-value">₹266/bag</div>
-        <div class="ns-trend neutral">→ Govt subsidised</div>
-      </div>
-      <div class="ns-card">
-        <div class="ns-label">DAP PRICE</div>
-        <div class="ns-value">₹1,350/bag</div>
-        <div class="ns-trend down">↓ Subsidy applied</div>
+        <div class="ns-label">LIVE SOURCE</div>
+        <div class="ns-value" id="statFeedSource">—</div>
+        <div class="ns-trend neutral">Feed provider</div>
       </div>
     </div>
 
@@ -140,7 +135,7 @@
 
         <!-- Trending Topics -->
         <div class="card ns-widget">
-          <div class="card-title">🔥 Trending Topics</div>
+          <div class="card-title">Recent Coverage</div>
           <div class="trending-list" id="trendingList">
             <!-- Injected by JS -->
           </div>
@@ -163,43 +158,14 @@
           </div>
         </div>
 
-        <!-- Seasonal Calendar -->
-        <div class="card ns-widget mt16">
-          <div class="card-title">📅 Seasonal Crop Calendar</div>
-          <div class="season-list">
-            <div class="season-item kharif">
-              <div class="season-badge">Kharif</div>
-              <div class="season-detail">
-                <div class="season-name">Kharif 2025</div>
-                <div class="season-phase">Sowing: June–July | Harvest: Oct–Nov</div>
-                <div class="season-crops">Rice, Cotton, Soybean, Maize, Groundnut</div>
-              </div>
-            </div>
-            <div class="season-item rabi">
-              <div class="season-badge">Rabi</div>
-              <div class="season-detail">
-                <div class="season-name">Rabi 2025–26</div>
-                <div class="season-phase">Sowing: Oct–Dec | Harvest: Mar–Apr</div>
-                <div class="season-crops">Wheat, Mustard, Chickpea, Barley</div>
-              </div>
-            </div>
-            <div class="season-item zaid">
-              <div class="season-badge">Zaid</div>
-              <div class="season-detail">
-                <div class="season-name">Zaid 2026</div>
-                <div class="season-phase">Sowing: Feb–Mar | Harvest: May–Jun</div>
-                <div class="season-crops">Watermelon, Cucumber, Moong, Vegetables</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
   </main>
 </div>
 
-<script src="agri_news.js"></script>
+<script src="agri_news.js?v=2"></script>
+<script src="assistant_context.js"></script>
+<script src="assistant_widget.js"></script>
 </body>
 </html>

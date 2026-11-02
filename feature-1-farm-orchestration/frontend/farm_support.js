@@ -1,6 +1,6 @@
 const API_URL = "http://127.0.0.1:8001";
-let userLat = 30.9010;
-let userLon = 75.8573;
+let userLat = null;
+let userLon = null;
 let currentCategory = "all";
 
 window.onload = function () {
@@ -11,6 +11,19 @@ window.onload = function () {
     const sendBtn = document.getElementById("chatSend");
     const chatInput = document.getElementById("chatInput");
     const chatBox = document.getElementById("chatMessages");
+    const gpsCoords = document.getElementById("gpsSupportCoords");
+    const refreshGpsBtn = document.getElementById("refreshSupportGpsBtn");
+
+    try {
+        const savedLocation = JSON.parse(localStorage.getItem("farm_assistant_location") || "null");
+        if (Number.isFinite(savedLocation?.lat) && Number.isFinite(savedLocation?.lon)) {
+            userLat = savedLocation.lat;
+            userLon = savedLocation.lon;
+            gpsCoords.textContent = `Saved location: ${userLat.toFixed(4)}°, ${userLon.toFixed(4)}°`;
+        }
+    } catch (error) {
+        console.warn("Saved farm location could not be read.", error);
+    }
 
     if (openChat && chatPopup) {
         openChat.addEventListener("click", () => chatPopup.classList.remove("hidden"));
@@ -28,7 +41,7 @@ window.onload = function () {
 
         const bubble = document.createElement("div");
         bubble.className = `chat-bubble ${sender === "user" ? "user-bubble" : "bot-bubble"}`;
-        bubble.innerHTML = text.replace(/\n/g, "<br>");
+        bubble.textContent = text;
 
         if (actionLink && actionText) {
             const btn = document.createElement("a");
@@ -55,7 +68,7 @@ window.onload = function () {
             const res = await fetch(`${API_URL}/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, ...window.getFarmAssistantContext() })
             });
             const data = await res.json();
             appendMessage("bot", data.reply || "Processing your request...", data.action_link, data.action_text);
@@ -93,49 +106,95 @@ window.onload = function () {
         });
     });
 
-    // Detect GPS
-    function getGPSLocation() {
-        const gpsCoords = document.getElementById("gpsSupportCoords");
-        if ("geolocation" in navigator) {
-            gpsCoords.textContent = "Acquiring GPS Signal...";
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    userLat = pos.coords.latitude;
-                    userLon = pos.coords.longitude;
-                    gpsCoords.textContent = `${userLat.toFixed(4)}° N, ${userLon.toFixed(4)}° E`;
-                    fetchFarmSupportData();
-                },
-                (err) => {
-                    console.warn("GPS error:", err.message);
-                    gpsCoords.textContent = "30.9010° N, 75.8573° E (Default Regional Hub)";
-                    fetchFarmSupportData();
-                },
-                { timeout: 8000 }
-            );
-        } else {
-            gpsCoords.textContent = "30.9010° N, 75.8573° E";
-            fetchFarmSupportData();
-        }
+    function showLocationUnavailable(message) {
+        gpsCoords.textContent = message;
+        document.getElementById("supportGrid").textContent =
+            "Allow location access and select GPS Sync to search using your current location.";
     }
 
+    // Detect GPS on demand and allow farmers to refresh it after moving.
+    function getGPSLocation() {
+        if (!navigator.geolocation) {
+            showLocationUnavailable("Location is not supported by this browser.");
+            return;
+        }
+        gpsCoords.textContent = "Requesting current GPS location...";
+        if (refreshGpsBtn) refreshGpsBtn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLat = pos.coords.latitude;
+                userLon = pos.coords.longitude;
+                try {
+                    localStorage.setItem("farm_assistant_location", JSON.stringify({ lat: userLat, lon: userLon }));
+                } catch (error) {
+                    console.warn("Current farm location could not be saved.", error);
+                }
+                gpsCoords.textContent = `Current: ${userLat.toFixed(4)}°, ${userLon.toFixed(4)}°`;
+                fetchFarmSupportData();
+                if (refreshGpsBtn) refreshGpsBtn.disabled = false;
+            },
+            (error) => {
+                console.warn("GPS error:", error.message);
+                const messages = {
+                    1: "Location permission denied. Allow it in browser settings, then sync again.",
+                    2: "Current location is unavailable. Try GPS Sync again outdoors.",
+                    3: "GPS request timed out. Try GPS Sync again."
+                };
+                const errorMessage = messages[error.code] || "Could not read the current location. Try GPS Sync again.";
+                if (userLat !== null && userLon !== null) {
+                    gpsCoords.textContent = `Using saved location: ${userLat.toFixed(4)}°, ${userLon.toFixed(4)}° · ${errorMessage}`;
+                    fetchFarmSupportData();
+                } else {
+                    showLocationUnavailable(errorMessage);
+                }
+                if (refreshGpsBtn) refreshGpsBtn.disabled = false;
+            },
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+        );
+    }
+    if (refreshGpsBtn) refreshGpsBtn.addEventListener("click", getGPSLocation);
+
     async function fetchFarmSupportData() {
+        if (!Number.isFinite(userLat) || !Number.isFinite(userLon)) {
+            showLocationUnavailable("No GPS location available yet.");
+            return;
+        }
         const grid = document.getElementById("supportGrid");
         grid.innerHTML = '<div class="loading-state">⚡ Locating nearest farm support & fertilizer stores...</div>';
 
         try {
-            const res = await fetch(`${API_URL}/api/farm-support?type=${currentCategory}&lat=${userLat}&lon=${userLon}`);
+            const params = new URLSearchParams({
+                type: currentCategory,
+                lat: userLat,
+                lon: userLon
+            });
+            let res;
+            let lastError;
+            for (let attempt = 0; attempt < 2; attempt += 1) {
+                try {
+                    res = await fetch(`${API_URL}/api/farm-support?${params}`, {
+                        signal: AbortSignal.timeout(15000)
+                    });
+                    if (res.ok || res.status < 500 || attempt === 1) break;
+                } catch (error) {
+                    lastError = error;
+                    if (attempt === 1) throw error;
+                }
+                await new Promise(resolve => setTimeout(resolve, 750));
+            }
+            if (!res && lastError) throw lastError;
             if (!res.ok) {
                 throw new Error(`Farm support API returned HTTP ${res.status}`);
             }
             const data = await res.json();
 
-            if (data.status !== "success") {
+            if (data.status !== "success" || !Array.isArray(data.results)) {
                 throw new Error(data.message || data.detail || "Farm support locations are unavailable.");
             }
-            renderSupportCards(data.results || []);
+            renderSupportCards(data.results);
         } catch (err) {
             console.error("Support fetch error:", err);
-            grid.innerHTML = '<div class="loading-state">Farm support locations could not be loaded. Please try again later.</div>';
+            grid.textContent = `Farm support locations could not be loaded: ${err.message}. Check that the backend is running, then retry.`;
         }
     }
 
@@ -192,5 +251,10 @@ window.onload = function () {
         });
     }
 
-    getGPSLocation();
+    if (userLat !== null && userLon !== null) {
+        fetchFarmSupportData();
+    } else {
+        gpsCoords.textContent = "Location not synced yet.";
+        showLocationUnavailable("Location not synced yet.");
+    }
 };

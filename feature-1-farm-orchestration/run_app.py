@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 
@@ -27,16 +29,36 @@ SERVICES = {
 }
 
 
+def service_is_ready(url):
+    """Return whether a service already responds at its expected local URL."""
+    try:
+        with urllib.request.urlopen(url, timeout=1.5) as response:
+            return response.status < 500
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return False
+
+
 def main():
     processes = {}
+    service_urls = {
+        "backend": "http://127.0.0.1:8001/docs",
+        "frontend": "http://127.0.0.1:8000/index.html",
+    }
     try:
         for name, command in SERVICES.items():
+            if service_is_ready(service_urls[name]):
+                print(f"Reusing the already running {name}: {service_urls[name]}", flush=True)
+                continue
             processes[name] = subprocess.Popen(command, cwd=ROOT)
             print(f"Starting {name}: {' '.join(command)}", flush=True)
 
         print("Frontend: http://127.0.0.1:8000/index.html", flush=True)
         print("Backend docs: http://127.0.0.1:8001/docs", flush=True)
-        print("Press Ctrl+C to stop both servers.", flush=True)
+        print("Keep this window open while using the app. Press Ctrl+C to stop servers started by this launcher.", flush=True)
+
+        if not processes:
+            while True:
+                time.sleep(1)
 
         while True:
             for name, process in processes.items():

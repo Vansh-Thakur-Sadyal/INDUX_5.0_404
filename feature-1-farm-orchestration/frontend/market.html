@@ -104,7 +104,7 @@
       <div class="page-header-left">
         <div class="page-eyebrow">DATA.GOV.IN & AGMARKNET INTEGRATION</div>
         <h1 class="page-title">Live Mandi Market Prices & Expected Value Analysis</h1>
-        <p class="page-desc">Real-time agricultural commodity prices, expected market value calculations, and nearest Mandi geolocation tracking.</p>
+        <p class="page-desc">Agmarknet commodity prices filtered to your approximate district or state when GPS is available. Exact mandi distances require verified market coordinates.</p>
       </div>
       <div class="gps-badge-card" id="gpsCard">
         <div class="gps-icon">📍</div>
@@ -115,23 +115,24 @@
         <button class="btn-gps-refresh" id="refreshGpsBtn" title="Re-detect GPS location">⚡ GPS Sync</button>
       </div>
     </div>
+    <p class="gps-attribution">For mandi locality filtering, approximate GPS coordinates are sent to OpenStreetMap Nominatim only when needed. Results are cached, with at most one lookup per second. Agmarknet records do not include verified mandi coordinates, so listings are matched by district/state rather than ranked by distance. <a href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noopener noreferrer">Usage policy</a> · © OpenStreetMap contributors.</p>
 
     <!-- KPI ROW -->
     <div class="market-kpi-row">
       <div class="card kpi-card-mkt">
-        <div class="kpi-mkt-label">AVG EXPECTED PRICE</div>
-        <div class="kpi-mkt-val green" id="kpiAvgPrice">₹28.40 / kg</div>
-        <div class="kpi-mkt-sub">Across nearest regional mandis</div>
+        <div class="kpi-mkt-label">AVG REPORTED MODAL PRICE</div>
+        <div class="kpi-mkt-val green" id="kpiAvgPrice">—</div>
+        <div class="kpi-mkt-sub">Across returned mandi records</div>
       </div>
       <div class="card kpi-card-mkt">
-        <div class="kpi-mkt-label">HIGHEST GAINER</div>
-        <div class="kpi-mkt-val gold" id="kpiTopGainer">Onion (+6.8%)</div>
-        <div class="kpi-mkt-sub">Lasalgaon Mandi</div>
+        <div class="kpi-mkt-label">FIRST LISTED ITEM</div>
+        <div class="kpi-mkt-val gold" id="kpiTopGainer">—</div>
+        <div class="kpi-mkt-sub">Price trend is not provided by the feed</div>
       </div>
       <div class="card kpi-card-mkt">
         <div class="kpi-mkt-label">LOWEST MIN PRICE</div>
-        <div class="kpi-mkt-val blue" id="kpiLowestMin">Potato (₹14.50/kg)</div>
-        <div class="kpi-mkt-sub">Jalandhar Main Mandi</div>
+        <div class="kpi-mkt-val blue" id="kpiLowestMin">—</div>
+        <div class="kpi-mkt-sub">Among returned mandi records</div>
       </div>
       <div class="card kpi-card-mkt">
         <div class="kpi-mkt-label">DATA SOURCE</div>
@@ -181,7 +182,7 @@
         <div class="filter-group">
           <label>SORT BY</label>
           <select id="sortSelect" class="custom-select">
-            <option value="distance">Nearest Mandi (GPS)</option>
+            <option value="distance">District/state match (GPS)</option>
             <option value="expected_high">Expected Price (High to Low)</option>
             <option value="expected_low">Expected Price (Low to High)</option>
             <option value="name">Commodity Name</option>
@@ -197,10 +198,16 @@
       <!-- Loaded dynamically via JS -->
       <div class="loading-state">Fetching real-time mandi prices...</div>
     </div>
+    <div class="market-pagination" id="marketPagination" hidden>
+      <button class="pagination-button" id="previousMarketPage" type="button">Previous</button>
+      <span id="marketPageInfo" aria-live="polite"></span>
+      <button class="pagination-button" id="nextMarketPage" type="button">Next</button>
+    </div>
 
   </main>
 </div>
 
-<script src="market.js"></script>
+<script src="assistant_context.js?v=gps-markdown-3"></script>
+<script src="market.js?v=market-pagination-1"></script>
 </body>
 </html>

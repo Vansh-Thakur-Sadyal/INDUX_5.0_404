@@ -137,7 +137,13 @@ html[dir="rtl"] .topnav, html[dir="rtl"] .layout { direction: rtl; }
   font-size: 12px;
   line-height: 1.5;
   word-break: break-word;
+  white-space: normal;
 }
+.chat-bubble p { margin: 0 0 7px; }
+.chat-bubble p:last-child { margin-bottom: 0; }
+.chat-bubble ul, .chat-bubble ol { margin: 4px 0 7px; padding-left: 20px; }
+.chat-bubble li { margin: 2px 0; }
+.chat-bubble h1, .chat-bubble h2, .chat-bubble h3 { font-size: 1em; margin: 6px 0 3px; }
 .bot-bubble { background: #fff; color: var(--text-dark); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .user-bubble { background: var(--green-dark); color: #fff; border-bottom-right-radius: 4px; }
 .typing-bubble {

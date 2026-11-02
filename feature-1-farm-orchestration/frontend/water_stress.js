@@ -25,7 +25,7 @@ window.onload = function () {
 
         const bubble = document.createElement("div");
         bubble.className = `chat-bubble ${sender === "user" ? "user-bubble" : "bot-bubble"}`;
-        bubble.innerHTML = text.replace(/\n/g, "<br>");
+        bubble.textContent = text;
 
         if (actionLink && actionText) {
             const btn = document.createElement("a");
@@ -52,7 +52,7 @@ window.onload = function () {
             const res = await fetch(`${API_URL}/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, ...window.getFarmAssistantContext() })
             });
             const data = await res.json();
             appendMessage("bot", data.reply || "Processing...", data.action_link, data.action_text);

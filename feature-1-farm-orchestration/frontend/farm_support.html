@@ -105,12 +105,13 @@
         <h1 class="page-title">Nearest Markets, Fertilizer Shops & Farm Machinery</h1>
         <p class="page-desc">Locate agricultural suppliers, fertilizer & bio-pesticide stores, and farm support equipment rentals nearby. Click any location to launch Google Maps navigation.</p>
       </div>
-      <div class="gps-badge-card">
+      <div class="gps-badge-card support-gps-card">
         <div class="gps-icon">🌐</div>
         <div>
-          <div class="gps-label">USER GPS COORDINATES</div>
-          <div class="gps-coords" id="gpsSupportCoords">Detecting GPS...</div>
+          <div class="gps-label">CURRENT GPS LOCATION</div>
+          <div class="gps-coords" id="gpsSupportCoords" aria-live="polite">Location not synced yet.</div>
         </div>
+        <button class="support-gps-sync" id="refreshSupportGpsBtn" type="button">📍 GPS Sync</button>
       </div>
     </div>
 
@@ -143,6 +144,7 @@
   </main>
 </div>
 
-<script src="farm_support.js"></script>
+<script src="assistant_context.js"></script>
+<script src="farm_support.js?v=current-gps-sync-1"></script>
 </body>
 </html>
