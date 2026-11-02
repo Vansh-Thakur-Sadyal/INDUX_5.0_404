@@ -23,6 +23,9 @@ backend's root `api_keys.txt` file. Farm Support uses your browser location
 when available and falls back to the regional sample location. Its current
 provider cards are sample listings, not a live business directory.
 
+Plant Growth tracks crop measurements, compares uploaded photos, and keeps
+recent analysis history in the browser.
+
 Copy `.env.example` to `.env` and add a Mistral API key to enable LLM-powered
 chat and recommendations. The dashboard and rule-based analysis can be opened
 without a key. The optional image-classification dataset and TensorFlow are not

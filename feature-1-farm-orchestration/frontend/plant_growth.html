@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plant Growth Tracker & Visual Analysis – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="plant_growth.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Ask me about your plant's growth speed, yellowing leaves, or NPK fertilizer suggestions!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab active">Plant Growth</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">PLANT TELEMETRY:<br/><span class="active-tag">GROWTH ANALYTICS</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">📊 Fleet Dashboard</a>
+      <a href="market.html" class="sidebar-nav-item">📈 Mandi Prices</a>
+      <a href="farm_support.html" class="sidebar-nav-item">🌿 Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item active">🌱 Plant Growth</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">VISUAL BOTANICAL MONITORING</div>
+        <h1 class="page-title">Plant Growth Tracker & Visual Analysis</h1>
+        <p class="page-desc">Track height progression (cm), upload stage photos, compare previous vs. latest plant growth side-by-side, and receive targeted AI agronomic suggestions.</p>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="growth-main-grid">
+
+      <!-- INPUT FORM CARD -->
+      <div class="card growth-form-card">
+        <div class="card-title">🌱 Log Plant Measurements & Photos</div>
+
+        <form id="plantGrowthForm" onsubmit="return false;">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>CROP / PLANT NAME <span class="req">*</span></label>
+              <select id="cropName" class="custom-select">
+                <option value="Tomato">Tomato Plant</option>
+                <option value="Green Chilli">Green Chilli</option>
+                <option value="Potato">Potato Plant</option>
+                <option value="Wheat">Wheat Crop</option>
+                <option value="Paddy (Rice)">Paddy / Rice</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Brinjal">Brinjal (Eggplant)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>DAYS BETWEEN LOGS</label>
+              <input type="number" id="daysElapsed" value="7" min="1" max="90" class="custom-input"/>
+            </div>
+          </div>
+
+          <!-- HEIGHT INPUTS ROW -->
+          <div class="form-row-2 mt12">
+            <div class="form-group">
+              <label>PREVIOUS HEIGHT (CM) <span class="req">*</span></label>
+              <input type="number" id="prevHeight" placeholder="e.g. 15.0" step="0.1" required class="custom-input"/>
+            </div>
+            <div class="form-group">
+              <label>LATEST HEIGHT (CM) <span class="req">*</span></label>
+              <input type="number" id="latestHeight" placeholder="e.g. 28.0" step="0.1" required class="custom-input"/>
+            </div>
+          </div>
+
+          <!-- STAGE & CONDITION ROW -->
+          <div class="form-row-2 mt12">
+            <div class="form-group">
+              <label>GROWTH STAGE</label>
+              <select id="growthStage" class="custom-select">
+                <option value="Vegetative">Vegetative (Stem & Leaves)</option>
+                <option value="Seedling">Seedling (Early Sprouts)</option>
+                <option value="Flowering">Flowering (Buds & Blooms)</option>
+                <option value="Fruiting">Fruiting / Pod Formation</option>
+                <option value="Mature">Mature / Pre-Harvest</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>LEAF / STEM CONDITION</label>
+              <input type="text" id="leafCondition" placeholder="e.g. Healthy green leaves, slight tip yellowing" class="custom-input"/>
+            </div>
+          </div>
+
+          <!-- PHOTO UPLOADS ROW -->
+          <div class="photo-upload-row mt16">
+            <div class="upload-box">
+              <div class="upload-label">PREVIOUS PLANT PHOTO</div>
+              <div class="drop-area" id="prevDropArea">
+                <input type="file" id="prevPhotoInput" accept="image/*" class="file-input"/>
+                <div class="upload-placeholder" id="prevPlaceholder">
+                  <span class="up-icon">📷</span>
+                  <span class="up-text">Click or drag photo</span>
+                </div>
+                <img id="prevPhotoPreview" class="photo-preview hidden" alt="Previous Plant Photo"/>
+              </div>
+            </div>
+
+            <div class="upload-box">
+              <div class="upload-label">LATEST PLANT PHOTO</div>
+              <div class="drop-area" id="latestDropArea">
+                <input type="file" id="latestPhotoInput" accept="image/*" class="file-input"/>
+                <div class="upload-placeholder" id="latestPlaceholder">
+                  <span class="up-icon">📸</span>
+                  <span class="up-text">Click or drag photo</span>
+                </div>
+                <img id="latestPhotoPreview" class="photo-preview hidden" alt="Latest Plant Photo"/>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-analyze-growth" id="analyzeGrowthBtn">
+            🚀 Run Growth Analytics & AI Diagnosis
+          </button>
+        </form>
+      </div>
+
+      <!-- ANALYSIS RESULT CARD -->
+      <div class="card growth-result-card" id="growthResultCard">
+        <div class="card-title">📊 Side-by-Side Visual Comparison & AI Suggestions</div>
+
+        <div class="growth-status-badge" id="growthStatusBadge" style="background:#f1f5f9;color:#475569">
+          Log plant measurements & photos above to view analysis
+        </div>
+
+        <!-- SIDE-BY-SIDE PHOTO COMPARISON -->
+        <div class="side-by-side-comparison" id="comparisonBox">
+          <div class="cmp-photo-card">
+            <div class="cmp-badge">PREVIOUS RECORD</div>
+            <div class="cmp-img-wrap">
+              <img id="cmpPrevImg" src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&auto=format&fit=crop&q=80" alt="Previous Plant"/>
+              <span class="height-tag" id="cmpPrevTag">15.0 cm</span>
+            </div>
+          </div>
+
+          <div class="cmp-delta-center">
+            <div class="cmp-arrow-icon">➔</div>
+            <div class="cmp-delta-val" id="cmpDeltaVal">+13.0 cm</div>
+            <div class="cmp-delta-sub" id="cmpDeltaSub">+86.7% Growth</div>
+          </div>
+
+          <div class="cmp-photo-card highlight">
+            <div class="cmp-badge green">LATEST RECORD</div>
+            <div class="cmp-img-wrap">
+              <img id="cmpLatestImg" src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&auto=format&fit=crop&q=80" alt="Latest Plant"/>
+              <span class="height-tag green" id="cmpLatestTag">28.0 cm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- METRICS ROW -->
+        <div class="growth-metrics-row mt16">
+          <div class="gm-box">
+            <div class="gm-label">HEIGHT GAIN</div>
+            <div class="gm-val" id="resGainCm">+0.0 cm</div>
+            <div class="gm-sub" id="resGainPct">+0%</div>
+          </div>
+          <div class="gm-box">
+            <div class="gm-label">GROWTH SPEED</div>
+            <div class="gm-val blue" id="resRateCm">0.00 cm/day</div>
+            <div class="gm-sub" id="resSpeedRating">Rating: Standard</div>
+          </div>
+          <div class="gm-box">
+            <div class="gm-label">GROWTH STAGE</div>
+            <div class="gm-val" id="resStage">Vegetative</div>
+            <div class="gm-sub">Development Stage</div>
+          </div>
+        </div>
+
+        <!-- AI SUGGESTIONS & CARE GUIDE BOX -->
+        <div class="ai-suggestions-box mt16">
+          <div class="ai-sug-header">
+            <span class="ai-sug-title">✦ AI Agronomy Suggestions & Care Guide</span>
+          </div>
+          <div class="ai-sug-summary" id="sugSummary">
+            Upload photo and height data to generate custom care suggestions.
+          </div>
+          <ul class="ai-sug-list" id="sugList">
+            <li>💧 Irrigation schedule recommendations based on growth rate</li>
+            <li>🧪 Custom NPK fertilizer dosage for stem development</li>
+            <li>🪴 Staking & physical plant support guidelines</li>
+            <li>🛡️ Pest and leaf yellowing prevention steps</li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SAVED LOGS HISTORY TABLE -->
+    <div class="card growth-history-card mt24">
+      <div class="card-header-row">
+        <span class="card-title">📋 Saved Plant Growth Tracking History</span>
+        <button class="btn-clear-history" id="clearGrowthLogsBtn">Clear History</button>
+      </div>
+      <div class="table-responsive">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Crop Name</th>
+              <th>Photos (Prev ➔ Latest)</th>
+              <th>Previous (cm)</th>
+              <th>Latest (cm)</th>
+              <th>Height Gain</th>
+              <th>Speed (cm/day)</th>
+              <th>Stage</th>
+              <th>Health Rating</th>
+            </tr>
+          </thead>
+          <tbody id="growthHistoryBody">
+            <tr>
+              <td colspan="9" style="text-align:center;color:#888;padding:20px;">No plant growth logs saved yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="plant_growth.js"></script>
+</body>
+</html>
