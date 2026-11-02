@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Government Farmer Subsidies & Schemes – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="subsidies.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Ask me about government subsidies like PM-KISAN, PMKSY Micro-Irrigation, PM-KUSUM Solar Pumps, or SMAM Machinery!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab active">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab">News & Trends</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">GOVERNMENT PORTAL:<br/><span class="active-tag">VERIFIED SCHEMES</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">Fleet</a>
+      <a href="market.html" class="sidebar-nav-item">Market Details</a>
+      <a href="farm_support.html" class="sidebar-nav-item">Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item">Plant Growth</a>
+      <a href="subsidies.html" class="sidebar-nav-item active">Farmer Subsidies</a>
+      <a href="water_stress.html" class="sidebar-nav-item">Water Stress AI</a>
+      <a href="farm_inspector.html" class="sidebar-nav-item">Farm Inspector</a>
+      <a href="npk_advisor.html" class="sidebar-nav-item">NPK Advisor</a>
+      <a href="yield_calculator.html" class="sidebar-nav-item">Yield Calculator</a>
+      <a href="dashboard2.html" class="sidebar-nav-item">Orchestration</a>
+      <a href="input_cost.html" class="sidebar-nav-item">Input Cost</a>
+      <a href="weather.html" class="sidebar-nav-item">Weather & Alerts</a>
+      <a href="finance.html" class="sidebar-nav-item">Farm Finance</a>
+      <a href="farmer_education.html" class="sidebar-nav-item">Education</a>
+      <a href="agri_news.html" class="sidebar-nav-item">News & Trends</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">CENTRAL & STATE SCHEMES DIRECTORY</div>
+        <h1 class="page-title">Government Farmer Subsidies & Grants</h1>
+        <p class="page-desc">Explore verified financial support schemes, micro-irrigation grants (up to 80% subsidy), solar pump schemes (60% subsidy), machinery subsidies, and direct income transfers.</p>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card filter-bar-card">
+      <div class="sub-filter-row">
+        <div class="sub-search-wrap">
+          <input type="text" id="subSearchInput" placeholder="Search schemes (e.g. Solar Pump, Drip Irrigation, PM-KISAN, Tractor)..." class="custom-input"/>
+        </div>
+        <div class="sub-pills-row">
+          <button class="btn-sub-pill active" data-cat="all">All Schemes</button>
+          <button class="btn-sub-pill" data-cat="Irrigation">Irrigation & Water</button>
+          <button class="btn-sub-pill" data-cat="Solar">Solar & Green Energy</button>
+          <button class="btn-sub-pill" data-cat="Machinery">Machinery & Implements</button>
+          <button class="btn-sub-pill" data-cat="Income">Income Support</button>
+          <button class="btn-sub-pill" data-cat="Loan">Loan & Credit</button>
+          <button class="btn-sub-pill" data-cat="Insurance">Insurance</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBSIDIES CARDS GRID -->
+    <div class="subsidies-grid" id="subsidiesGrid">
+      <div class="loading-state">⚡ Loading verified government subsidy schemes...</div>
+    </div>
+
+  </main>
+</div>
+
+<script src="subsidies.js"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farm Image Upload & Aerial Field Inspector – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="farm_inspector.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Upload field photos, drone shots, or crop canopy photos to inspect crop health, weed density, and dry patches!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab active">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab">News & Trends</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">FIELD VISION:<br/><span class="active-tag">IMAGE INSPECTION</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">Fleet</a>
+      <a href="market.html" class="sidebar-nav-item">Market Details</a>
+      <a href="farm_support.html" class="sidebar-nav-item">Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item">Plant Growth</a>
+      <a href="subsidies.html" class="sidebar-nav-item">Farmer Subsidies</a>
+      <a href="water_stress.html" class="sidebar-nav-item">Water Stress AI</a>
+      <a href="farm_inspector.html" class="sidebar-nav-item active">Farm Inspector</a>
+      <a href="npk_advisor.html" class="sidebar-nav-item">NPK Advisor</a>
+      <a href="yield_calculator.html" class="sidebar-nav-item">Yield Calculator</a>
+      <a href="dashboard2.html" class="sidebar-nav-item">Orchestration</a>
+      <a href="input_cost.html" class="sidebar-nav-item">Input Cost</a>
+      <a href="weather.html" class="sidebar-nav-item">Weather & Alerts</a>
+      <a href="finance.html" class="sidebar-nav-item">Farm Finance</a>
+      <a href="farmer_education.html" class="sidebar-nav-item">Education</a>
+      <a href="agri_news.html" class="sidebar-nav-item">News & Trends</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">VISUAL FIELD & CANOPY COMPUTER VISION</div>
+        <h1 class="page-title">Farm Photo Upload & Aerial Field Inspector</h1>
+        <p class="page-desc">Upload a photo of your field, drone overview, or crop canopy to visually inspect foliage coverage, field health score (0-100), weed density, and dry soil patches.</p>
+      </div>
+    </div>
+
+    <div class="farm-inspector-grid">
+      <!-- UPLOAD CARD -->
+      <div class="card inspector-upload-card">
+        <div class="card-title">📤 Upload Farm / Drone / Field Photo</div>
+        <p class="inspect-desc">Drag and drop or browse to upload your field photo for visual crop canopy inspection.</p>
+
+        <div class="farm-drop-area" id="farmDropArea">
+          <input type="file" id="farmPhotoInput" accept="image/*" class="file-input"/>
+          <div class="upload-placeholder" id="farmPlaceholder">
+            <span class="up-icon">📷</span>
+            <span class="up-text">Click or drag your farm photo here</span>
+            <span class="up-sub">Supports Drone, Satellite, or Phone Field Photos</span>
+          </div>
+          <img id="farmPhotoPreview" class="photo-preview hidden" alt="Uploaded Farm Field Photo"/>
+        </div>
+
+        <div class="form-group mt16">
+          <label>CROP TYPE IN FIELD</label>
+          <select id="inspectCropSelect" class="custom-select">
+            <option value="Tomato">Tomato Field</option>
+            <option value="Wheat">Wheat Field</option>
+            <option value="Paddy (Rice)">Paddy / Rice Field</option>
+            <option value="Cotton">Cotton Field</option>
+            <option value="Green Chilli">Chilli Field</option>
+          </select>
+        </div>
+
+        <button class="btn-inspect-farm" id="inspectFarmBtn">
+          🔍 Inspect Farm Field Photo
+        </button>
+      </div>
+
+      <!-- INSPECTOR DIAGNOSTICS CARD -->
+      <div class="card inspector-results-card">
+        <div class="card-title">🔬 Field Diagnostic & Health Inspection Report</div>
+
+        <div class="inspect-metrics-grid">
+          <div class="im-box">
+            <div class="im-label">CANOPY COVERAGE</div>
+            <div class="im-val" id="resCanopy">78.5%</div>
+            <div class="im-sub">Foliage Density</div>
+          </div>
+          <div class="im-box">
+            <div class="im-label">FIELD HEALTH SCORE</div>
+            <div class="im-val green" id="resHealthIndex">84 / 100</div>
+            <div class="im-sub">High Productivity</div>
+          </div>
+          <div class="im-box">
+            <div class="im-label">WEED DENSITY</div>
+            <div class="im-val blue" id="resWeedDensity">Low (4.2%)</div>
+            <div class="im-sub">Weed Pressure</div>
+          </div>
+        </div>
+
+        <div class="agronomy-notes-box mt16">
+          <div class="anb-title">✦ Visual Field Diagnostic Notes</div>
+          <ul class="anb-list" id="anbList">
+            <li>🟢 **Canopy Density**: Crop foliage coverage is at 78.5%, indicating healthy vegetative biomass development.</li>
+            <li>🟡 **Moisture Deficit Zone**: Minor dry soil patch detected in North-West grid sector. Recommend localized drip pulse.</li>
+            <li>🛡️ **Weed Pressure**: Weed density is low (4.2%). No immediate chemical herbicide intervention required.</li>
+            <li>🌱 **Yield Potential**: Field health index is rated 84/100 (High Productivity Potential).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="farm_inspector.js"></script>
+</body>
+</html>

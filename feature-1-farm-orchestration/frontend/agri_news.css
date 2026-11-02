@@ -1,0 +1,289 @@
+/* =============================================
+   AGRI NEWS & TRENDS — Styles
+============================================= */
+
+/* Quick Stats Row */
+.news-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.ns-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+
+.ns-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+
+.ns-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--green-dark);
+  margin-bottom: 4px;
+}
+
+.ns-trend {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ns-trend.up { color: #16a34a; }
+.ns-trend.down { color: #2563eb; }
+.ns-trend.neutral { color: var(--text-muted); }
+
+/* Filter Tabs */
+.news-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.news-filter-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: var(--text-dark);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.news-filter-btn:hover {
+  background: #e2e8f0;
+}
+
+.news-filter-btn.active {
+  background: var(--green-primary);
+  color: #fff;
+  border-color: var(--green-dark);
+}
+
+/* Main Layout */
+.news-main-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .news-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* News Feed Cards */
+.news-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.news-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+}
+
+.nc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.nc-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.nc-tag.policy { background: #dbeafe; color: #1e40af; }
+.nc-tag.market { background: #dcfce7; color: #166534; }
+.nc-tag.tech { background: #f3e8ff; color: #6b21a8; }
+.nc-tag.weather { background: #fef3c7; color: #92400e; }
+.nc-tag.export { background: #ffedd5; color: #9a3412; }
+
+.nc-date {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.nc-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1.35;
+}
+
+.nc-snippet {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.nc-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  font-size: 11px;
+}
+
+.nc-source {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.nc-read-more {
+  color: var(--green-primary);
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nc-read-more:hover {
+  text-decoration: underline;
+}
+
+/* Sidebar Widgets */
+.ns-widget {
+  padding: 18px;
+}
+
+.trending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.trend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.trend-topic {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.trend-volume {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.source-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.source-link:hover {
+  background: var(--green-pale);
+  color: var(--green-primary);
+}
+
+/* Seasonal Calendar */
+.season-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.season-item {
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.season-item.kharif { border-left: 4px solid #16a34a; }
+.season-item.rabi { border-left: 4px solid #ca8a04; }
+.season-item.zaid { border-left: 4px solid #0284c7; }
+
+.season-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.season-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.season-phase {
+  font-size: 11px;
+  color: var(--green-primary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.season-crops {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}

@@ -1,0 +1,173 @@
+/* ============================================================
+   FARMER SUBSIDIES PAGE STYLES (subsidies.css)
+   ============================================================ */
+
+.sub-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-search-wrap {
+  width: 100%;
+}
+
+.sub-pills-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-sub-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sub-pill:hover {
+  background: #e2e8f0;
+}
+
+.btn-sub-pill.active {
+  background: var(--green-primary);
+  color: #ffffff;
+  border-color: var(--green-dark);
+  box-shadow: 0 2px 8px rgba(45, 106, 45, 0.25);
+}
+
+.subsidies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.subsidy-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.subsidy-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+}
+
+.sub-card-header {
+  padding: 18px;
+  background: linear-gradient(135deg, #183318 0%, #2b592b 100%);
+  color: #ffffff;
+  position: relative;
+}
+
+.sub-cat-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: rgba(255,255,255,0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.sub-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sub-percent-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.sub-card-body {
+  padding: 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-benefit-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.sbb-label {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: #166534;
+  font-weight: 700;
+}
+
+.sbb-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #15803d;
+  margin-top: 2px;
+}
+
+.sub-section-block {
+  font-size: 12px;
+}
+
+.ssb-title {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.ssb-text {
+  color: var(--text-dark);
+  line-height: 1.4;
+}
+
+.btn-apply-portal {
+  margin-top: auto;
+  width: 100%;
+  background: var(--green-primary);
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(45, 106, 45, 0.25);
+}
+
+.btn-apply-portal:hover {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yield Calculator & Growth Analytics – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="yield_calculator.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab active">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab">News & Trends</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">HARVEST ANALYTICS:<br/><span class="active-tag">YIELD COMPARATOR</span></div>
+      </div>
+    </div>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">Fleet</a>
+      <a href="market.html" class="sidebar-nav-item">Market Details</a>
+      <a href="farm_support.html" class="sidebar-nav-item">Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item">Plant Growth</a>
+      <a href="subsidies.html" class="sidebar-nav-item">Farmer Subsidies</a>
+      <a href="water_stress.html" class="sidebar-nav-item">Water Stress AI</a>
+      <a href="farm_inspector.html" class="sidebar-nav-item">Farm Inspector</a>
+      <a href="npk_advisor.html" class="sidebar-nav-item">NPK Advisor</a>
+      <a href="yield_calculator.html" class="sidebar-nav-item active">Yield Calculator</a>
+      <a href="dashboard2.html" class="sidebar-nav-item">Orchestration</a>
+      <a href="input_cost.html" class="sidebar-nav-item">Input Cost</a>
+      <a href="weather.html" class="sidebar-nav-item">Weather & Alerts</a>
+      <a href="finance.html" class="sidebar-nav-item">Farm Finance</a>
+      <a href="farmer_education.html" class="sidebar-nav-item">Education</a>
+      <a href="agri_news.html" class="sidebar-nav-item">News & Trends</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">AGRICULTURAL PRODUCTIVITY & EFFICIENCY</div>
+        <h1 class="page-title">Yield Calculator & Growth Analytics</h1>
+        <p class="page-desc">Compare previous harvest data (in kgs) with latest yield records to calculate net gain/loss, per-acre efficiency, and financial revenue impact.</p>
+      </div>
+    </div>
+
+    <div class="yield-calc-grid">
+      <!-- INPUT FORM CARD -->
+      <div class="card yield-form-card">
+        <div class="card-title">⚖️ Input Harvest Data</div>
+
+        <form id="yieldForm" onsubmit="return false;">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>PREVIOUS YIELD (IN KGS) <span class="req">*</span></label>
+              <input type="number" id="prevYield" placeholder="e.g. 1200" step="0.1" required class="custom-input"/>
+            </div>
+            <div class="form-group">
+              <label>LATEST YIELD (IN KGS) <span class="req">*</span></label>
+              <input type="number" id="latestYield" placeholder="e.g. 1550" step="0.1" required class="custom-input"/>
+            </div>
+          </div>
+
+          <div class="form-row-3 mt12">
+            <div class="form-group">
+              <label>CROP NAME</label>
+              <select id="cropSelect" class="custom-select">
+                <option value="Tomato">Tomato</option>
+                <option value="Potato">Potato</option>
+                <option value="Onion">Onion</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Rice">Rice</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Green Chilli">Green Chilli</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>LAND AREA (ACRES)</label>
+              <input type="number" id="landAcres" value="2.5" step="0.1" min="0.1" class="custom-input"/>
+            </div>
+            <div class="form-group">
+              <label>MARKET PRICE (₹ / KG)</label>
+              <input type="number" id="pricePerKg" value="28.50" step="0.5" class="custom-input"/>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-calculate-yield" id="calcYieldBtn">
+            🚀 Analyze Yield Growth & Efficiency
+          </button>
+        </form>
+      </div>
+
+      <!-- ANALYSIS RESULT CARD -->
+      <div class="card yield-result-card" id="resultCard">
+        <div class="card-title">📈 Harvest Comparison & AI Agronomy Analysis</div>
+        
+        <div class="analysis-status-badge" id="statusBadge" style="background:#f1f5f9;color:#475569">
+          Enter harvest data above to run analysis
+        </div>
+
+        <div class="yield-comparison-grid">
+          <div class="yc-box">
+            <div class="yc-label">PREVIOUS HARVEST</div>
+            <div class="yc-val" id="resPrevKg">— kg</div>
+            <div class="yc-sub" id="resPrevPerAcre">— kg / acre</div>
+          </div>
+
+          <div class="yc-arrow">➔</div>
+
+          <div class="yc-box highlight">
+            <div class="yc-label">LATEST HARVEST</div>
+            <div class="yc-val green" id="resLatestKg">— kg</div>
+            <div class="yc-sub" id="resLatestPerAcre">— kg / acre</div>
+          </div>
+
+          <div class="yc-box">
+            <div class="yc-label">NET YIELD CHANGE</div>
+            <div class="yc-val" id="resDiffKg">— kg</div>
+            <div class="yc-sub" id="resPctChange">— %</div>
+          </div>
+        </div>
+
+        <!-- REVENUE DELTA BOX -->
+        <div class="revenue-delta-box mt16">
+          <div>
+            <div class="rev-label">PROJECTED FINANCIAL REVENUE DIFFERENCE</div>
+            <div class="rev-value" id="resRevDiff">₹0</div>
+          </div>
+          <div class="rev-details" id="resRevSub">Previous: ₹0 &nbsp;|&nbsp; Latest: ₹0</div>
+        </div>
+
+        <!-- AI ADVISORY BOX -->
+        <div class="ai-agronomy-box mt16">
+          <div class="ai-box-title">✦ AI Agronomy Recommendation</div>
+          <p class="ai-box-text" id="resAiInsight">Run yield analysis to generate agronomy recommendations based on your harvest variance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVED HISTORY TABLE -->
+    <div class="card yield-history-card mt24">
+      <div class="card-header-row">
+        <span class="card-title">📋 Saved Yield Records History</span>
+        <button class="btn-clear-history" id="clearHistoryBtn">Clear Log</button>
+      </div>
+      <div class="table-responsive">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Crop</th>
+              <th>Previous (kg)</th>
+              <th>Latest (kg)</th>
+              <th>Net Change (kg)</th>
+              <th>Growth (%)</th>
+              <th>Revenue Impact</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr>
+              <td colspan="8" style="text-align:center;color:#888;padding:20px;">No yield calculations saved yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="i18n.js"></script>
+<script src="yield_calculator.js"></script>
+</body>
+</html>
+
+

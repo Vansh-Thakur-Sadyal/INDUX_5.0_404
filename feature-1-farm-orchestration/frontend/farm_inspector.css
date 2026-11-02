@@ -1,0 +1,141 @@
+/* ============================================================
+   FARM INSPECTOR PAGE STYLES (farm_inspector.css)
+   ============================================================ */
+
+.farm-inspector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .farm-inspector-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inspector-upload-card, .inspector-results-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.inspect-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.farm-drop-area {
+  position: relative;
+  height: 220px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.farm-drop-area:hover {
+  border-color: var(--green-primary);
+  background: #f0fdf4;
+}
+
+.up-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.btn-inspect-farm {
+  margin-top: 16px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-primary) 100%);
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(45, 106, 45, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.btn-inspect-farm:hover {
+  transform: translateY(-2px);
+}
+
+.inspect-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.im-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.im-label {
+  font-size: 8px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.im-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 3px 0;
+}
+
+.im-val.green { color: #16a34a; }
+.im-val.blue { color: #2563eb; }
+
+.im-sub {
+  font-size: 9px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+}
+
+.agronomy-notes-box {
+  background: #f8faf8;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.anb-title {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+
+.anb-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.anb-list li {
+  font-size: 12px;
+  color: var(--text-dark);
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  line-height: 1.4;
+}

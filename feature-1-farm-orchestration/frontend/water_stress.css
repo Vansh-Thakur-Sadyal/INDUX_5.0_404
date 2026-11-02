@@ -1,0 +1,160 @@
+/* ============================================================
+   WATER STRESS AI PAGE STYLES (water_stress.css)
+   ============================================================ */
+
+.water-stress-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .water-stress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ws-form-card, .ws-result-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.btn-calculate-ws {
+  margin-top: 20px;
+  width: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-calculate-ws:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.4);
+}
+
+.ws-status-badge {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-align: center;
+  margin: 12px 0 16px 0;
+  letter-spacing: 0.5px;
+}
+
+.cwsi-meter-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.cwsi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cwsi-title {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.cwsi-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.cwsi-bar-wrap {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cwsi-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.cwsi-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.ws-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.wsm-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.wsm-label {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.wsm-val {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0 2px 0;
+}
+
+.wsm-val.green { color: #16a34a; }
+.wsm-val.gold { color: #d97706; }
+
+.wsm-sub {
+  font-size: 10px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+}
+
+.action-advice-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.aab-title {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #1e40af;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.aab-text {
+  font-size: 13px;
+  color: #1e3a8a;
+  line-height: 1.5;
+}

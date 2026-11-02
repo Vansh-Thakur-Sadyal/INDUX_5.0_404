@@ -1,0 +1,606 @@
+/* =============================================
+   NPK SMART ADVISOR — Styles
+   Extends index.css
+============================================= */
+
+/* Input section layout */
+.npk-input-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .npk-input-section { grid-template-columns: 1fr; }
+}
+
+/* Sensor Gauges Card */
+.npk-inputs-card { padding: 24px; }
+.npk-crop-card { padding: 24px; }
+
+.npk-gauges-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.npk-gauge-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gauge-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.gauge-bar-wrap {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: #ef4444;
+  transition: width 0.4s ease;
+}
+
+.gauge-bar.green { background: #16a34a; }
+.gauge-bar.orange { background: #f59e0b; }
+.gauge-bar.blue { background: #3b82f6; }
+.gauge-bar.teal { background: #14b8a6; }
+
+.gauge-input {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.gauge-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Crop card farmer-friendly styles */
+.npk-crop-card .tf-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.npk-crop-card .custom-select,
+.npk-crop-card .custom-input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.npk-crop-card .custom-select:focus,
+.npk-crop-card .custom-input:focus {
+  border-color: var(--green-primary);
+  outline: none;
+}
+
+/* Output Card */
+.npk-output-card { padding: 0; overflow: hidden; }
+
+.npk-output-header {
+  padding: 18px 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.npk-output-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.npk-tab-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  border-radius: 6px 6px 0 0;
+}
+
+.npk-tab-btn.active {
+  color: var(--green-primary);
+  border-bottom-color: var(--green-primary);
+  background: var(--green-pale);
+}
+
+.npk-tab-btn:hover:not(.active) {
+  background: #f8fafc;
+  color: var(--text-dark);
+}
+
+.npk-tab-content {
+  padding: 20px;
+}
+
+/* Recommendation Cards */
+.rec-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.rec-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.rec-card.priority-high {
+  border-left: 5px solid #ef4444;
+}
+
+.rec-card.priority-medium {
+  border-left: 5px solid #f59e0b;
+}
+
+.rec-card.priority-low {
+  border-left: 5px solid #16a34a;
+}
+
+.rec-product {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.rec-dose {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--green-primary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.rec-reason {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.rec-timing {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.rec-cost {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  margin-left: 4px;
+}
+
+/* Deficiency Alert Banner */
+.deficiency-banner {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #9a3412;
+}
+
+.deficiency-banner strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+/* Pesticide & technique lists */
+.pest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pest-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pest-icon { font-size: 20px; flex-shrink: 0; }
+
+.pest-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pest-info {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 3px;
+}
+
+.technique-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.tech-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tech-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tech-impact {
+  font-size: 11px;
+  color: var(--green-primary);
+  font-weight: 600;
+}
+
+.tech-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.mt24 { margin-top: 24px; }
+
+/* =============================================
+   DATA INPUT MODE SELECTOR
+   ============================================= */
+.npk-data-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.npk-data-option {
+  background: #f8fafc;
+  border: 3px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.npk-data-option:hover {
+  border-color: var(--green-primary);
+  background: var(--green-pale);
+  transform: translateY(-2px);
+}
+
+.npk-data-option.active {
+  border-color: var(--green-primary);
+  background: var(--green-pale);
+  box-shadow: 0 0 0 4px rgba(45, 106, 45, 0.15);
+}
+
+.ndo-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.ndo-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.ndo-desc {
+  display: none;
+}
+
+/* =============================================
+   BLUETOOTH MODAL POPUP
+   ============================================= */
+.bt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.bt-modal-overlay.hidden {
+  display: none;
+}
+
+.bt-modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.bt-modal-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.bt-modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.bt-modal-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.bt-modal-spinner {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.bt-modal-spinner.hidden {
+  display: none;
+}
+
+.spinner-ring {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: var(--green-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.bt-modal-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 20px;
+}
+
+.bt-modal-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.bt-modal-dot.scanning {
+  background: #f59e0b;
+  animation: pulse-dot 1s infinite;
+}
+
+.bt-modal-dot.connected {
+  background: #16a34a;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.bt-modal-progress {
+  margin-bottom: 16px;
+}
+
+.bt-modal-progress.hidden {
+  display: none;
+}
+
+.bmp-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+.bmp-bar-wrap {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bmp-bar {
+  height: 100%;
+  background: var(--green-primary);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.bt-sensor-live-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.bt-sensor-live-card.hidden {
+  display: none;
+}
+
+.bslc-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 12px;
+}
+
+.bslc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.bslc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.bslc-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.bslc-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  font-family: var(--font-mono);
+}
+
+.bt-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-bt-modal-load {
+  padding: 14px 28px;
+  background: var(--green-primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-bt-modal-load:hover {
+  background: var(--green-dark);
+}
+
+.btn-bt-modal-load.hidden {
+  display: none;
+}
+
+.btn-bt-modal-cancel {
+  padding: 14px 28px;
+  background: #f1f5f9;
+  color: var(--text-mid);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-bt-modal-cancel:hover {
+  background: #e2e8f0;
+  color: var(--text-dark);
+}
+
+/* Mode selector card spacing */
+.mode-selector-card {
+  margin-bottom: 20px;
+}
+
+/* Farmer-friendly inputs */
+.npk-gauge-item .custom-input {
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.npk-gauge-item .custom-input:focus {
+  border-color: var(--green-primary);
+  outline: none;
+}
+
+.npkgrid-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
