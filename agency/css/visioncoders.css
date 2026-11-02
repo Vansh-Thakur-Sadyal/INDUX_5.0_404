@@ -1,0 +1,751 @@
+/* VisionCoders brand lockup — centred header slot.
+   The header is transparent over the dark banners and turns solid #000 once
+   sticky, so both the mark and the wordmark are white in every state. */
+
+.logo-img .brand_lockup {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    line-height: 1;
+}
+
+/* the mark stands alone now — no wordmark beneath it */
+.logo-img .brand_lockup img {
+    display: block;
+    width: 78px;
+    height: auto;
+}
+
+
+@media (max-width: 767px) {
+    .logo-img .brand_lockup img { width: 60px; }
+}
+
+/* Sticky header.
+   style.css positions the scrolled header with `top:-70px` and relies on
+   `transform:translateY(70px)` to pull it back to 0 — but that transform and
+   its `background:#000` never take effect in the browser, so the bar sits 70px
+   above the fold with no backdrop. That was harmless when the header was only
+   ~76px tall (a few pixels of the old mark peeked out); with the taller brand
+   lockup it left "VisionCoders" floating over the page content. Restore the
+   intended end state explicitly. */
+.header-area .main-header-area.sticky {
+    top: 0;
+    -webkit-transform: none;
+    transform: none;
+    background: #000;
+}
+
+/* ------------------------------------------------------------------ *
+   VisionCoders palette
+   Sampled from the hero artwork so the brand and the imagery agree:
+   a near-black navy field lit by electric blue, magenta and orange.
+ * ------------------------------------------------------------------ */
+:root {
+    --vc-ink:     #020315;  /* base field — darkest 5% of the artwork */
+    --vc-blue:    #3D8BFF;  /* primary — ties to the circuit mark      */
+    --vc-teal:    #16C79A;
+    --vc-magenta: #FF2E86;
+    --vc-orange:  #FF6A2B;
+}
+
+/* ---- Hero ---------------------------------------------------------- */
+.vc_hero {
+    /* scrim over the artwork: firmer at the top so the white nav keeps its
+       contrast, light through the middle so the colour stays vivid */
+    background-image:
+        linear-gradient(180deg,
+            rgba(2, 3, 21, 0.78) 0%,
+            rgba(2, 3, 21, 0.52) 32%,
+            rgba(2, 3, 21, 0.50) 62%,
+            rgba(2, 3, 21, 0.72) 100%),
+        url(../img/banner/vc-hero.jpg);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-color: var(--vc-ink);  /* holds the fold while the jpg loads */
+}
+
+/* beats the template's `.slider_area .single_slider .slider_text h3`,
+   including its 33px/30px/35px responsive overrides */
+.slider_area .single_slider .slider_text h3.vc_hero_title {
+    margin: 0;
+    /* real fallbacks: Raleway is ~6.2x its font-size wide at weight 900, a
+       generic grotesque ~7.0x, so the ceiling below is set to clear the
+       container even when the webfont has not arrived yet */
+    font-family: 'Raleway', 'Segoe UI', Arial, sans-serif;
+    font-weight: 900;
+    font-size: clamp(30px, 10.5vw, 158px);
+    line-height: 1.02;
+    max-width: 100%;
+    letter-spacing: -0.02em;
+    text-transform: none;   /* keep the wordmark exactly "VisionCoders" */
+    color: #fff;
+    text-shadow: 0 6px 44px rgba(2, 3, 21, 0.55);
+}
+
+/* the palette, stated once, under the wordmark */
+.vc_hero .vc_hero_rule {
+    display: block;
+    width: clamp(130px, 26vw, 340px);
+    height: 5px;
+    margin: 30px auto 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+        var(--vc-blue) 0%,
+        var(--vc-teal) 30%,
+        var(--vc-magenta) 68%,
+        var(--vc-orange) 100%);
+}
+
+/* ---- Primary CTA in brand blue ------------------------------------- */
+.book_btn a.popup-with-form {
+    background: var(--vc-blue);
+    border-color: var(--vc-blue);
+}
+.book_btn a.popup-with-form:hover {
+    background: var(--vc-magenta);
+    border-color: var(--vc-magenta);
+    color: #fff !important;
+}
+
+/* ---- Presentation chrome ------------------------------------------- *
+   This page is shown on a projector, so the OS scrollbar is hidden.
+   Scrolling itself is untouched — wheel, trackpad, arrows, Page Up/Down,
+   Home/End and touch all still work.                                    */
+html {
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* legacy Edge/IE */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {           /* Chrome, Safari */
+    width: 0;
+    height: 0;
+}
+
+/* ------------------------------------------------------------------ *
+   VisionCoders content sections
+   The template ships light hotel sections; these replace them with a
+   dark deck that carries the hero's palette down the whole page.
+ * ------------------------------------------------------------------ */
+body {
+    background: var(--vc-ink);
+}
+
+.vc_section {
+    padding: 120px 0;
+    background: var(--vc-ink);
+    color: #E8ECF7;
+    position: relative;
+}
+
+/* alternating band so adjacent sections separate without a hard rule.
+   Order down the page: intro, capabilities, work, toolkit, process,
+   engagement, faq, cta — so the raised band lands on every second one. */
+.vc_capabilities,
+.vc_stack,
+.vc_engage {
+    background: #070B22;
+}
+
+.vc_eyebrow {
+    display: block;
+    margin-bottom: 14px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--vc-blue);
+}
+
+.vc_h2 {
+    margin: 0 0 22px;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 3.6vw, 52px);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.vc_lead {
+    max-width: 560px;
+    margin: 0 0 30px;
+    font-size: 17px;
+    line-height: 1.75;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+
+.vc_head {
+    margin-bottom: 70px;
+}
+.vc_head .vc_lead {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ---- buttons ---- */
+.vc_btn {
+    display: inline-block;
+    padding: 15px 34px;
+    border-radius: 999px;
+    background: var(--vc-blue);
+    color: #fff !important;
+    font-family: 'Raleway', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 0;
+    transition: background .25s ease, transform .25s ease;
+}
+.vc_btn:hover {
+    background: var(--vc-magenta);
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+.vc_btn_lg {
+    padding: 18px 46px;
+    font-size: 15px;
+}
+
+/* header CTA, in place of the old booking popup button */
+.book_btn a.vc_nav_cta {
+    display: inline-block;
+    padding: 14px 30px;
+    background: var(--vc-blue);
+    color: #fff !important;
+    font-family: 'Raleway', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    border-radius: 4px;
+    transition: background .25s ease;
+}
+.book_btn a.vc_nav_cta:hover {
+    background: var(--vc-magenta);
+}
+
+/* ---- intro ---- */
+.vc_panel img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---- capability cards ---- */
+.vc_card {
+    height: 100%;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform .28s ease, border-color .28s ease;
+}
+.vc_card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(61, 139, 255, 0.45);
+}
+.vc_card_img img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+}
+.vc_card_body {
+    padding: 30px 28px 34px;
+}
+.vc_card_body h3 {
+    margin: 0 0 14px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+}
+.vc_card_body p {
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+
+.vc_list {
+    margin: 20px 0 0;
+    padding: 0;
+}
+.vc_list li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 10px;
+    font-size: 14.5px;
+    font-weight: 300;
+    color: #C4CCE0;
+    list-style: none;
+}
+.vc_list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--vc-teal);
+}
+
+/* ---- toolkit chips ---- */
+.vc_chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    max-width: 860px;
+    margin: 0 auto;
+}
+.vc_chip {
+    display: inline-block;
+    padding: 11px 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #D6DCEC;
+    transition: border-color .25s ease, color .25s ease;
+}
+.vc_chip:hover {
+    border-color: var(--vc-blue);
+    color: #fff;
+}
+
+/* ---- process ---- */
+.vc_step {
+    margin-bottom: 30px;
+    padding-top: 22px;
+    border-top: 2px solid rgba(255, 255, 255, 0.12);
+}
+.vc_step_no {
+    display: block;
+    margin-bottom: 14px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(90deg, var(--vc-blue), var(--vc-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.vc_step h3 {
+    margin: 0 0 10px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #fff;
+}
+.vc_step p {
+    font-size: 14.5px;
+    line-height: 1.7;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+
+/* ---- closing CTA ---- */
+.vc_cta_box {
+    padding: 78px 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background:
+        radial-gradient(120% 160% at 12% 0%, rgba(61, 139, 255, 0.30) 0%, rgba(61, 139, 255, 0) 55%),
+        radial-gradient(120% 160% at 88% 100%, rgba(255, 46, 134, 0.28) 0%, rgba(255, 46, 134, 0) 55%),
+        #080D26;
+}
+.vc_cta_box .vc_lead {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ---- footer, darkened to match ---- */
+.footer,
+.footer .footer_top,
+.footer .copy-right_text {
+    background: #04061A;
+}
+.footer .footer_title {
+    color: #fff;
+    font-size: 19px;
+    font-weight: 700;
+}
+.footer .footer_text,
+.footer .copy_right {
+    color: #98A2BD;
+    font-weight: 300;
+}
+.footer .footer_widget ul li a {
+    color: #98A2BD;
+}
+.footer .footer_widget ul li a:hover,
+.footer .copy_right a {
+    color: var(--vc-blue);
+}
+.footer .footer_border {
+    border-color: rgba(255, 255, 255, 0.10);
+}
+
+@media (max-width: 991px) {
+    .vc_section { padding: 84px 0; }
+    .vc_head { margin-bottom: 48px; }
+    .vc_panel { margin-top: 40px; }
+    .vc_cta_box { padding: 54px 22px; }
+}
+
+/* ---- Header: nav and CTA out to the corners ------------------------ *
+   style.css insets the header by 150px, which parks the menu and the
+   button well inside the edges. Only widened from lg up; the narrow
+   breakpoints keep the template's own tighter gutters.               */
+@media (min-width: 992px) {
+    .header-area .main-header-area,
+    .header-area .main-header-area.sticky {
+        padding-left: 34px;
+        padding-right: 34px;
+    }
+    /* style.css centres the nav inside its 5-column block, which is what
+       actually held "Home" away from the edge — not padding */
+    .header-area .main-header-area .main-menu {
+        text-align: left;
+    }
+    .main-menu ul#navigation > li:first-child > a {
+        padding-left: 0;
+    }
+}
+
+/* ---- Team cards ---------------------------------------------------- *
+   Five members on a three-column grid: the last row centres its two
+   cards rather than leaving a hole on the right.                       */
+.vc_team {
+    padding-top: 190px;   /* clears the transparent fixed header */
+}
+
+.vc_member {
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    text-align: center;
+    transition: transform .28s ease, border-color .28s ease;
+}
+.vc_member:hover {
+    transform: translateY(-6px);
+    border-color: rgba(61, 139, 255, 0.45);
+}
+
+.vc_member_photo {
+    /* square frame, so any portrait crop drops in without redesigning */
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    overflow: hidden;
+}
+.vc_member_photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.vc_member_body {
+    padding: 26px 22px 30px;
+}
+.vc_member_body h3 {
+    /* The name is the only thing in the card now, so no gap under it. */
+    margin: 0;
+    font-family: 'Raleway', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: #fff;
+}
+.vc_member_role {
+    display: block;
+    margin-bottom: 0;
+    font-size: 14.5px;
+    font-weight: 300;
+    letter-spacing: .3px;
+    color: #A9B3CC;
+}
+
+
+@media (max-width: 991px) {
+    .vc_team { padding-top: 140px; }
+}
+
+/* ---- Contact form -------------------------------------------------- */
+.vc_contact {
+    padding-top: 190px;   /* clears the transparent fixed header */
+}
+.vc_contact .vc_head .vc_lead {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.vc_form .form-group {
+    margin-bottom: 18px;
+}
+.vc_input {
+    width: 100%;
+    padding: 15px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: #E8ECF7;
+    transition: border-color .22s ease, background .22s ease;
+}
+.vc_input::placeholder {
+    color: #7C87A3;
+    font-size: 15px;
+    opacity: 1;
+}
+.vc_input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--vc-blue);
+}
+.vc_textarea {
+    resize: vertical;
+    min-height: 160px;
+}
+.vc_form .vc_btn {
+    margin-top: 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 991px) {
+    .vc_contact { padding-top: 140px; }
+}
+
+
+/* ------------------------------------------------------------------ *
+   Content pass, 2026-09-04
+   Hero subtitle, selected work, engagement models and FAQ.
+ * ------------------------------------------------------------------ */
+
+/* ---- hero subtitle ---- */
+.vc_hero .vc_hero_sub {
+    max-width: 620px;
+    margin: 26px auto 0;
+    font-family: 'Raleway', sans-serif;
+    font-size: clamp(15px, 1.5vw, 20px);
+    font-weight: 300;
+    line-height: 1.6;
+    letter-spacing: .2px;
+    color: #C4CCE0;
+    text-shadow: 0 2px 18px rgba(2, 3, 21, 0.65);
+}
+
+/* ---- selected work ---- *
+   Alternating rows rather than a third card grid: the capability cards
+   already own that shape, and these need room for a paragraph.        */
+.vc_work_item {
+    margin-bottom: 92px;
+}
+.vc_work_item:last-child {
+    margin-bottom: 0;
+}
+
+/* the flip is done with `direction`, which bootstrap's float-free grid
+   respects, so no column order has to be duplicated in the markup */
+@media (min-width: 992px) {
+    .vc_work_flip {
+        direction: rtl;
+    }
+    .vc_work_flip > [class*="col-"] {
+        direction: ltr;
+    }
+}
+
+.vc_work_shot {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: #070B22;
+    transition: border-color .28s ease, transform .28s ease;
+}
+.vc_work_shot:hover {
+    border-color: rgba(61, 139, 255, 0.42);
+    transform: translateY(-4px);
+}
+.vc_work_shot img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.vc_work_body {
+    padding-left: 24px;
+}
+.vc_work_kicker {
+    display: block;
+    margin-bottom: 12px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    color: var(--vc-teal);
+}
+.vc_work_body h3 {
+    margin: 0 0 16px;
+    font-family: 'Raleway', sans-serif;
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+.vc_work_body p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.75;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+
+.vc_tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.vc_tags li {
+    padding: 7px 15px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    color: #C4CCE0;
+}
+
+/* ---- engagement models ---- */
+.vc_engage_item {
+    height: 100%;
+    margin-bottom: 30px;
+    padding: 36px 32px 34px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform .28s ease, border-color .28s ease;
+}
+.vc_engage_item:hover {
+    transform: translateY(-6px);
+    border-color: rgba(61, 139, 255, 0.45);
+}
+.vc_engage_icon {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 24px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(61, 139, 255, 0.12);
+    border: 1px solid rgba(61, 139, 255, 0.32);
+    color: var(--vc-blue);
+}
+.vc_engage_icon svg {
+    width: 26px;
+    height: 26px;
+}
+.vc_engage_item h3 {
+    margin: 0 0 13px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: #fff;
+}
+.vc_engage_item p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.72;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+.vc_engage_meta {
+    display: block;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    color: #7C87A3;
+}
+
+/* ---- faq ---- */
+.vc_faq_item {
+    margin-bottom: 34px;
+    padding-left: 22px;
+    border-left: 2px solid rgba(255, 255, 255, 0.10);
+}
+.vc_faq_item:hover {
+    border-left-color: var(--vc-blue);
+}
+.vc_faq_item h3 {
+    margin: 0 0 10px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #fff;
+}
+.vc_faq_item p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.75;
+    font-weight: 300;
+    color: #A9B3CC;
+}
+
+@media (max-width: 991px) {
+    .vc_work_item { margin-bottom: 64px; }
+    .vc_work_body { padding-left: 0; padding-top: 30px; }
+    .vc_engage_item { padding: 30px 26px; }
+}
+
+/* The Saarthi entry exists only for the phone menu.
+ *
+ * SlickNav clones ul#navigation into .mobile_menu, so anything that has to reach
+ * a phone has to be in that list. In the desktop nav the same item would sit
+ * next to the real Saarthi button, saying the same thing twice, so it is hidden
+ * there and shown in the clone. Both selectors are written out rather than
+ * relying on one of them failing: the clone keeps the class, and if a future
+ * SlickNav drops it the item still shows on the phone, which is the side to err
+ * on.
+ */
+#navigation .vc_nav_saarthi { display: none; }
+.slicknav_nav .vc_nav_saarthi { display: block; }
+.slicknav_nav .vc_nav_saarthi > a { color: var(--vc-blue); font-weight: 700; }
