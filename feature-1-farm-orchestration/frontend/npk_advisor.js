@@ -43,13 +43,10 @@ window.onload = function () {
     if (selected) selected.classList.add("active");
   }
 
-  function hideBtModal() {
+  function hideBtModal(disconnectSensor = true) {
     const overlay = document.getElementById("btModalOverlay");
     if (overlay) overlay.classList.add("hidden");
-    if (window.sensorTimer) {
-      clearTimeout(window.sensorTimer);
-      window.sensorTimer = null;
-    }
+    if (disconnectSensor) window.HM10SoilSensor.disconnect();
   }
 
   if (optManual) {
@@ -105,12 +102,11 @@ window.onload = function () {
     }
   });
 
-  // ─── HC-05 & ESP32 HARDWARE & CSV INTEGRATION ─────────
+  // ─── HM-10 BLE & HARDWARE DATA INTEGRATION ─────────────
   const npkConnectSerialBtn = document.getElementById("npkConnectSerialBtn");
   const npkSyncCsvBtn = document.getElementById("npkSyncCsvBtn");
   const npkToggleTerminalBtn = document.getElementById("npkToggleTerminalBtn");
   const npkTerminalDrawer = document.getElementById("npkTerminalDrawer");
-  const npkApplySampleBtn = document.getElementById("npkApplySampleBtn");
   const npkParseApplyBtn = document.getElementById("npkParseApplyBtn");
   const npkRawInput = document.getElementById("npkRawInput");
   const npkHtdStatus = document.getElementById("npkHtdStatus");
@@ -121,81 +117,48 @@ window.onload = function () {
     });
   }
 
-  if (npkApplySampleBtn && npkRawInput) {
-    npkApplySampleBtn.addEventListener("click", () => {
-      npkRawInput.value = `[ESP32 RAW] [ESP32] Forwarding data: [UNO] Button pressed: Starting 10s measurement...
-[ESP32 RAW] [ESP32] Forwarding data: [UNO] Sending averaged data to ESP32...
-[ESP32 RAW] [ESP32] Forwarding data: === Averaged Sensor Data (10s) ===
-[ESP32 RAW] [ESP32] Forwarding data: Moisture: 62.15
-[ESP32 RAW] [ESP32] Forwarding data: Temperature: 26.30
-[ESP32 RAW] [ESP32] Forwarding data: EC: 185
-[ESP32 RAW] [ESP32] Forwarding data: pH: 5.80
-[ESP32 RAW] [ESP32] Forwarding data: N: 22
-[ESP32 RAW] [ESP32] Forwarding data: P: 45
-[ESP32 RAW] [ESP32] Forwarding data: K: 38
-[ESP32 RAW] [ESP32] Forwarding data: ---END---`;
-      if (npkHtdStatus) npkHtdStatus.textContent = "ESP32 Sample loaded. Click 'Parse & Populate' below.";
-    });
-  }
-
   if (npkParseApplyBtn && npkRawInput) {
     npkParseApplyBtn.addEventListener("click", () => {
       const raw = npkRawInput.value.trim();
       if (!raw) {
-        alert("Please paste or type your ESP32 / HC-05 serial output stream first.");
+        alert("Paste a complete Arduino telemetry line first.");
         return;
       }
       const parsed = parseHC05SoilData(raw);
       if (parsed && Object.keys(parsed).length > 0) {
         applyParsedDataToAdvisor(parsed);
-        if (npkHtdStatus) npkHtdStatus.textContent = `✅ Successfully parsed ${Object.keys(parsed).length} parameters!`;
+        if (npkHtdStatus) npkHtdStatus.textContent = "Complete sensor measurement parsed.";
         const dot = document.getElementById("npkBtDot");
         const text = document.getElementById("npkBtText");
         if (dot) dot.className = "bt-status-dot connected";
-        if (text) text.textContent = "ESP32 / HC-05: Averaged Data Synchronized";
+        if (text) text.textContent = "Arduino telemetry synchronized";
       } else {
         if (npkHtdStatus) npkHtdStatus.textContent = "⚠️ Could not parse sensor values. Check format.";
       }
     });
   }
 
-  // Sync from soil_sensor_data.csv
+  // Sync the latest real hardware reading
   if (npkSyncCsvBtn) {
     npkSyncCsvBtn.addEventListener("click", async () => {
       const dot = document.getElementById("npkBtDot");
       const text = document.getElementById("npkBtText");
       if (dot) dot.className = "bt-status-dot scanning";
-      if (text) text.textContent = "Syncing from soil_sensor_data.csv...";
+      if (text) text.textContent = "Loading latest real hardware reading...";
 
       try {
-        const res = await fetch(`${API_URL}/api/soil-csv-data`);
+        const res = await fetch(`${API_URL}/api/hardware-data`);
+        if (!res.ok) throw new Error(`Backend returned HTTP ${res.status}`);
         const data = await res.json();
-        if (data.status === "success" && data.latest && Object.keys(data.latest).length > 0) {
-          const row = data.latest;
-          const parsed = {
-            soil_moisture: parseFloat(row.Moisture) || 62.15,
-            temperature: parseFloat(row.Temperature) || 26.30,
-            ec_raw: parseFloat(row.EC) || 185,
-            ec: parseFloat(row.EC) > 50 ? parseFloat((parseFloat(row.EC) / 1000).toFixed(2)) : parseFloat(row.EC),
-            ph: parseFloat(row.pH) || 5.80,
-            nitrogen: parseFloat(row.N) || 22,
-            phosphorus: parseFloat(row.P) || 45,
-            potassium: parseFloat(row.K) || 38
-          };
-          applyParsedDataToAdvisor(parsed);
+        if (data.status === "success" && data.telemetry) {
+          applyParsedDataToAdvisor(data.telemetry);
           if (dot) dot.className = "bt-status-dot connected";
-          if (text) text.textContent = `Synced from CSV (Record: ${row.timestamp || 'Latest'})`;
-          if (npkHtdStatus) npkHtdStatus.textContent = `✅ Loaded latest reading from soil_sensor_data.csv (${row.timestamp})`;
+          if (text) text.textContent = `Latest HM-10 reading (${data.telemetry.timestamp})`;
+          if (npkHtdStatus) npkHtdStatus.textContent = `Loaded real sensor reading (${data.telemetry.timestamp}).`;
         } else {
-          const hwRes = await fetch(`${API_URL}/api/hardware-data`);
-          const hwData = await hwRes.json();
-          if (hwData.status === "success" && hwData.telemetry) {
-            applyParsedDataToAdvisor(hwData.telemetry);
-            if (dot) dot.className = "bt-status-dot connected";
-            if (text) text.textContent = "Synced from Hardware API";
-          } else {
-            alert("No entries found in soil_sensor_data.csv yet. Run soil_sensor_data.py to log readings.");
-          }
+          if (dot) dot.className = "bt-status-dot disconnected";
+          if (text) text.textContent = "No hardware reading received yet";
+          alert("No real HM-10 sensor reading is available yet.");
         }
       } catch (err) {
         console.error("CSV sync error:", err);
@@ -207,7 +170,7 @@ window.onload = function () {
   if (npkConnectSerialBtn) {
     npkConnectSerialBtn.addEventListener("click", async () => {
       if (!("serial" in navigator)) {
-        alert("Web Serial API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Opera on Desktop, or use the 'Paste / Test Data' button.");
+        alert("Web Serial is unavailable in this browser. Use the HM-10 BLE sensor mode or run the serial bridge.");
         if (npkTerminalDrawer) npkTerminalDrawer.classList.remove("hidden");
         return;
       }
@@ -217,7 +180,7 @@ window.onload = function () {
 
       try {
         if (dot) dot.className = "bt-status-dot scanning";
-        if (text) text.textContent = "Serial COM: Selecting Port (e.g. COM16)...";
+        if (text) text.textContent = "Select the serial port connected to the Arduino...";
 
         const serialPort = await navigator.serial.requestPort();
         await serialPort.open({ baudRate: 9600 });
@@ -247,15 +210,18 @@ window.onload = function () {
         if (done) break;
         if (value) {
           serialBuffer += value;
+          const lines = serialBuffer.split(/\r?\n/);
+          serialBuffer = lines.pop() || "";
           if (npkRawInput) {
-            npkRawInput.value = serialBuffer.slice(-2000);
+            npkRawInput.value = (npkRawInput.value + lines.join("\n") + "\n").slice(-2000);
             npkRawInput.scrollTop = npkRawInput.scrollHeight;
           }
-          if (serialBuffer.includes("---END---") || serialBuffer.includes("=== Averaged Sensor Data")) {
-            const parsed = parseHC05SoilData(serialBuffer);
-            if (parsed && Object.keys(parsed).length >= 4) {
+          for (const line of lines) {
+            const parsed = parseHC05SoilData(line);
+            if (parsed) {
               applyParsedDataToAdvisor(parsed);
-              if (npkHtdStatus) npkHtdStatus.textContent = "✅ Live Averaged Measurement Received & Applied!";
+              publishHardwareTelemetry(parsed);
+              if (npkHtdStatus) npkHtdStatus.textContent = "Live Arduino serial reading received and applied.";
             }
           }
         }
@@ -290,8 +256,18 @@ window.onload = function () {
       if (window.pendingSensorData) {
         clearAllInputs();
         const d = window.pendingSensorData;
-        fillInputs(d.N, d.P, d.K, parseFloat(d.ph), parseFloat(d.ec), d.moisture, d.temp);
-        hideBtModal();
+        fillInputs(d.N, d.P, d.K, d.ph, d.ec, d.moisture, d.temp);
+        applyParsedDataToAdvisor({
+          nitrogen: d.N,
+          phosphorus: d.P,
+          potassium: d.K,
+          ph: d.ph,
+          ec_us_cm: d.ec * 1000,
+          ec: d.ec,
+          soil_moisture: d.moisture,
+          temperature: d.temp
+        });
+        hideBtModal(false);
       }
     });
   }
@@ -303,131 +279,94 @@ window.onload = function () {
 };
 
 function parseHC05SoilData(rawText) {
-  const data = {};
-  if (!rawText) return data;
-
-  const lines = rawText.split(/\r?\n/);
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    const match = trimmed.match(/(Moisture|Temperature|EC|pH|N|P|K):\s*([\d\.]+)/i);
-    if (match) {
-      const key = match[1].toLowerCase();
-      const numVal = parseFloat(match[2]);
-
-      if (key === "moisture") {
-        data.soil_moisture = numVal;
-      } else if (key === "temperature") {
-        data.temperature = numVal;
-      } else if (key === "ec") {
-        data.ec_raw = numVal;
-        data.ec = numVal > 50 ? parseFloat((numVal / 1000).toFixed(2)) : numVal;
-        data.ec_us_cm = numVal > 50 ? numVal : parseFloat((numVal * 1000).toFixed(1));
-      } else if (key === "ph") {
-        data.ph = numVal;
-      } else if (key === "n") {
-        data.nitrogen = numVal;
-      } else if (key === "p") {
-        data.phosphorus = numVal;
-      } else if (key === "k") {
-        data.potassium = numVal;
-      }
-    }
+  if (!rawText) return null;
+  const fields = {};
+  const keyMap = {
+    N: "nitrogen",
+    P: "phosphorus",
+    K: "potassium",
+    TEMP_C: "temperature",
+    MOISTURE_PCT: "soil_moisture",
+    EC_US_CM: "ec_us_cm",
+    PH: "ph"
+  };
+  for (const part of rawText.trim().split(",")) {
+    const match = part.trim().match(/^([A-Z_]+)\s*=\s*(-?\d+(?:\.\d+)?)$/i);
+    if (!match || !keyMap[match[1].toUpperCase()]) return null;
+    const key = keyMap[match[1].toUpperCase()];
+    const value = Number(match[2]);
+    fields[key] = value === -1 && ["temperature", "soil_moisture", "ph"].includes(key) ? null : value;
   }
 
-  if (data.soil_moisture !== undefined && data.humidity === undefined) {
-    data.humidity = Math.min(90, Math.max(30, Math.round(data.soil_moisture * 1.25)));
-  }
+  const required = ["nitrogen", "phosphorus", "potassium", "temperature", "soil_moisture", "ec_us_cm", "ph"];
+  if (required.some(key => !Object.prototype.hasOwnProperty.call(fields, key))) return null;
+  if (Object.values(fields).some(value => value !== null && !Number.isFinite(value))) return null;
+  if ((fields.soil_moisture !== null && (fields.soil_moisture < 0 || fields.soil_moisture > 100)) ||
+      (fields.ph !== null && (fields.ph < 0 || fields.ph > 14)) ||
+      (fields.temperature !== null && (fields.temperature < -20 || fields.temperature > 100)) ||
+      ["nitrogen", "phosphorus", "potassium", "ec_us_cm"].some(key => fields[key] < 0)) return null;
 
-  return data;
+  fields.ec_raw = fields.ec_us_cm;
+  fields.ec = fields.ec_us_cm / 1000;
+  return fields;
 }
 
 function applyParsedDataToAdvisor(parsed) {
-  const n = parsed.nitrogen !== undefined ? parsed.nitrogen : 50;
-  const p = parsed.phosphorus !== undefined ? parsed.phosphorus : 30;
-  const k = parsed.potassium !== undefined ? parsed.potassium : 40;
-  const ph = parsed.ph !== undefined ? parsed.ph : 6.5;
-  const ec = parsed.ec !== undefined ? parsed.ec : 1.2;
-  const ecDisplay = parsed.ec_raw ? `${parsed.ec_raw} µS/cm` : `${ec} uS/cm`;
-  const moisture = parsed.soil_moisture !== undefined ? parsed.soil_moisture : 45.3;
-  const temp = parsed.temperature !== undefined ? parsed.temperature : 26.7;
-  const hum = parsed.humidity !== undefined ? parsed.humidity : 60.0;
+  const n = parsed.nitrogen;
+  const p = parsed.phosphorus;
+  const k = parsed.potassium;
+  const ph = parsed.ph;
+  const ec = parsed.ec;
+  const ecDisplay = `${parsed.ec_us_cm} µS/cm`;
+  const moisture = parsed.soil_moisture;
+  const temp = parsed.temperature;
 
   fillInputs(n, p, k, ph, ec, moisture, temp);
 
   const mEl = document.getElementById("npkBtMoisture");
   const tEl = document.getElementById("npkBtTemp");
-  const hEl = document.getElementById("npkBtHumidity");
   const nEl = document.getElementById("npkBtN");
   const pEl = document.getElementById("npkBtP");
   const kEl = document.getElementById("npkBtK");
   const phEl = document.getElementById("npkBtPh");
   const ecEl = document.getElementById("npkBtEc");
 
-  if (mEl) mEl.textContent = `${moisture}%`;
-  if (tEl) tEl.textContent = `${temp}°C`;
-  if (hEl) hEl.textContent = `${hum}%`;
+  if (mEl) mEl.textContent = moisture === null ? "Not measured" : `${moisture}%`;
+  if (tEl) tEl.textContent = temp === null ? "Not measured" : `${temp}°C`;
   if (nEl) nEl.textContent = `${n} mg/kg`;
   if (pEl) pEl.textContent = `${p} mg/kg`;
   if (kEl) kEl.textContent = `${k} mg/kg`;
-  if (phEl) phEl.textContent = `${ph}`;
+  if (phEl) phEl.textContent = ph === null ? "Not measured" : `${ph}`;
   if (ecEl) ecEl.textContent = ecDisplay;
 
   sessionStorage.setItem("lastFarmState", JSON.stringify({
-    moisture, temp, humidity: hum, N: n, P: p, K: k, ph, ec, ec_display: ecDisplay,
+    moisture, temp, N: n, P: p, K: k, ph, ec, ec_display: ecDisplay,
     timestamp: new Date().toISOString(),
-    source: "HC-05 Bluetooth 7-in-1 Soil Sensor"
+    source: "HM-10 BLE Serial Sensor"
   }));
 }
 
-// ─── BLUETOOTH CONNECT (BLE) ──────────────────────────────
-async function connectBluetooth() {
-  const dot = document.getElementById("npkBtDot");
-  const text = document.getElementById("npkBtText");
-
-  if (!navigator.bluetooth) {
-    text.textContent = "Bluetooth Sensor: Browser unsupported — running Simulator";
-    simulateBluetooth();
-    return;
-  }
-
-  try {
-    dot.className = "bt-status-dot scanning";
-    text.textContent = "Bluetooth Sensor: Scanning...";
-
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: ["environmental_sensing"]
-    });
-
-    dot.className = "bt-status-dot connected";
-    text.textContent = `Bluetooth Sensor: Connected (${device.name || "7-in-1 NPK Probe"})`;
-    simulateBluetooth(); // In real hardware, read GATT characteristics here
-
-  } catch (err) {
-    simulateBluetooth();
-  }
-}
-
-function simulateBluetooth() {
-  const dot = document.getElementById("npkBtDot");
-  const text = document.getElementById("npkBtText");
-  dot.className = "bt-status-dot connected";
-  text.textContent = "Bluetooth Sensor: Connected (7-in-1 Simulator Active)";
-
-  const readings = { N: 44, P: 29, K: 52, ph: 6.8, ec: 1.4, moisture: 36, temp: 30, humidity: 58 };
-
-  document.getElementById("npkBtMoisture").textContent = readings.moisture + "%";
-  document.getElementById("npkBtTemp").textContent = readings.temp + "°C";
-  document.getElementById("npkBtHumidity").textContent = readings.humidity + "%";
-  document.getElementById("npkBtN").textContent = readings.N + " mg/kg";
-  document.getElementById("npkBtP").textContent = readings.P + " mg/kg";
-  document.getElementById("npkBtK").textContent = readings.K + " mg/kg";
-  document.getElementById("npkBtPh").textContent = readings.ph;
-  document.getElementById("npkBtEc").textContent = readings.ec + " uS/cm";
-
-  fillInputs(readings.N, readings.P, readings.K, readings.ph, readings.ec, readings.moisture, readings.temp);
+function publishHardwareTelemetry(parsed) {
+  fetch(`${API_URL}/api/hardware-data`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      soil_moisture: parsed.soil_moisture,
+      temperature: parsed.temperature,
+      ec_us_cm: parsed.ec_us_cm,
+      ph: parsed.ph,
+      nitrogen: parsed.nitrogen,
+      phosphorus: parsed.phosphorus,
+      potassium: parsed.potassium,
+      source: "HM-10 BLE Serial"
+    })
+  }).then(response => {
+    if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
+  }).catch(error => {
+    console.error("Could not save sensor telemetry:", error);
+    const status = document.getElementById("npkHtdStatus");
+    if (status) status.textContent = `Sensor reading received, but backend sync failed: ${error.message}`;
+  });
 }
 
 function fillInputs(n, p, k, ph, ec, moisture, temp) {
@@ -443,6 +382,11 @@ function fillInputs(n, p, k, ph, ec, moisture, temp) {
 function setValue(inputId, val, gaugeId, max) {
   const el = document.getElementById(inputId);
   const bar = document.getElementById(gaugeId);
+  if (val === null || val === undefined) {
+    if (el) el.value = "";
+    if (bar) bar.style.width = "0%";
+    return;
+  }
   if (el) el.value = val;
   if (bar) bar.style.width = Math.min(100, (val / max) * 100) + "%";
 }
@@ -462,13 +406,23 @@ function loadFromLastAgentRun() {
 
 // ─── GENERATE RECOMMENDATIONS ─────────────────────────────
 async function generateRecommendations() {
-  const n = parseFloat(document.getElementById("inpN").value) || 42;
-  const p = parseFloat(document.getElementById("inpP").value) || 28;
-  const k = parseFloat(document.getElementById("inpK").value) || 55;
-  const ph = parseFloat(document.getElementById("inpPh").value) || 6.8;
-  const ec = parseFloat(document.getElementById("inpEc").value) || 1.4;
-  const moisture = parseFloat(document.getElementById("inpMoisture").value) || 32;
-  const temp = parseFloat(document.getElementById("inpTemp").value) || 29;
+  const telemetryInputs = ["inpN", "inpP", "inpK", "inpPh", "inpEc", "inpMoisture", "inpTemp"];
+  if (npkMode === "sensor" && telemetryInputs.some(id => !document.getElementById(id).value.trim())) {
+    alert("Wait for the HM-10 reading, then enter any parameters the probe did not measure before requesting advice.");
+    return;
+  }
+  const readValue = (id, fallback) => {
+    const raw = document.getElementById(id).value.trim();
+    const value = Number(raw);
+    return raw && Number.isFinite(value) ? value : fallback;
+  };
+  const n = readValue("inpN", 42);
+  const p = readValue("inpP", 28);
+  const k = readValue("inpK", 55);
+  const ph = readValue("inpPh", 6.8);
+  const ec = readValue("inpEc", 1.4);
+  const moisture = readValue("inpMoisture", 32);
+  const temp = readValue("inpTemp", 29);
   const crop = document.getElementById("npkCrop").value;
   const stage = document.getElementById("npkStage").value;
   const acres = parseFloat(document.getElementById("npkAcres").value) || 2.5;
@@ -758,7 +712,7 @@ function renderTechnique(recs, p) {
 
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-// ─── SENSOR DATA GENERATION & LOADING ────────────────────
+// ─── HM-10 BLE SENSOR READING ────────────────────────────
 function startSensorFlow() {
   const overlay = document.getElementById("btModalOverlay");
   const title = document.getElementById("btModalTitle");
@@ -766,141 +720,137 @@ function startSensorFlow() {
   const spinner = document.getElementById("btModalSpinner");
   const statusText = document.getElementById("btModalStatusText");
   const dot = document.getElementById("btModalDot");
-  const progress = document.getElementById("btModalProgress");
   const liveCard = document.getElementById("btSensorLiveCard");
   const loadBtn = document.getElementById("btnLoadSensorData");
-  const countdown = document.getElementById("bmpCountdown");
-  const bar = document.getElementById("bmpBar");
 
   overlay.classList.remove("hidden");
-  title.textContent = "Connecting Sensor...";
-  subtitle.textContent = "Please wait";
+  clearAllInputs();
+  title.textContent = "Connecting to HM-10 Sensor...";
+  subtitle.textContent = "Choose your HM-10 device. Press the Arduino scan button after it connects.";
   spinner.classList.remove("hidden");
-  progress.classList.add("hidden");
   liveCard.classList.add("hidden");
   loadBtn.classList.add("hidden");
   dot.className = "bt-modal-dot scanning";
-  statusText.textContent = "Searching sensor...";
+  statusText.textContent = "Select the HM-10 BLE device...";
+  window.pendingSensorData = null;
 
-  setTimeout(() => {
-    title.textContent = "Sensor Ready";
-    subtitle.textContent = "Connected successfully";
-    spinner.classList.add("hidden");
+  window.HM10SoilSensor.connect(reading => {
+    const parsed = {
+      nitrogen: reading.n,
+      phosphorus: reading.p,
+      potassium: reading.k,
+      ph: reading.ph,
+      ec_us_cm: reading.ec,
+      ec_raw: reading.ec,
+      ec: reading.ec / 1000,
+      soil_moisture: reading.moisture,
+      temperature: reading.temp
+    };
+    window.pendingSensorData = {
+      N: reading.n,
+      P: reading.p,
+      K: reading.k,
+      ph: reading.ph,
+      ec: reading.ec / 1000,
+      ec_display: `${reading.ec} µS/cm`,
+      moisture: reading.moisture,
+      temp: reading.temp
+    };
+    publishHardwareTelemetry(parsed);
+    const grid = document.getElementById("bslcGrid");
+    grid.innerHTML = `
+      <div class="bslc-item"><span class="bslc-label">NITROGEN (N)</span><span class="bslc-value">${reading.n} mg/kg</span></div>
+      <div class="bslc-item"><span class="bslc-label">PHOSPHORUS (P)</span><span class="bslc-value">${reading.p} mg/kg</span></div>
+      <div class="bslc-item"><span class="bslc-label">POTASSIUM (K)</span><span class="bslc-value">${reading.k} mg/kg</span></div>
+      <div class="bslc-item"><span class="bslc-label">pH</span><span class="bslc-value">${reading.ph === null ? "Not measured" : reading.ph}</span></div>
+      <div class="bslc-item"><span class="bslc-label">EC</span><span class="bslc-value">${reading.ec} µS/cm</span></div>
+      <div class="bslc-item"><span class="bslc-label">SOIL MOISTURE</span><span class="bslc-value">${reading.moisture === null ? "Not measured" : `${reading.moisture}%`}</span></div>
+      <div class="bslc-item"><span class="bslc-label">TEMPERATURE</span><span class="bslc-value">${reading.temp === null ? "Not measured" : `${reading.temp}°C`}</span></div>
+    `;
+    liveCard.classList.remove("hidden");
+    loadBtn.classList.remove("hidden");
+    title.textContent = "Real Sensor Reading Received";
+    statusText.textContent = "Complete Arduino telemetry frame received";
     dot.className = "bt-modal-dot connected";
-    statusText.textContent = "Reading soil...";
-    progress.classList.remove("hidden");
-
-    let remaining = 5;
-    countdown.textContent = remaining;
-    bar.style.width = "0%";
-
-    const interval = setInterval(() => {
-      remaining--;
-      countdown.textContent = remaining;
-      bar.style.width = ((5 - remaining) / 5 * 100) + "%";
-      if (remaining <= 0) {
-        clearInterval(interval);
-        showGeneratedSensorData();
-      }
-    }, 1000);
-
-    window.sensorTimer = setTimeout(() => {
-      clearInterval(interval);
-      showGeneratedSensorData();
-    }, 5000);
-  }, 1500);
-}
-
-function showGeneratedSensorData() {
-  const liveCard = document.getElementById("btSensorLiveCard");
-  const loadBtn = document.getElementById("btnLoadSensorData");
-  const statusText = document.getElementById("btModalStatusText");
-  const dot = document.getElementById("btModalDot");
-  const grid = document.getElementById("bslcGrid");
-
-  const readings = generateMockNPKData();
-  window.pendingSensorData = readings;
-
-  grid.innerHTML = `
-    <div class="bslc-item"><span class="bslc-label">N</span><span class="bslc-value">${readings.N} mg/kg</span></div>
-    <div class="bslc-item"><span class="bslc-label">P</span><span class="bslc-value">${readings.P} mg/kg</span></div>
-    <div class="bslc-item"><span class="bslc-label">K</span><span class="bslc-value">${readings.K} mg/kg</span></div>
-    <div class="bslc-item"><span class="bslc-label">pH</span><span class="bslc-value">${readings.ph}</span></div>
-    <div class="bslc-item"><span class="bslc-label">EC</span><span class="bslc-value">${readings.ec} uS/cm</span></div>
-    <div class="bslc-item"><span class="bslc-label">Moisture</span><span class="bslc-value">${readings.moisture}%</span></div>
-    <div class="bslc-item"><span class="bslc-label">Temp</span><span class="bslc-value">${readings.temp}°C</span></div>
-  `;
-
-  liveCard.classList.remove("hidden");
-  loadBtn.classList.remove("hidden");
-  statusText.textContent = "Done";
-  dot.className = "bt-modal-dot connected";
-}
-
-function generateMockNPKData() {
-  return {
-    N: Math.floor(Math.random() * 80) + 20,
-    P: Math.floor(Math.random() * 60) + 15,
-    K: Math.floor(Math.random() * 80) + 25,
-    ph: (Math.random() * 2 + 5.5).toFixed(1),
-    ec: (Math.random() * 2 + 0.5).toFixed(1),
-    moisture: Math.floor(Math.random() * 40) + 30,
-    temp: Math.floor(Math.random() * 10) + 22
-  };
+    const status = document.getElementById("npkHtdStatus");
+    if (status) status.textContent = "Real HM-10 BLE reading received; select Use This Data to populate the form.";
+  }, () => {
+    spinner.classList.add("hidden");
+    dot.className = "bt-modal-dot";
+    statusText.textContent = "HM-10 disconnected";
+  }).then(device => {
+    spinner.classList.add("hidden");
+    title.textContent = "HM-10 Connected";
+    subtitle.textContent = `Connected to ${device.name || "HM-10"}. Press the Arduino scan button and wait for its 10-second reading.`;
+    dot.className = "bt-modal-dot connected";
+    statusText.textContent = "Waiting for telemetry from the sensor...";
+  }).catch(error => {
+    console.error("HM-10 BLE connection failed:", error);
+    spinner.classList.add("hidden");
+    title.textContent = "Sensor Connection Failed";
+    subtitle.textContent = error.message || "Could not connect to the HM-10 BLE serial device.";
+    statusText.textContent = error.name === "NotFoundError" ? "Device selection canceled" : "No BLE sensor connection";
+    dot.className = "bt-modal-dot";
+  });
 }
 
 function loadPreviousData() {
   try {
     const last = JSON.parse(sessionStorage.getItem("lastFarmState") || "{}");
-    if (last.N) {
+    if (last.N !== undefined && last.source === "HM-10 BLE Serial Sensor") {
       clearAllInputs();
       fillInputs(last.N, last.P, last.K, last.ph, last.ec, last.moisture, last.temp);
       updateSensorDisplay(last);
       return;
     }
-  } catch {}
+  } catch (error) {
+    console.warn("Could not read the previous sensor record:", error);
+  }
 
-  fetch(`${API_URL}/api/soil-csv-data`)
+  fetch(`${API_URL}/api/hardware-data`)
     .then(res => res.json())
     .then(data => {
-      if (data.status === "success" && data.latest) {
-        const row = data.latest;
+      if (data.status === "success" && data.telemetry) {
+        const telemetry = data.telemetry;
         const parsed = {
-          N: parseFloat(row.N) || 22,
-          P: parseFloat(row.P) || 45,
-          K: parseFloat(row.K) || 38,
-          ph: parseFloat(row.pH) || 5.8,
-          ec: parseFloat(row.EC) > 50 ? parseFloat((parseFloat(row.EC) / 1000).toFixed(2)) : parseFloat(row.EC),
-          moisture: parseFloat(row.Moisture) || 62.15,
-          temp: parseFloat(row.Temperature) || 26.3
+          nitrogen: telemetry.nitrogen,
+          phosphorus: telemetry.phosphorus,
+          potassium: telemetry.potassium,
+          ph: telemetry.ph,
+          ec_us_cm: telemetry.ec_us_cm,
+          ec_raw: telemetry.ec_raw,
+          ec: telemetry.ec,
+          soil_moisture: telemetry.soil_moisture,
+          temperature: telemetry.temperature
         };
+        applyParsedDataToAdvisor(parsed);
         clearAllInputs();
-        fillInputs(parsed.N, parsed.P, parsed.K, parsed.ph, parsed.ec, parsed.moisture, parsed.temp);
-        updateSensorDisplay(parsed);
+        fillInputs(telemetry.nitrogen, telemetry.phosphorus, telemetry.potassium, telemetry.ph, telemetry.ec, telemetry.soil_moisture, telemetry.temperature);
       } else {
-        alert("No previous data found in CSV or session.");
+        alert("No real HM-10 sensor reading is available yet.");
       }
     })
-    .catch(() => alert("Could not reach backend API."));
+    .catch(error => {
+      console.error("Could not load previous hardware reading:", error);
+      alert("Could not reach backend API.");
+    });
 }
 
 function updateSensorDisplay(data) {
   const mEl = document.getElementById("npkBtMoisture");
   const tEl = document.getElementById("npkBtTemp");
-  const hEl = document.getElementById("npkBtHumidity");
   const nEl = document.getElementById("npkBtN");
   const pEl = document.getElementById("npkBtP");
   const kEl = document.getElementById("npkBtK");
   const phEl = document.getElementById("npkBtPh");
   const ecEl = document.getElementById("npkBtEc");
 
-  if (mEl) mEl.textContent = `${data.moisture}%`;
-  if (tEl) tEl.textContent = `${data.temp}°C`;
-  if (hEl) hEl.textContent = data.humidity ? `${data.humidity}%` : `${Math.min(90, Math.max(30, Math.round(data.moisture * 1.25)))}%`;
+  if (mEl) mEl.textContent = data.moisture === null ? "Not measured" : `${data.moisture}%`;
+  if (tEl) tEl.textContent = data.temp === null ? "Not measured" : `${data.temp}°C`;
   if (nEl) nEl.textContent = `${data.N} mg/kg`;
   if (pEl) pEl.textContent = `${data.P} mg/kg`;
   if (kEl) kEl.textContent = `${data.K} mg/kg`;
-  if (phEl) phEl.textContent = data.ph;
+  if (phEl) phEl.textContent = data.ph === null ? "Not measured" : data.ph;
   if (ecEl) ecEl.textContent = data.ec_display || `${data.ec} uS/cm`;
 }
 

@@ -91,18 +91,14 @@
     <div class="bt-modal-overlay hidden" id="btModalOverlay">
       <div class="bt-modal-box" id="btModalBox">
         <div class="bt-modal-icon" id="btModalIcon">📶</div>
-        <div class="bt-modal-title" id="btModalTitle">Connecting Sensor...</div>
-        <div class="bt-modal-subtitle" id="btModalSubtitle">Please wait</div>
+        <div class="bt-modal-title" id="btModalTitle">Connect to HM-10 Sensor</div>
+        <div class="bt-modal-subtitle" id="btModalSubtitle">Select your HM-10 device, then press the Arduino scan button.</div>
         <div class="bt-modal-spinner" id="btModalSpinner">
           <div class="spinner-ring"></div>
         </div>
         <div class="bt-modal-status" id="btModalStatus">
           <span class="bt-modal-dot" id="btModalDot"></span>
           <span id="btModalStatusText">Searching sensor...</span>
-        </div>
-        <div class="bt-modal-progress hidden" id="btModalProgress">
-          <div class="bmp-label">⏱ Reading soil: <strong id="bmpCountdown">5</strong>s</div>
-          <div class="bmp-bar-wrap"><div class="bmp-bar" id="bmpBar"></div></div>
         </div>
         <div class="bt-sensor-live-card hidden" id="btSensorLiveCard">
           <div class="bslc-header">📊 Soil Reading</div>
@@ -302,7 +298,7 @@
   </main>
 </div>
 
+<script src="hm10_ble.js"></script>
 <script src="npk_advisor.js"></script>
 </body>
 </html>
-

@@ -11,7 +11,7 @@ for stream in (sys.stdout, sys.stderr):
     if stream and hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from agents.orchestrator import AgentOrchestrator
 from llm_client import mistral_chat
@@ -406,20 +406,9 @@ def get_education_resources(category: Optional[str] = None):
         {"title": "PM-KUSUM Solar Pumps", "category": "scheme", "url": "https://pmkusum.mnre.gov.in"},
     ]
 
-# ================= HC-05 BLUETOOTH & HARDWARE PARSER =================
+# ================= HM-10 BLE & HARDWARE TELEMETRY =================
 LATEST_HARDWARE_TELEMETRY = {
-    "timestamp": None,
-    "soil_moisture": 45.3,
-    "temperature": 26.7,
-    "ec": 1.2,
-    "ec_raw": 1200.0,
-    "ec_us_cm": 1200.0,
-    "ph": 6.5,
-    "nitrogen": 50.0,
-    "phosphorus": 30.0,
-    "potassium": 40.0,
-    "humidity": 60.0,
-    "source": "HC-05 Bluetooth Serial (7-in-1 Soil Sensor)"
+    "timestamp": None
 }
 
 # CSV File Path for Soil Sensor Data
@@ -429,103 +418,152 @@ def append_to_soil_csv(data_dict: dict):
     """Appends parsed soil sensor data to soil_sensor_data.csv."""
     import csv
     from datetime import datetime
-    try:
-        ts = data_dict.get("timestamp") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        row = {
-            "timestamp": ts,
-            "Moisture": data_dict.get("soil_moisture") or data_dict.get("Moisture", "N/A"),
-            "Temperature": data_dict.get("temperature") or data_dict.get("Temperature", "N/A"),
-            "EC": data_dict.get("ec_raw") or data_dict.get("ec") or data_dict.get("EC", "N/A"),
-            "pH": data_dict.get("ph") or data_dict.get("pH", "N/A"),
-            "N": data_dict.get("nitrogen") or data_dict.get("N", "N/A"),
-            "P": data_dict.get("phosphorus") or data_dict.get("P", "N/A"),
-            "K": data_dict.get("potassium") or data_dict.get("K", "N/A")
-        }
-        fieldnames = ['timestamp', 'Moisture', 'Temperature', 'EC', 'pH', 'N', 'P', 'K']
-        file_exists = os.path.exists(CSV_SOIL_FILE)
-        with open(CSV_SOIL_FILE, mode='a', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(row)
-    except Exception as e:
-        print(f"[WARN] Failed to append to {CSV_SOIL_FILE}: {e}")
+    ts = data_dict.get("timestamp") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    row = {
+        "timestamp": ts,
+        "Moisture": data_dict.get("soil_moisture", "N/A"),
+        "Temperature": data_dict.get("temperature", "N/A"),
+        "EC": data_dict.get("ec_raw", data_dict.get("ec_us_cm", "N/A")),
+        "pH": data_dict.get("ph", "N/A"),
+        "N": data_dict.get("nitrogen", "N/A"),
+        "P": data_dict.get("phosphorus", "N/A"),
+        "K": data_dict.get("potassium", "N/A")
+    }
+    fieldnames = ['timestamp', 'Moisture', 'Temperature', 'EC', 'pH', 'N', 'P', 'K']
+    file_exists = os.path.exists(CSV_SOIL_FILE)
+    with open(CSV_SOIL_FILE, mode='a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
 
 def parse_hc05_text(raw_text: str) -> dict:
     """
-    Parses incoming raw text stream from ESP32 / Arduino UNO / HC-05 7-in-1 Soil Sensor.
-    Handles formats like:
-    [ESP32] Forwarding data: Moisture: 62.15
-    [ESP32] Forwarding data: Temperature: 26.30
-    [ESP32] Forwarding data: EC: 185
-    [ESP32] Forwarding data: pH: 5.80
-    [ESP32] Forwarding data: N: 22
-    [ESP32] Forwarding data: P: 45
-    [ESP32] Forwarding data: K: 38
+    Parses the Arduino key=value line, with legacy labeled lines still accepted.
     """
     import re
-    data = {}
+    values = {}
+    key_map = {
+        "N": "nitrogen",
+        "P": "phosphorus",
+        "K": "potassium",
+        "TEMP_C": "temperature",
+        "MOISTURE_PCT": "soil_moisture",
+        "EC_US_CM": "ec_us_cm",
+        "PH": "ph",
+        "MOISTURE": "soil_moisture",
+        "TEMPERATURE": "temperature",
+        "EC": "ec_us_cm"
+    }
 
-    # Generic regex for all 7 parameters
     for line in raw_text.splitlines():
         line = line.strip()
         if not line:
             continue
-        match = re.search(r'(Moisture|Temperature|EC|pH|N|P|K):\s*([\d\.]+)', line, re.IGNORECASE)
-        if match:
-            key, val = match.groups()
-            key_lower = key.lower()
-            num_val = float(val) if '.' in val else int(val)
-            if key_lower == "moisture":
-                data["soil_moisture"] = float(num_val)
-            elif key_lower == "temperature":
-                data["temperature"] = float(num_val)
-            elif key_lower == "ec":
-                data["ec_raw"] = float(num_val)
-                data["ec"] = round(num_val / 1000.0, 2) if num_val > 50 else float(num_val)
-                data["ec_us_cm"] = float(num_val) if num_val > 50 else round(num_val * 1000.0, 1)
-            elif key_lower == "ph":
-                data["ph"] = float(num_val)
-            elif key_lower == "n":
-                data["nitrogen"] = float(num_val)
-            elif key_lower == "p":
-                data["phosphorus"] = float(num_val)
-            elif key_lower == "k":
-                data["potassium"] = float(num_val)
+        for part in line.split(","):
+            match = re.fullmatch(r"\s*([A-Z_]+)\s*=\s*(-?\d+(?:\.\d+)?)\s*", part, re.IGNORECASE)
+            if match:
+                key, value = match.groups()
+                normalized_key = key.upper()
+                if normalized_key in key_map:
+                    field = key_map[normalized_key]
+                    parsed_value = float(value)
+                    values[field] = None if field in {"soil_moisture", "temperature", "ph"} and parsed_value == -1 else parsed_value
+                continue
 
-    # Calculate estimated humidity if moisture is present
-    if "soil_moisture" in data:
-        data["humidity"] = round(min(90.0, max(30.0, data["soil_moisture"] * 1.25)), 1)
+            match = re.search(
+                r"\b(Moisture|Temperature|EC|pH|N|P|K)\s*:\s*(-?\d+(?:\.\d+)?)",
+                part,
+                re.IGNORECASE
+            )
+            if match:
+                key, value = match.groups()
+                field = key_map[key.upper()]
+                parsed_value = float(value)
+                values[field] = None if field in {"soil_moisture", "temperature", "ph"} and parsed_value == -1 else parsed_value
 
-    return data
+    required = {
+        "soil_moisture", "temperature", "ec_us_cm", "ph",
+        "nitrogen", "phosphorus", "potassium"
+    }
+    if not required.issubset(values):
+        return {}
+    if any(value is not None and not math.isfinite(value) for value in values.values()):
+        return {}
+    if values["soil_moisture"] is not None and not 0 <= values["soil_moisture"] <= 100:
+        return {}
+    if values["ph"] is not None and not 0 <= values["ph"] <= 14:
+        return {}
+    if values["temperature"] is not None and not -20 <= values["temperature"] <= 100:
+        return {}
+    if any(values[field] < 0 for field in ("ec_us_cm", "nitrogen", "phosphorus", "potassium")):
+        return {}
+
+    values["ec_raw"] = values["ec_us_cm"]
+    values["ec"] = round(values["ec_us_cm"] / 1000.0, 3)
+    return values
 
 @app.post("/api/hc05-parse")
 def hc05_parse_endpoint(body: dict):
-    """Parses raw text stream from ESP32 / HC-05 and updates latest hardware state + CSV."""
+    """Parses Arduino serial telemetry and updates latest hardware state + CSV."""
     raw_text = body.get("raw_text", "")
     if not raw_text and "text" in body:
         raw_text = body.get("text", "")
+    if not isinstance(raw_text, str):
+        raise HTTPException(status_code=422, detail="raw_text must be a serial telemetry string.")
     parsed = parse_hc05_text(raw_text)
     if parsed:
         from datetime import datetime
         parsed["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        parsed["source"] = "HM-10 BLE Serial"
         LATEST_HARDWARE_TELEMETRY.update(parsed)
         append_to_soil_csv(parsed)
         return {"status": "success", "parsed": parsed, "message": "Sensor telemetry parsed and saved to CSV"}
-    return {"status": "warning", "parsed": {}, "message": "No sensor values matched in raw stream"}
+    raise HTTPException(status_code=422, detail="No complete, valid Arduino telemetry line was received.")
 
 @app.get("/api/hardware-data")
 def get_hardware_data():
     """Returns the latest stored telemetry from hardware."""
+    if LATEST_HARDWARE_TELEMETRY.get("timestamp") is None:
+        return {"status": "empty", "telemetry": None, "message": "No hardware reading received yet."}
     return {"status": "success", "telemetry": LATEST_HARDWARE_TELEMETRY}
 
 @app.post("/api/hardware-data")
 def post_hardware_data(body: dict):
     """Directly pushes hardware telemetry from a script or bridge."""
     from datetime import datetime
-    body["timestamp"] = datetime.utcnow().isoformat() + "Z"
-    LATEST_HARDWARE_TELEMETRY.update(body)
-    append_to_soil_csv(body)
+    required = ("nitrogen", "phosphorus", "potassium")
+    try:
+        telemetry = {key: float(body[key]) for key in required}
+        for key in ("soil_moisture", "temperature", "ph"):
+            value = body.get(key)
+            telemetry[key] = None if value is None else float(value)
+        ec_value = body.get("ec_us_cm", body.get("ec_raw", body.get("ec")))
+        ec_us_cm = float(ec_value)
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="A complete soil sensor reading is required.")
+
+    if any(value is not None and not math.isfinite(value) for value in telemetry.values()) or not math.isfinite(ec_us_cm):
+        raise HTTPException(status_code=422, detail="Sensor values must be finite numbers.")
+    if telemetry["soil_moisture"] is not None and not 0 <= telemetry["soil_moisture"] <= 100:
+        raise HTTPException(status_code=422, detail="Soil moisture is outside the sensor range.")
+    if telemetry["ph"] is not None and not 0 <= telemetry["ph"] <= 14:
+        raise HTTPException(status_code=422, detail="pH is outside the sensor range.")
+    if telemetry["temperature"] is not None and not -20 <= telemetry["temperature"] <= 100:
+        raise HTTPException(status_code=422, detail="Temperature is outside the sensor range.")
+    if ec_us_cm < 0 or any(telemetry[field] < 0 for field in required):
+        raise HTTPException(status_code=422, detail="EC and nutrient values cannot be negative.")
+
+    stored = {
+        **telemetry,
+        "ec_raw": ec_us_cm,
+        "ec_us_cm": ec_us_cm,
+        "ec": round(ec_us_cm / 1000.0, 3),
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "source": body.get("source", "HM-10 BLE Serial")
+    }
+    LATEST_HARDWARE_TELEMETRY.update(stored)
+    append_to_soil_csv(stored)
     return {"status": "success", "stored": LATEST_HARDWARE_TELEMETRY}
 
 @app.get("/api/soil-csv-data")
@@ -567,7 +605,8 @@ def run_agent(body: dict):
         # Extract Raw Telemetry Inputs
         sm = float(body.get("soil_moisture", 32.0))
         temp = float(body.get("temperature", 29.0))
-        humidity = float(body.get("humidity", 60.0))
+        humidity_value = body.get("humidity")
+        humidity = None if humidity_value is None else float(humidity_value)
         n_val = float(body.get("nitrogen", 42.0))
         p_val = float(body.get("phosphorus", 28.0))
         k_val = float(body.get("potassium", 55.0))
@@ -610,8 +649,14 @@ def run_agent(body: dict):
         # 1. Water Stress & CWSI Calculation
         temp_factor = max(0.0, (temp - 22.0) / 25.0)
         moisture_deficit = max(0.0, (65.0 - sm) / 65.0)
-        humidity_factor = max(0.0, (70.0 - humidity) / 70.0)
-        cwsi = round(min(1.0, max(0.0, (moisture_deficit * 0.50) + (temp_factor * 0.30) + (humidity_factor * 0.20))), 2)
+        stress_score = (moisture_deficit * 0.50) + (temp_factor * 0.30)
+        if humidity is not None:
+            humidity_factor = max(0.0, (70.0 - humidity) / 70.0)
+            stress_score += humidity_factor * 0.20
+            stress_score /= 1.0
+        else:
+            stress_score /= 0.80
+        cwsi = round(min(1.0, max(0.0, stress_score)), 2)
 
         if cwsi >= 0.65:
             ranked_risks.append({

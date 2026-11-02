@@ -119,8 +119,8 @@
     <div class="bt-modal-overlay hidden" id="btModalOverlay">
       <div class="bt-modal-box" id="btModalBox">
         <div class="bt-modal-icon" id="btModalIcon">📶</div>
-        <div class="bt-modal-title" id="btModalTitle">Connecting to Sensor...</div>
-        <div class="bt-modal-subtitle" id="btModalSubtitle">Looking for your soil probe...</div>
+        <div class="bt-modal-title" id="btModalTitle">Connect to HM-10 Sensor</div>
+        <div class="bt-modal-subtitle" id="btModalSubtitle">Select your HM-10 device, then press the Arduino scan button.</div>
         <div class="bt-modal-spinner" id="btModalSpinner">
           <div class="spinner-ring"></div>
         </div>
@@ -132,10 +132,6 @@
           <div class="sensor-checkpoint pending" id="sensorStepConnected"><span>1</span><strong>Device connected</strong></div>
           <div class="sensor-checkpoint pending" id="sensorStepReading"><span>2</span><strong>Reading received</strong></div>
           <div class="sensor-checkpoint pending" id="sensorStepLoaded"><span>3</span><strong>Data loaded</strong></div>
-        </div>
-        <div class="bt-modal-progress hidden" id="btModalProgress">
-          <div class="bmp-label">Reading soil <strong id="bmpCountdown">5</strong>s</div>
-          <div class="bmp-bar-wrap"><div class="bmp-bar" id="bmpBar"></div></div>
         </div>
         <div class="bt-sensor-live-card hidden" id="btSensorLiveCard">
           <div class="bslc-header">📊 Soil Reading Results</div>
@@ -223,11 +219,6 @@
           <div class="gauge-label">🌡️ Temp</div>
           <div class="gauge-bar-wrap"><div class="gauge-bar orange" id="gTemp" style="width:48.3%"></div></div>
           <input type="number" id="inpTemp" value="29" min="0" max="60" class="custom-input gauge-input" placeholder="°C"/>
-        </div>
-        <div class="npk-gauge-item">
-          <div class="gauge-label">💨 Air</div>
-          <div class="gauge-bar-wrap"><div class="gauge-bar teal" id="gHumidity" style="width:60%"></div></div>
-          <input type="number" id="inpHumidity" value="60" min="0" max="100" class="custom-input gauge-input" placeholder="%"/>
         </div>
       </div>
       <div class="telemetry-grid fleet-field-details">
@@ -352,6 +343,7 @@
   </main>
 </div>
 
+<script src="hm10_ble.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

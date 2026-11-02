@@ -1,6 +1,5 @@
 const API_URL = "http://127.0.0.1:8001";
 let activeIngestionMode = "manual";
-let bluetoothDevice = null;
 
 window.onload = function () {
     // Chatbot setup
@@ -85,9 +84,6 @@ window.onload = function () {
     const btModalSpinner = document.getElementById("btModalSpinner");
     const btModalStatusText = document.getElementById("btModalStatusText");
     const btModalDot = document.getElementById("btModalDot");
-    const btModalProgress = document.getElementById("btModalProgress");
-    const bmpCountdown = document.getElementById("bmpCountdown");
-    const bmpBar = document.getElementById("bmpBar");
     const btSensorLiveCard = document.getElementById("btSensorLiveCard");
     const bslcGrid = document.getElementById("bslcGrid");
     const btnLoadSensorData = document.getElementById("btnLoadSensorData");
@@ -103,16 +99,9 @@ window.onload = function () {
         if (selectedBtn) selectedBtn.classList.add("active");
     }
 
-    function hideBtModal() {
+    function hideBtModal(disconnectSensor = true) {
         if (btModalOverlay) btModalOverlay.classList.add("hidden");
-        if (window.sensorTimer) {
-            clearTimeout(window.sensorTimer);
-            window.sensorTimer = null;
-        }
-        if (window.sensorInterval) {
-            clearInterval(window.sensorInterval);
-            window.sensorInterval = null;
-        }
+        if (disconnectSensor) window.HM10SoilSensor.disconnect();
     }
 
     function setSensorCheckpoint(step, state) {
@@ -140,14 +129,13 @@ window.onload = function () {
         });
     }
 
-    function fillTelemetryInputs(sm, temp, hum, n, p, k, ph, ec) {
+    function fillTelemetryInputs(sm, temp, n, p, k, ph, ec) {
         const setVal = (id, val) => {
             const el = document.getElementById(id);
             if (el && val !== undefined) el.value = val;
         };
         setVal("inpMoisture", sm);
         setVal("inpTemp", temp);
-        setVal("inpHumidity", hum);
         setVal("inpN", n);
         setVal("inpP", p);
         setVal("inpK", k);
@@ -160,7 +148,7 @@ window.onload = function () {
         const gaugeMap = {
             inpN: ["gN", 300], inpP: ["gP", 300], inpK: ["gK", 300],
             inpPh: ["gPh", 14], inpEc: ["gEc", 10], inpMoisture: ["gMoisture", 100],
-            inpTemp: ["gTemp", 60], inpHumidity: ["gHumidity", 100]
+            inpTemp: ["gTemp", 60]
         };
         Object.entries(gaugeMap).forEach(([inputId, [gaugeId, max]]) => {
             const input = document.getElementById(inputId);
@@ -171,7 +159,7 @@ window.onload = function () {
         });
     }
 
-    ["inpN", "inpP", "inpK", "inpPh", "inpEc", "inpMoisture", "inpTemp", "inpHumidity"].forEach(id => {
+    ["inpN", "inpP", "inpK", "inpPh", "inpEc", "inpMoisture", "inpTemp"].forEach(id => {
         const input = document.getElementById(id);
         if (input) input.addEventListener("input", updateTelemetryGauges);
     });
@@ -202,28 +190,52 @@ window.onload = function () {
         });
     }
 
-    function loadPreviousData() {
+    async function loadPreviousData() {
         let prev = null;
         try {
             const saved = sessionStorage.getItem("lastFarmState") || localStorage.getItem("lastFarmState");
-            if (saved) prev = JSON.parse(saved);
+            if (saved) {
+                const candidate = JSON.parse(saved);
+                if (candidate.source === "HM-10 BLE Serial Sensor") prev = candidate;
+            }
         } catch (e) {
             console.warn("Could not read previous saved state", e);
         }
 
-        const sm = (prev && prev.moisture !== undefined) ? prev.moisture : 38.0;
-        const temp = (prev && prev.temp !== undefined) ? prev.temp : 27.5;
-        const hum = (prev && prev.humidity !== undefined) ? prev.humidity : 62.0;
-        const n = (prev && prev.N !== undefined) ? prev.N : (prev && prev.n !== undefined ? prev.n : 48.0);
-        const p = (prev && prev.P !== undefined) ? prev.P : (prev && prev.p !== undefined ? prev.p : 32.0);
-        const k = (prev && prev.K !== undefined) ? prev.K : (prev && prev.k !== undefined ? prev.k : 54.0);
-        const ph = (prev && prev.ph !== undefined) ? prev.ph : 6.7;
-        const ec = (prev && prev.ec !== undefined) ? prev.ec : 1.3;
+        if (!prev) {
+            try {
+                const response = await fetch(`${API_URL}/api/hardware-data`);
+                if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
+                const result = await response.json();
+                if (result.status === "success" && result.telemetry) {
+                    const telemetry = result.telemetry;
+                    prev = {
+                        moisture: telemetry.soil_moisture,
+                        temp: telemetry.temperature,
+                        N: telemetry.nitrogen,
+                        P: telemetry.phosphorus,
+                        K: telemetry.potassium,
+                        ph: telemetry.ph,
+                        ec: telemetry.ec,
+                        source: "HM-10 BLE Serial Sensor"
+                    };
+                }
+            } catch (error) {
+                console.error("Could not load previous hardware telemetry:", error);
+                alert("Could not reach the sensor backend.");
+                return;
+            }
+        }
+        if (!prev) {
+            alert("No real HM-10 sensor reading is available yet.");
+            return;
+        }
 
-        fillTelemetryInputs(sm, temp, hum, n, p, k, ph, ec);
+        const { moisture, temp, N, P, K, ph, ec } = prev;
+        fillTelemetryInputs(moisture, temp, N, P, K, ph, ec);
 
         if (previousDataBanner) {
-            previousDataBanner.innerHTML = `<span>📂 <strong>Previous Telemetry Applied:</strong> Moisture: ${sm}%, N: ${n}, P: ${p}, K: ${k} mg/kg, pH: ${ph}, EC: ${ec} uS/cm</span>`;
+            previousDataBanner.innerHTML = `<span>📂 <strong>Previous real sensor reading applied:</strong> Moisture: ${moisture ?? "not measured"}%, N: ${N}, P: ${P}, K: ${K} mg/kg, pH: ${ph ?? "not measured"}, EC: ${ec} mS/cm</span>`;
             previousDataBanner.classList.remove("hidden");
         }
     }
@@ -251,100 +263,102 @@ window.onload = function () {
     function startSensorFlow() {
         if (!btModalOverlay) return;
 
-        // Reset and show connecting popup
-        hideBtModal();
+        ["inpMoisture", "inpTemp", "inpN", "inpP", "inpK", "inpPh", "inpEc"].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = "";
+        });
+        updateTelemetryGauges();
+        window.pendingSensorData = null;
+        window.sensorDataLoaded = false;
+        if (btSensorStatusBanner) btSensorStatusBanner.classList.add("hidden");
         btModalOverlay.classList.remove("hidden");
-
-        btModalTitle.textContent = "Connecting Bluetooth Sensor...";
-        btModalSubtitle.textContent = "Searching for nearby 7-in-1 Soil NPK probe...";
+        btModalTitle.textContent = "Connecting to HM-10 Sensor...";
+        btModalSubtitle.textContent = "Choose your HM-10 device. Press the Arduino scan button after it connects.";
         if (btModalSpinner) btModalSpinner.classList.remove("hidden");
-        if (btModalProgress) btModalProgress.classList.add("hidden");
         if (btSensorLiveCard) btSensorLiveCard.classList.add("hidden");
         if (btnLoadSensorData) btnLoadSensorData.classList.add("hidden");
         if (btModalDot) btModalDot.className = "bt-modal-dot scanning";
-        if (btModalStatusText) btModalStatusText.textContent = "Looking for sensor...";
+        if (btModalStatusText) btModalStatusText.textContent = "Select the HM-10 BLE device...";
         resetSensorCheckpoints();
 
-        // Handshake: As physical sensor is dead/offline, simulate handshake seamlessly
-        const connectionDelay = Math.floor(Math.random() * 1800) + 1000;
-        window.sensorTimer = setTimeout(() => {
-            if (activeIngestionMode !== "sensors") return;
-
-            // Sensor connected status (visible on modal and only when option 3 is selected)
-            btModalTitle.textContent = "Sensor Connected";
-            btModalSubtitle.textContent = "Sensor is ready";
+        window.HM10SoilSensor.connect(async readings => {
+            const readingsForForm = {
+                n: readings.n,
+                p: readings.p,
+                k: readings.k,
+                ph: readings.ph === null ? undefined : readings.ph,
+                ec: readings.ec / 1000,
+                moisture: readings.moisture === null ? undefined : readings.moisture,
+                temp: readings.temp === null ? undefined : readings.temp
+            };
+            window.pendingSensorData = readingsForForm;
+            const displayValue = (value, unit) => value === null ? "Not measured" : `${value}${unit}`;
+            bslcGrid.innerHTML = `
+                <div class="bslc-item"><span class="bslc-label">NITROGEN (N)</span><span class="bslc-value">${readings.n} mg/kg</span></div>
+                <div class="bslc-item"><span class="bslc-label">PHOSPHORUS (P)</span><span class="bslc-value">${readings.p} mg/kg</span></div>
+                <div class="bslc-item"><span class="bslc-label">POTASSIUM (K)</span><span class="bslc-value">${readings.k} mg/kg</span></div>
+                <div class="bslc-item"><span class="bslc-label">pH LEVEL</span><span class="bslc-value">${displayValue(readings.ph, "")}</span></div>
+                <div class="bslc-item"><span class="bslc-label">EC</span><span class="bslc-value">${readings.ec} µS/cm</span></div>
+                <div class="bslc-item"><span class="bslc-label">SOIL MOISTURE</span><span class="bslc-value">${displayValue(readings.moisture, "%")}</span></div>
+                <div class="bslc-item"><span class="bslc-label">TEMPERATURE</span><span class="bslc-value">${displayValue(readings.temp, "°C")}</span></div>
+            `;
             if (btModalSpinner) btModalSpinner.classList.add("hidden");
+            if (btSensorLiveCard) btSensorLiveCard.classList.remove("hidden");
+            if (btnLoadSensorData) btnLoadSensorData.classList.remove("hidden");
+            if (btModalTitle) btModalTitle.textContent = "Real Sensor Reading Received";
+            if (btModalStatusText) btModalStatusText.textContent = "Complete Arduino telemetry frame received";
             if (btModalDot) btModalDot.className = "bt-modal-dot connected";
-            if (btModalStatusText) btModalStatusText.textContent = "Device connected";
-            setSensorCheckpoint("connected", "complete");
-            setSensorCheckpoint("reading", "active");
-
-            // Reveal on-page sensor connected banner (strictly visible on option 3)
-            if (btSensorStatusBanner) {
-                btSensorStatusBanner.classList.remove("hidden");
-                if (btSensorBannerSummary) {
-                    btSensorBannerSummary.textContent = "Status: Connected • Reading 7-in-1 soil NPK telemetry...";
-                }
+            setSensorCheckpoint("reading", "complete");
+            setSensorCheckpoint("loaded", "active");
+            if (btSensorBannerSummary) {
+                btSensorBannerSummary.textContent = `Latest real reading: N ${readings.n}, P ${readings.p}, K ${readings.k}`;
             }
 
-            // Start 5-second countdown
-            if (btModalProgress) btModalProgress.classList.remove("hidden");
-            let remaining = 5;
-            if (bmpCountdown) bmpCountdown.textContent = remaining;
-            if (bmpBar) bmpBar.style.width = "0%";
-
-            window.sensorInterval = setInterval(() => {
-                remaining--;
-                if (bmpCountdown) bmpCountdown.textContent = Math.max(0, remaining);
-                if (bmpBar) bmpBar.style.width = `${((5 - remaining) / 5) * 100}%`;
-                if (remaining <= 0) {
-                    clearInterval(window.sensorInterval);
-                    window.sensorInterval = null;
-                    showGeneratedSensorData();
-                }
-            }, 1000);
-
-        }, connectionDelay);
-    }
-
-    function generateMockNPKData() {
-        return {
-            n: Math.floor(Math.random() * 45) + 35,          // 35 - 80 mg/kg
-            p: Math.floor(Math.random() * 30) + 20,          // 20 - 50 mg/kg
-            k: Math.floor(Math.random() * 40) + 35,          // 35 - 75 mg/kg
-            ph: +(Math.random() * 1.4 + 6.0).toFixed(1),     // 6.0 - 7.4
-            ec: +(Math.random() * 1.0 + 0.8).toFixed(1),      // 0.8 - 1.8 uS/cm
-            moisture: +(Math.random() * 18 + 36).toFixed(1),  // 36 - 54 %
-            temp: +(Math.random() * 8 + 24).toFixed(1),       // 24 - 32 °C
-            humidity: Math.floor(Math.random() * 20) + 55    // 55 - 75 %
-        };
-    }
-
-    function showGeneratedSensorData() {
-        if (!btSensorLiveCard || !bslcGrid) return;
-
-        const readings = generateMockNPKData();
-        window.pendingSensorData = readings;
-
-        bslcGrid.innerHTML = `
-            <div class="bslc-item"><span class="bslc-label">NITROGEN (N)</span><span class="bslc-value">${readings.n} mg/kg</span></div>
-            <div class="bslc-item"><span class="bslc-label">PHOSPHORUS (P)</span><span class="bslc-value">${readings.p} mg/kg</span></div>
-            <div class="bslc-item"><span class="bslc-label">POTASSIUM (K)</span><span class="bslc-value">${readings.k} mg/kg</span></div>
-            <div class="bslc-item"><span class="bslc-label">pH LEVEL</span><span class="bslc-value">${readings.ph}</span></div>
-            <div class="bslc-item"><span class="bslc-label">EC (SALINITY)</span><span class="bslc-value">${readings.ec} uS/cm</span></div>
-            <div class="bslc-item"><span class="bslc-label">SOIL MOISTURE</span><span class="bslc-value">${readings.moisture}%</span></div>
-            <div class="bslc-item"><span class="bslc-label">TEMPERATURE</span><span class="bslc-value">${readings.temp}°C</span></div>
-            <div class="bslc-item"><span class="bslc-label">HUMIDITY</span><span class="bslc-value">${readings.humidity}%</span></div>
-        `;
-
-        btSensorLiveCard.classList.remove("hidden");
-        if (btnLoadSensorData) btnLoadSensorData.classList.remove("hidden");
-        if (btModalStatusText) btModalStatusText.textContent = "Reading received";
-        if (btModalDot) btModalDot.className = "bt-modal-dot connected";
-        if (bmpCountdown) bmpCountdown.textContent = "0";
-        if (bmpBar) bmpBar.style.width = "100%";
-        setSensorCheckpoint("reading", "complete");
-        setSensorCheckpoint("loaded", "active");
+            try {
+                const response = await fetch(`${API_URL}/api/hardware-data`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        soil_moisture: readings.moisture,
+                        temperature: readings.temp,
+                        ec_us_cm: readings.ec,
+                        ph: readings.ph,
+                        nitrogen: readings.n,
+                        phosphorus: readings.p,
+                        potassium: readings.k,
+                        source: "HM-10 BLE Serial"
+                    })
+                });
+                if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
+                if (btModalSubtitle) btModalSubtitle.textContent = "Live BLE measurement saved to the dashboard API.";
+            } catch (error) {
+                console.error("Could not save BLE telemetry to backend:", error);
+                if (btModalSubtitle) btModalSubtitle.textContent = `BLE reading received, but backend sync failed: ${error.message}`;
+            }
+        }, () => {
+            if (btModalSpinner) btModalSpinner.classList.add("hidden");
+            if (btModalDot) btModalDot.className = "bt-modal-dot";
+            if (btModalStatusText) btModalStatusText.textContent = "HM-10 disconnected";
+            if (btSensorStatusBanner) btSensorStatusBanner.classList.add("hidden");
+        }).then(device => {
+            if (btModalSpinner) btModalSpinner.classList.add("hidden");
+            if (btModalTitle) btModalTitle.textContent = "HM-10 Connected";
+            if (btModalSubtitle) btModalSubtitle.textContent = `Connected to ${device.name || "HM-10"}. Press the Arduino scan button and wait for its 10-second reading.`;
+            if (btModalStatusText) btModalStatusText.textContent = "Waiting for telemetry from the sensor...";
+            if (btModalDot) btModalDot.className = "bt-modal-dot connected";
+            if (btSensorStatusBanner) btSensorStatusBanner.classList.remove("hidden");
+            if (btSensorBannerSummary) btSensorBannerSummary.textContent = `Connected to ${device.name || "HM-10"}; waiting for a real scan.`;
+            setSensorCheckpoint("connected", "complete");
+            setSensorCheckpoint("reading", "active");
+        }).catch(error => {
+            console.error("HM-10 BLE connection failed:", error);
+            if (btModalSpinner) btModalSpinner.classList.add("hidden");
+            if (btModalTitle) btModalTitle.textContent = "Sensor Connection Failed";
+            if (btModalSubtitle) btModalSubtitle.textContent = error.message || "Could not connect to the HM-10 BLE serial device.";
+            if (btModalStatusText) btModalStatusText.textContent =
+                error.name === "NotFoundError" ? "Device selection canceled" : "No BLE sensor connection";
+            if (btModalDot) btModalDot.className = "bt-modal-dot";
+        });
     }
 
     // LOAD DATA BUTTON HANDLER
@@ -352,20 +366,24 @@ window.onload = function () {
         btnLoadSensorData.addEventListener("click", () => {
             if (window.pendingSensorData) {
                 const d = window.pendingSensorData;
-                fillTelemetryInputs(d.moisture, d.temp, d.humidity, d.n, d.p, d.k, d.ph, d.ec);
+                fillTelemetryInputs(d.moisture, d.temp, d.n, d.p, d.k, d.ph, d.ec);
+                if (d.moisture === undefined) document.getElementById("inpMoisture").value = "";
+                if (d.temp === undefined) document.getElementById("inpTemp").value = "";
+                if (d.ph === undefined) document.getElementById("inpPh").value = "";
+                updateTelemetryGauges();
+                window.sensorDataLoaded = true;
 
                 // Save to sessionStorage for cross-page compatibility
                 sessionStorage.setItem("lastFarmState", JSON.stringify({
                     moisture: d.moisture,
                     temp: d.temp,
-                    humidity: d.humidity,
                     N: d.n,
                     P: d.p,
                     K: d.k,
                     ph: d.ph,
                     ec: d.ec,
                     timestamp: new Date().toISOString(),
-                    source: "7-in-1 Bluetooth Sensor Probe"
+                    source: "HM-10 BLE Serial Sensor"
                 }));
 
                 // Update on-page banner
@@ -375,7 +393,7 @@ window.onload = function () {
 
                 setSensorCheckpoint("loaded", "complete");
 
-                hideBtModal();
+                hideBtModal(false);
             }
         });
     }
@@ -391,29 +409,44 @@ window.onload = function () {
     }
 
     async function run6AgentPipeline() {
-        const smVal = parseFloat(document.getElementById("inpMoisture").value) || 32.0;
-        const tempVal = parseFloat(document.getElementById("inpTemp").value) || 29.0;
-        const humidityVal = parseFloat(document.getElementById("inpHumidity").value) || 60.0;
-        const nVal = parseFloat(document.getElementById("inpN").value) || 42.0;
-        const pVal = parseFloat(document.getElementById("inpP").value) || 28.0;
-        const kVal = parseFloat(document.getElementById("inpK").value) || 55.0;
-        const phVal = parseFloat(document.getElementById("inpPh").value) || 6.8;
-        const ecVal = parseFloat(document.getElementById("inpEc").value) || 1.4;
+        if (activeIngestionMode === "sensors") {
+            if (!window.sensorDataLoaded) {
+                alert("Connect the HM-10, take a hardware reading, and load it before running the pipeline.");
+                return;
+            }
+            const requiredSensorInputs = ["inpMoisture", "inpTemp", "inpN", "inpP", "inpK", "inpPh", "inpEc"];
+            if (requiredSensorInputs.some(id => !document.getElementById(id).value.trim())) {
+                alert("Enter any soil sensor values that the probe did not measure before running the pipeline.");
+                return;
+            }
+        }
+        const readValue = (id, fallback) => {
+            const raw = document.getElementById(id).value.trim();
+            const value = Number(raw);
+            return raw && Number.isFinite(value) ? value : fallback;
+        };
+        const sensorMode = activeIngestionMode === "sensors";
+        const smVal = readValue("inpMoisture", sensorMode ? null : 32.0);
+        const tempVal = readValue("inpTemp", sensorMode ? null : 29.0);
+        const nVal = readValue("inpN", sensorMode ? null : 42.0);
+        const pVal = readValue("inpP", sensorMode ? null : 28.0);
+        const kVal = readValue("inpK", sensorMode ? null : 55.0);
+        const phVal = readValue("inpPh", sensorMode ? null : 6.8);
+        const ecVal = readValue("inpEc", sensorMode ? null : 1.4);
         const cropVal = document.getElementById("inpCrop").value;
         const acresVal = parseFloat(document.getElementById("inpAcres").value) || 2.5;
         const budgetVal = parseFloat(document.getElementById("inpBudget").value) || 24500.0;
         const waterVal = parseFloat(document.getElementById("inpWater").value) || 12500.0;
 
         const payload = {
-            mode: activeIngestionMode,
+            mode: activeIngestionMode === "sensors" ? "bluetooth" : activeIngestionMode,
             soil_moisture: smVal,
             temperature: tempVal,
-            humidity: humidityVal,
             nitrogen: nVal,
             phosphorus: pVal,
             potassium: kVal,
             ph: phVal,
-            ec: ecVal,
+            ec: sensorMode ? ecVal * 1000 : ecVal,
             crop_type: cropVal,
             acres: acresVal,
             budget: budgetVal,
@@ -436,6 +469,11 @@ window.onload = function () {
             }
         } catch (err) {
             console.error("6-agent pipeline fetch error:", err);
+            if (activeIngestionMode === "sensors") {
+                setAgentStatuses("BACKEND UNAVAILABLE");
+                alert("Could not run sensor analysis because the backend is unavailable. The live reading was not analyzed.");
+                return;
+            }
             // Local fallback execution
             render6AgentResults(getFallback6AgentOutput(payload));
             document.getElementById("sysHealthVal").textContent = "LOCAL ENGINE ACTIVE";
@@ -624,7 +662,7 @@ window.onload = function () {
                 telemetry: {
                     soil_moisture_pct: p.soil_moisture,
                     temperature_c: p.temperature,
-                    humidity_pct: p.humidity,
+                    humidity_pct: null,
                     nitrogen_mg_kg: p.nitrogen,
                     phosphorus_mg_kg: p.phosphorus,
                     potassium_mg_kg: p.potassium,
