@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>6-Agent Autonomous Architecture – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Ask me about the 6-agent pipeline, 7-in-1 Bluetooth NPK sensor telemetry, or candidate action plans!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab active">Fleet</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <button class="btn-outline" id="exportDocBtn">Export DOC</button>
+    <button class="btn-filled" id="exportJsonBtn">Export JSON</button>
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">AUTONOMOUS PIPELINE:<br/><span class="active-tag">6 AGENTS SYNC</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item active">📊 Fleet Dashboard</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">🌾 SMART FARM HELPER</div>
+        <h1 class="page-title">Field Soil Check & Simple Farm Advice</h1>
+        <p class="page-desc">Check your soil, find crop problems early, and see what to do today in 3 easy steps.</p>
+      </div>
+      <div class="system-health-badge">
+        <div>
+          <div class="sh-label">SYSTEM</div>
+          <div class="sh-value" id="sysHealthVal">READY</div>
+        </div>
+        <div class="sh-icon">🌱</div>
+      </div>
+    </div>
+
+    <!-- BLUETOOTH CONNECT POPUP MODAL -->
+    <div class="bt-modal-overlay hidden" id="btModalOverlay">
+      <div class="bt-modal-box" id="btModalBox">
+        <div class="bt-modal-icon" id="btModalIcon">📶</div>
+        <div class="bt-modal-title" id="btModalTitle">Connecting to Sensor...</div>
+        <div class="bt-modal-subtitle" id="btModalSubtitle">Looking for your soil probe...</div>
+        <div class="bt-modal-spinner" id="btModalSpinner">
+          <div class="spinner-ring"></div>
+        </div>
+        <div class="bt-modal-status" id="btModalStatus">
+          <span class="bt-modal-dot scanning" id="btModalDot"></span>
+          <span id="btModalStatusText">Looking for sensor...</span>
+        </div>
+        <div class="sensor-checklist" aria-live="polite">
+          <div class="sensor-checkpoint pending" id="sensorStepConnected"><span>1</span><strong>Device connected</strong></div>
+          <div class="sensor-checkpoint pending" id="sensorStepReading"><span>2</span><strong>Reading received</strong></div>
+          <div class="sensor-checkpoint pending" id="sensorStepLoaded"><span>3</span><strong>Data loaded</strong></div>
+        </div>
+        <div class="bt-modal-progress hidden" id="btModalProgress">
+          <div class="bmp-label">Reading soil <strong id="bmpCountdown">5</strong>s</div>
+          <div class="bmp-bar-wrap"><div class="bmp-bar" id="bmpBar"></div></div>
+        </div>
+        <div class="bt-sensor-live-card hidden" id="btSensorLiveCard">
+          <div class="bslc-header">📊 Soil Reading Results</div>
+          <div class="bslc-grid" id="bslcGrid"></div>
+        </div>
+        <div class="bt-modal-actions" id="btModalActions">
+          <button class="btn-bt-modal-load hidden" id="btnLoadSensorData">Load data</button>
+          <button class="btn-bt-modal-cancel" id="btModalCancelBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA INGESTION MODE SELECTOR BAR -->
+    <div class="card mode-selector-card">
+      <div class="card-title">📡 Add soil data</div>
+      <div class="ingestion-mode-tabs npk-data-options">
+        <button class="mode-tab-btn active" data-mode="manual" id="btnModeManual">
+          <span class="ndo-icon">✍️</span><span class="ndo-label">Type it</span>
+        </button>
+        <button class="mode-tab-btn" data-mode="previous" id="btnModePrevious">
+          <span class="ndo-icon">📂</span><span class="ndo-label">Last data</span>
+        </button>
+        <button class="mode-tab-btn" data-mode="sensors" id="btnModeSensors">
+          <span class="ndo-icon">📶</span><span class="ndo-label">Use sensor</span>
+        </button>
+      </div>
+
+      <!-- SENSOR CONNECTED STATUS BANNER (ONLY VISIBLE ON OPTION 3) -->
+      <div class="bt-sensor-status-banner hidden" id="btSensorStatusBanner">
+        <div class="bssb-left">
+          <span class="bt-status-dot connected" id="bannerDot"></span>
+          <div>
+            <div class="bssb-title" id="bannerTitle">🟢 Sensor ready</div>
+            <div class="bssb-sub" id="btSensorBannerSummary">Live reading ready</div>
+          </div>
+        </div>
+        <div class="bssb-right">
+          <button class="btn-rescan-sensor" id="btnRescanSensor" title="Read sensor again">
+            🔄 Read again
+          </button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATION FOR PREVIOUS DATA LOADED -->
+      <div class="previous-data-banner hidden" id="previousDataBanner">
+        <span>📂 <strong>Loaded:</strong> Using your last saved farm soil record.</span>
+      </div>
+    </div>
+
+    <!-- FIELD TELEMETRY FORM & CONSTRAINTS INPUT -->
+    <div class="card telemetry-form-card mt16">
+      <div class="card-title">🔬 Soil readings</div>
+      <div class="npk-gauges-row fleet-soil-gauges">
+        <div class="npk-gauge-item">
+          <div class="gauge-label">🌿 Nitrogen (N)</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar" id="gN" style="width:14%"></div></div>
+          <input type="number" id="inpN" value="42" min="0" max="300" class="custom-input gauge-input" placeholder="mg/kg"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">🟡 Phosphorus (P)</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar orange" id="gP" style="width:9%"></div></div>
+          <input type="number" id="inpP" value="28" min="0" max="300" class="custom-input gauge-input" placeholder="mg/kg"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">🟢 Potassium (K)</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar green" id="gK" style="width:18%"></div></div>
+          <input type="number" id="inpK" value="55" min="0" max="300" class="custom-input gauge-input" placeholder="mg/kg"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">💧 pH</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar blue" id="gPh" style="width:48.5%"></div></div>
+          <input type="number" id="inpPh" value="6.8" step="0.1" min="1" max="14" class="custom-input gauge-input" placeholder="pH"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">🧂 Salt (EC)</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar teal" id="gEc" style="width:14%"></div></div>
+          <input type="number" id="inpEc" value="1.4" step="0.1" min="0" max="10" class="custom-input gauge-input" placeholder="EC"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">💦 Water</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar teal" id="gMoisture" style="width:32%"></div></div>
+          <input type="number" id="inpMoisture" value="32" min="0" max="100" class="custom-input gauge-input" placeholder="%"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">🌡️ Temp</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar orange" id="gTemp" style="width:48.3%"></div></div>
+          <input type="number" id="inpTemp" value="29" min="0" max="60" class="custom-input gauge-input" placeholder="°C"/>
+        </div>
+        <div class="npk-gauge-item">
+          <div class="gauge-label">💨 Air</div>
+          <div class="gauge-bar-wrap"><div class="gauge-bar teal" id="gHumidity" style="width:60%"></div></div>
+          <input type="number" id="inpHumidity" value="60" min="0" max="100" class="custom-input gauge-input" placeholder="%"/>
+        </div>
+      </div>
+      <div class="telemetry-grid fleet-field-details">
+        <div class="tf-group">
+          <label>🌾 Crop</label>
+          <select id="inpCrop" class="custom-select">
+            <option value="Tomato">🍅 Tomato</option>
+            <option value="Wheat">🌾 Wheat</option>
+            <option value="Paddy (Rice)">🍚 Paddy / Rice</option>
+            <option value="Cotton">🌱 Cotton</option>
+            <option value="Green Chilli">🌶️ Green Chilli</option>
+          </select>
+        </div>
+        <div class="tf-group">
+          <label>📐 Land (acres)</label>
+          <input type="number" id="inpAcres" value="2.5" step="0.1" class="custom-input"/>
+        </div>
+        <div class="tf-group">
+          <label>💰 Budget (₹)</label>
+          <input type="number" id="inpBudget" value="24500" class="custom-input"/>
+        </div>
+        <div class="tf-group">
+          <label>🚰 Water limit (L)</label>
+          <input type="number" id="inpWater" value="12500" class="custom-input"/>
+        </div>
+      </div>
+
+      <button class="btn-run-6agents" id="runPipelineBtn">
+        🌱 Check field
+      </button>
+    </div>
+
+    <!-- 6-AGENT PIPELINE OUTPUT CONTAINER -->
+    <div class="pipeline-6agent-container mt24" id="pipelineContainer">
+
+      <!-- AGENT 1: DATA INGESTION CARD -->
+      <div class="card agent-card" id="agent1Card">
+        <div class="ac-header">
+          <span class="ac-title">📋 1. Soil & Field Summary</span>
+          <span class="ac-badge green" id="a1Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">Your field's current soil, moisture, and fertilizer levels.</p>
+          <div class="farmstate-box" id="a1FarmState">
+            <div class="empty-text">Click "Check My Field" to see your field summary...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 2: RISK DETECTION CARD -->
+      <div class="card agent-card" id="agent2Card">
+        <div class="ac-header">
+          <span class="ac-title">⚠️ 2. Crop Problems & Alerts</span>
+          <span class="ac-badge gold" id="a2Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">Alerts for dry soil, low fertilizer, or weather risks.</p>
+          <div class="risks-list" id="a2RisksList">
+            <div class="empty-text">Problems found in your soil will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 3: MONITORING & FEEDBACK CARD -->
+      <div class="card agent-card" id="agent3Card">
+        <div class="ac-header">
+          <span class="ac-title">📈 3. Field Health Progress</span>
+          <span class="ac-badge blue" id="a3Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">How your soil is improving after watering and fertilizer.</p>
+          <div class="feedback-box" id="a3FeedbackBox">
+            <div class="empty-text">Soil recovery report will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 4: DECISION / PLANNING CARD -->
+      <div class="card agent-card wide-agent-card" id="agent4Card">
+        <div class="ac-header">
+          <span class="ac-title">💡 4. Farming Options For You</span>
+          <span class="ac-badge green" id="a4Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">Choose between High Crop Yield or Saving Water & Money.</p>
+          <div class="candidate-plans-grid" id="a4PlansGrid">
+            <div class="empty-text">2 to 3 simple farming plans will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 5: CONSTRAINT OPTIMIZATION CARD -->
+      <div class="card agent-card" id="agent5Card">
+        <div class="ac-header">
+          <span class="ac-title">🎯 5. Best Choice For Your Budget</span>
+          <span class="ac-badge gold" id="a5Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">The smartest plan that fits your water and budget limits.</p>
+          <div class="constraint-box" id="a5ConstraintBox">
+            <div class="empty-text">The best affordable plan will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 6: EXECUTION & ORCHESTRATION CARD -->
+      <div class="card agent-card" id="agent6Card">
+        <div class="ac-header">
+          <span class="ac-title">🚜 6. What To Do Today</span>
+          <span class="ac-badge red" id="a6Status">READY</span>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">Simple, clear steps to take right now on your field.</p>
+          <div class="execution-box" id="a6ExecutionBox">
+            <div class="empty-text">Your daily farm action steps will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="index.js"></script>
+</body>
+</html>

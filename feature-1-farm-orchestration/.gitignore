@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+api_keys.txt
+memory.json
+**/memory.json
+backend/agents/agent2/Dataset/
+logs/

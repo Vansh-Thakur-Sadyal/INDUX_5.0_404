@@ -1,0 +1,74 @@
+{
+  "Rice": [
+    {
+      "field_id": "R001",
+      "region": "Punjab",
+      "season": "Kharif",
+      "months": ["June", "July", "August", "September"],
+      "area_hectares": 2.5,
+      "sensor_ids": ["S_R001_1", "S_R001_2"]
+    },
+    {
+      "field_id": "R002",
+      "region": "Uttar Pradesh",
+      "season": "Kharif",
+      "months": ["June", "July", "August", "September"],
+      "area_hectares": 3.0,
+      "sensor_ids": ["S_R002_1", "S_R002_2"]
+    }
+  ],
+  "Wheat": [
+    {
+      "field_id": "W001",
+      "region": "Haryana",
+      "season": "Rabi",
+      "months": ["November", "December", "January", "February"],
+      "area_hectares": 3.0,
+      "sensor_ids": ["S_W001_1", "S_W001_2"]
+    },
+    {
+      "field_id": "W002",
+      "region": "Punjab",
+      "season": "Rabi",
+      "months": ["November", "December", "January", "February"],
+      "area_hectares": 2.8,
+      "sensor_ids": ["S_W002_1", "S_W002_2"]
+    }
+  ],
+  "Cotton": [
+    {
+      "field_id": "C001",
+      "region": "Maharashtra",
+      "season": "Kharif",
+      "months": ["July", "August", "September", "October"],
+      "area_hectares": 1.8,
+      "sensor_ids": ["S_C001_1", "S_C001_2"]
+    },
+    {
+      "field_id": "C002",
+      "region": "Gujarat",
+      "season": "Kharif",
+      "months": ["July", "August", "September", "October"],
+      "area_hectares": 2.0,
+      "sensor_ids": ["S_C002_1", "S_C002_2"]
+    }
+  ],
+  "Sugarcane": [
+    {
+      "field_id": "SC001",
+      "region": "Uttar Pradesh",
+      "season": "Rabi",
+      "months": ["October", "November", "December", "January", "February", "March"],
+      "area_hectares": 4.0,
+      "sensor_ids": ["S_SC001_1", "S_SC001_2"]
+    },
+    {
+      "field_id": "SC002",
+      "region": "Maharashtra",
+      "season": "Rabi",
+      "months": ["October", "November", "December", "January", "February", "March"],
+      "area_hectares": 3.5,
+      "sensor_ids": ["S_SC002_1", "S_SC002_2"]
+    }
+  ]
+}
