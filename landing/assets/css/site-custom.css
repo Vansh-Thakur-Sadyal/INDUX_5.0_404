@@ -1,0 +1,95 @@
+/* VisionCoders — site overrides layered on top of the compiled theme.
+   Put custom rules HERE: styles.css is generated from assets/scss and any
+   edit made directly to it is lost the next time the scss is compiled. */
+
+/* --------------------------------------------------------------------------
+   Hide the browser scrollbar.
+
+   The page still scrolls exactly as before — mouse wheel, trackpad, touch,
+   drag, the keyboard (arrows / Page Up / Page Down / Home / End / space) and
+   the theme's own scroll-to-top button are all unaffected. Only the visible
+   track and thumb are removed, because the pale native bar cut a hard edge
+   down the right of the full-bleed dark hero.
+
+   Removing the bar also gives the layout back the ~15px it used to reserve,
+   so the hero video now runs edge to edge.
+   -------------------------------------------------------------------------- */
+
+html {
+  scrollbar-width: none;      /* Firefox 64+ */
+  -ms-overflow-style: none;   /* IE 10+ / legacy Edge */
+}
+
+/* Chrome, Edge, Safari, Opera and every other WebKit/Blink browser */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Inner scrollable areas too — chiefly the mobile off-canvas menu — so a
+   stray bar never appears there while the main page has none. */
+*{
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Contact form status line (injected by assets/js/support-form.js).
+   Sits inside the form, below the submit button. Empty until there is
+   something to say, so it takes no space in the normal state.
+   -------------------------------------------------------------------------- */
+
+.support-status {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.support-status:empty {
+  display: none;
+}
+
+.support-status.is-pending,
+.support-status.is-success,
+.support-status.is-error {
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid transparent;
+}
+
+.support-status.is-pending {
+  color: #4a5558;
+  background: rgba(31, 42, 46, 0.06);
+  border-left-color: rgba(31, 42, 46, 0.35);
+}
+
+.support-status.is-success {
+  color: #23331a;
+  background: rgba(193, 255, 114, 0.30);   /* --bs-primary, tinted */
+  border-left-color: #C1FF72;
+}
+
+.support-status.is-error {
+  color: #7d2018;
+  background: rgba(179, 38, 30, 0.09);
+  border-left-color: #b3261e;
+}
+
+/* The submit button while a query is in flight. */
+.support-status ~ *,
+form[data-support-form] button[aria-busy="true"] {
+  cursor: progress;
+}
+
+form[data-support-form] button[disabled] {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
