@@ -1,0 +1,294 @@
+.hardware-share-layout {
+  min-height: calc(100vh - 52px);
+}
+
+.hardware-share-sidebar {
+  position: sticky;
+  top: 52px;
+  align-self: start;
+  gap: 12px;
+  padding: 22px 16px;
+}
+
+.hardware-sidebar-title,
+.hardware-share-page .page-eyebrow {
+  color: #387347;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.hardware-share-sidebar h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.hardware-share-sidebar ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-mid);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hardware-prototype-note {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #e6d39f;
+  border-radius: 8px;
+  background: #fff9e9;
+  color: #5b4b22;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.hardware-prototype-note p {
+  margin: 5px 0 0;
+}
+
+.hardware-share-main {
+  min-width: 0;
+  max-width: 1300px;
+}
+
+.hardware-hero,
+.hardware-section-heading,
+.hardware-location-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hardware-hero {
+  margin-bottom: 18px;
+}
+
+.hardware-share-page .page-eyebrow {
+  margin-bottom: 6px;
+}
+
+.hardware-share-page .page-title {
+  margin-bottom: 6px;
+}
+
+.hardware-share-page .page-desc {
+  max-width: 650px;
+}
+
+.hardware-card {
+  margin-bottom: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hardware-section-heading {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.hardware-section-heading h2 {
+  margin: 0 0 5px;
+  font-size: 19px;
+}
+
+.hardware-quota-badge,
+.hardware-radius-badge {
+  flex: 0 0 auto;
+  border-radius: 20px;
+  padding: 7px 11px;
+  background: #eef7ef;
+  color: #28643a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hardware-radius-badge {
+  background: #eef3f8;
+  color: #315779;
+}
+
+.hardware-status,
+.hardware-location-row p,
+.hardware-unit-meta,
+.hardware-empty-state {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hardware-unit-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.hardware-unit-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fbfcfa;
+}
+
+.hardware-unit-card.selected {
+  border-color: #42865a;
+  box-shadow: 0 0 0 2px #42865a22;
+}
+
+.hardware-unit-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hardware-unit-status {
+  border-radius: 14px;
+  padding: 3px 8px;
+  background: #e8f5e9;
+  color: #28643a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.hardware-unit-status.in-use,
+.hardware-unit-status.maintenance {
+  background: #fff1e9;
+  color: #9c4a20;
+}
+
+.hardware-form {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.hardware-form > label,
+.hardware-coordinate-grid label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hardware-form select,
+.hardware-form input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #cbd5c8;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-dark);
+  font: 13px var(--font-main);
+  padding: 9px 11px;
+}
+
+.hardware-location-row {
+  margin-top: 7px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fafbf9;
+}
+
+.hardware-coordinate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hardware-coordinate-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.hardware-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font: 700 12px var(--font-main);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hardware-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.hardware-button.primary {
+  background: #317348;
+  color: #fff;
+}
+
+.hardware-button.primary:hover:not(:disabled) {
+  background: #255a37;
+}
+
+.hardware-button.secondary {
+  border: 1px solid #cbd5c8;
+  background: #fff;
+  color: var(--text-dark);
+}
+
+.hardware-booking-panel {
+  margin-top: 16px;
+}
+
+.hardware-booking-card {
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f7faf6;
+}
+
+.hardware-booking-card h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.hardware-booking-card p {
+  margin: 5px 0;
+  color: var(--text-mid);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hardware-booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hardware-message-error {
+  color: #a3261e;
+}
+
+.hardware-message-success {
+  color: #28643a;
+}
+
+@media (max-width: 760px) {
+  .hardware-hero,
+  .hardware-section-heading,
+  .hardware-location-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hardware-coordinate-grid {
+    grid-template-columns: 1fr;
+  }
+}

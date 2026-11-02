@@ -5,6 +5,7 @@ import re
 import requests
 import threading
 import time
+from contextlib import asynccontextmanager
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -27,9 +28,25 @@ from agents.orchestrator import AgentOrchestrator
 from assistant_knowledge import list_feature_knowledge, retrieve_feature_knowledge
 from llm_client import mistral_chat
 from api.sos import router as sos_router, start_sos_cleanup, stop_sos_cleanup
+from api.hardware_share import (
+    router as hardware_share_router,
+    start_hardware_share_worker,
+    stop_hardware_share_worker,
+)
 import progress
 
-app = FastAPI(title="Agritech Farm API", version="2.5.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    start_sos_cleanup()
+    start_hardware_share_worker()
+    try:
+        yield
+    finally:
+        stop_hardware_share_worker()
+        stop_sos_cleanup()
+
+
+app = FastAPI(title="Agritech Farm API", version="2.5.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,16 +55,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(sos_router)
-
-
-@app.on_event("startup")
-def start_sos_retention_cleanup():
-    start_sos_cleanup()
-
-
-@app.on_event("shutdown")
-def stop_sos_retention_cleanup():
-    stop_sos_cleanup()
+app.include_router(hardware_share_router)
 
 orchestrator = AgentOrchestrator()
 

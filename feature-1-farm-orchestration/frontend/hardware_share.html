@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Book Shared Hardware – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="hardware_share.css"/>
+</head>
+<body class="hardware-share-page">
+  <header class="topnav">
+    <div class="topnav-left">
+      <span class="brand">Farm Hardware Share</span>
+      <nav class="top-tabs" aria-label="Main navigation">
+        <a href="index.html" class="tab">Farm Dashboard</a>
+        <a href="hardware_share.html" class="tab active" aria-current="page">Book hardware</a>
+        <a href="sos.html" class="tab">Emergency SOS</a>
+      </nav>
+    </div>
+    <a class="btn-outline" href="index.html">Back to dashboard</a>
+  </header>
+
+  <div class="layout hardware-share-layout">
+    <aside class="sidebar hardware-share-sidebar">
+      <div class="hardware-sidebar-title">SHARED FARM EQUIPMENT</div>
+      <h2>How booking works</h2>
+      <ol>
+        <li>GPS is optional. Sync your location or enter coordinates if you want to share them.</li>
+        <li>Join a unit's queue. The suggested 5 km proximity is not enforced.</li>
+        <li>Start your two-hour session when allocated.</li>
+        <li>Return the unit to its hub when finished. Any distance guidance is informational only.</li>
+      </ol>
+      <div class="hardware-prototype-note">
+        <strong>Prototype notice</strong>
+        <p>Bookings are held in memory on this app process and reset when it restarts. The listed Gwalior unit is a demo, not a real available device. Your browser ID is a prototype identifier, not a verified account.</p>
+      </div>
+    </aside>
+
+    <main class="main hardware-share-main">
+      <section class="hardware-hero">
+        <div>
+          <div class="page-eyebrow">SHARED HARDWARE POOL</div>
+          <h1 class="page-title">Book shared hardware</h1>
+          <p class="page-desc">Reserve a turn in the shared sensor queue, collect the unit, and return it to its registered hub.</p>
+        </div>
+        <button type="button" class="hardware-button secondary" id="refreshUnitsButton">Refresh units</button>
+      </section>
+
+      <section class="hardware-card" aria-labelledby="unitHeading">
+        <div class="hardware-section-heading">
+          <div>
+            <div class="page-eyebrow">AVAILABLE UNITS</div>
+            <h2 id="unitHeading">Choose a hardware hub</h2>
+          </div>
+          <span class="hardware-quota-badge">2 sessions / calendar month</span>
+        </div>
+        <p id="unitStatus" class="hardware-status" role="status" aria-live="polite">Loading shared hardware units…</p>
+        <div id="unitList" class="hardware-unit-list"></div>
+      </section>
+
+      <section class="hardware-card" aria-labelledby="bookingHeading">
+        <div class="hardware-section-heading">
+          <div>
+            <div class="page-eyebrow">YOUR BOOKING</div>
+            <h2 id="bookingHeading">Join the queue</h2>
+          </div>
+          <span class="hardware-radius-badge">5 km suggested · not checked</span>
+        </div>
+
+        <form id="hardwareBookingForm" class="hardware-form">
+          <label for="hardwareUnitSelect">Hardware unit</label>
+          <select id="hardwareUnitSelect" required>
+            <option value="">Loading units…</option>
+          </select>
+
+          <div class="hardware-location-row">
+            <div>
+              <strong>Your current location</strong>
+              <p id="locationStatus">Location is optional. The suggested hub distance is not checked.</p>
+            </div>
+            <button type="button" class="hardware-button secondary" id="syncLocationButton">Sync GPS</button>
+          </div>
+
+          <div class="hardware-coordinate-grid">
+            <label>
+              Latitude (optional)
+              <input id="userLatitude" name="user_lat" type="number" min="-90" max="90" step="any" placeholder="Optional"/>
+            </label>
+            <label>
+              Longitude (optional)
+              <input id="userLongitude" name="user_lng" type="number" min="-180" max="180" step="any" placeholder="Optional"/>
+            </label>
+          </div>
+
+          <button type="submit" class="hardware-button primary" id="joinQueueButton">Join booking queue</button>
+        </form>
+
+        <div id="bookingPanel" class="hardware-booking-panel" aria-live="polite">
+          <p class="hardware-empty-state">Your queue position or active session will appear here.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="hardware_share.js?v=2"></script>
+  <script src="sos.js?v=3"></script>
+</body>
+</html>

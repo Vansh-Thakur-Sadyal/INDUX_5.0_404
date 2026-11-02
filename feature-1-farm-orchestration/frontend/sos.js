@@ -5,6 +5,33 @@
   const MAX_RECORDING_MS = 2 * 60 * 1000;
 
   function addSosLauncher() {
+    if (!location.pathname.toLowerCase().endsWith("/hardware_share.html")
+      && !document.getElementById("farmGlobalHardwareShareLink")) {
+      const hardwareLink = document.createElement("a");
+      hardwareLink.id = "farmGlobalHardwareShareLink";
+      hardwareLink.href = "hardware_share.html";
+      hardwareLink.textContent = "📡 Book Hardware";
+      hardwareLink.setAttribute("aria-label", "Book shared farm hardware");
+      hardwareLink.style.cssText = [
+        "position:fixed",
+        "left:20px",
+        "bottom:80px",
+        "z-index:9998",
+        "display:inline-flex",
+        "align-items:center",
+        "justify-content:center",
+        "min-height:48px",
+        "padding:0 18px",
+        "border-radius:26px",
+        "background:#317348",
+        "color:#fff",
+        "font:700 14px sans-serif",
+        "text-decoration:none",
+        "box-shadow:0 4px 16px #0004",
+      ].join(";");
+      document.body.appendChild(hardwareLink);
+    }
+
     if (location.pathname.toLowerCase().endsWith("/sos.html")) return;
     if (document.getElementById("farmGlobalSosLink")) return;
 

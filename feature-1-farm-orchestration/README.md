@@ -40,6 +40,20 @@ The prototype does not contact emergency services; call 112 directly in an
 emergency. Users must consent before sharing exact incident coordinates and
 voice recordings.
 
+Hardware Share is also a local prototype. It provides an in-memory shared
+hardware queue, optional GPS capture with informational 5 km hub and 100 m
+return-distance guidance (distances are not calculated or enforced), two
+started sessions per calendar month, two-hour sessions, and a seven-day
+blacklist for overdue returns. The overdue worker runs once per minute. For API testing, a
+sample unit (`sample-hardware-001`) is seeded at the Gwalior demo coordinates
+configured in `backend/api/hardware_share.py`; it is not a real registered
+device. Bookings are available from the dashboard's Hardware Share navigation
+or the floating Book Hardware shortcut. State resets when the backend restarts
+and is not shared across worker processes. User endpoints require `X-User-Id`;
+this prototype header is not authentication and must be replaced with a
+verified account identity before deployment. The session return request also
+requires the token returned by the start endpoint.
+
 The text assistant is available across all feature pages shown in the
 navigation. It retrieves relevant entries from a local feature knowledge
 index using sparse TF-IDF vectors and BM25, then grounds its answer in those
