@@ -1,0 +1,251 @@
+/* ============================================================
+   YIELD CALCULATOR STYLES (yield_calculator.css)
+   ============================================================ */
+
+.yield-calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .yield-calc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.yield-form-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.req {
+  color: #ef4444;
+}
+
+.btn-calculate-yield {
+  margin-top: 20px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-primary) 100%);
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(45, 106, 45, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-calculate-yield:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 106, 45, 0.4);
+}
+
+/* Result Card */
+.yield-result-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-status-badge {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-align: center;
+  margin: 12px 0 16px 0;
+  letter-spacing: 0.5px;
+}
+
+.yield-comparison-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f8faf8;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.yc-box {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.yc-box.highlight {
+  background: #ffffff;
+  border: 1px solid var(--green-accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.yc-label {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.yc-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 4px 0;
+}
+
+.yc-val.green {
+  color: #16a34a;
+}
+
+.yc-sub {
+  font-size: 10px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+}
+
+.yc-arrow {
+  font-size: 20px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.revenue-delta-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rev-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #166534;
+  font-weight: 700;
+}
+
+.rev-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #15803d;
+  margin-top: 2px;
+}
+
+.rev-details {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #166534;
+}
+
+.ai-agronomy-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ai-box-title {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #1e40af;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.ai-box-text {
+  font-size: 13px;
+  color: #1e3a8a;
+  line-height: 1.5;
+}
+
+/* Saved History Table */
+.yield-history-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.btn-clear-history {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.btn-clear-history:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.history-table th {
+  background: #f8fafc;
+  padding: 10px 12px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.history-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--text-dark);
+}

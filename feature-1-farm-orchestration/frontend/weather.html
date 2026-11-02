@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather & Farm Alerts – Verdant Intelligence</title>
+  <link rel="stylesheet" href="index.css" /><link rel="stylesheet" href="weather.css" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topnav"><div class="topnav-left"><span class="brand">Verdant Intelligence</span><nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab active">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab">News & Trends</a>
+    </nav></div><div class="topnav-right"></div></header>
+  <div class="layout"><aside class="sidebar"><div class="sidebar-brand"><div class="brand-dot"></div><div><div class="brand-name">Verdant Intelligence</div><div class="brand-sub">FIELD WEATHER:<br><span class="active-tag">LIVE MONITORING</span></div></div></div><a class="chatbot-open-btn" href="plant_growth.html">Track plant growth</a></aside>
+  <main class="main weather-main">
+    <section class="weather-hero"><div><div class="page-eyebrow" data-i18n="live_weather">LIVE FIELD WEATHER</div><h1 class="page-title" data-i18n="weather_title">Farm weather, made actionable.</h1><p class="page-desc" data-i18n="weather_intro">Live conditions and farm-ready warnings for irrigation, spraying and crop protection.</p></div><div class="weather-controls"><button class="btn-outline" id="locationBtn">Use my location</button><button class="btn-filled" id="refreshBtn">↻ Refresh now</button><span class="updated" id="lastUpdated">Last updated —</span></div></section>
+    <div class="location-line">⌖ <span id="locationName">Finding your farm location…</span><span id="weatherStatus" class="weather-status">Connecting to Open‑Meteo</span></div>
+    <section class="weather-grid" aria-live="polite"><article class="weather-now"><div class="weather-symbol" id="weatherSymbol">☀</div><div><div class="metric-label">CURRENT FIELD CONDITIONS</div><div class="temperature"><span id="temperature">—</span><small>°C</small></div><div id="condition">Loading live weather…</div></div><div class="feels">Feels like <b id="apparent">—°</b></div></article>
+      <article class="stat-card"><span>💧</span><div><div class="metric-label">HUMIDITY</div><strong id="humidity">—%</strong></div></article><article class="stat-card"><span>〰</span><div><div class="metric-label">WIND</div><strong id="wind">— km/h</strong></div></article><article class="stat-card rain-card"><span>☔</span><div><div class="metric-label" data-i18n="expected_rain">EXPECTED RAIN</div><strong id="rainToday">— mm today</strong><small id="rainNext">— in next 7 days</small></div></article>
+    </section>
+    <section class="content-grid"><article class="card alerts-card"><div class="section-heading"><div><div class="page-eyebrow" data-i18n="farm_alerts">FARM ALERTS</div><h2 data-i18n="action_required">Action when it matters</h2></div><span id="alertCount" class="alert-count">0 active</span></div><div id="alertsList" class="alerts-list"><div class="empty-alert">Checking farm risks…</div></div></article>
+      <article class="card forecast-card"><div class="section-heading"><div><div class="page-eyebrow">7 DAY OUTLOOK</div><h2>Plan field work</h2></div></div><div id="forecast" class="forecast-list"></div><p class="forecast-note">Rain is shown at all times so irrigation can be planned with confidence.</p></article></section>
+    <section class="card advisory-card"><div><div class="page-eyebrow">DAILY FIELD PLAN</div><h2 id="advisoryTitle">Loading advisory…</h2><p id="advisoryText">We use current weather and the coming forecast to suggest the safest next step.</p></div><a href="plant_growth.html" class="btn-filled">Open plant tracker →</a></section>
+    <p class="source-note">Weather data: Open‑Meteo. Alerts are decision support and should be checked against local field conditions.</p>
+  </main></div><script src="i18n.js"></script><script src="config.js"></script><script src="weather.js"></script>
+</body></html>

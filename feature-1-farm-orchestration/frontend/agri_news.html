@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agri News & Trends – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="agri_news.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab active">News & Trends</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <button class="btn-outline" id="refreshNewsBtn">🔄 Refresh</button>
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">NEWS & TRENDS<br/><span class="active-tag">LIVE FEED</span></div>
+      </div>
+    </div>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">Fleet</a>
+      <a href="market.html" class="sidebar-nav-item">Market Details</a>
+      <a href="farm_support.html" class="sidebar-nav-item">Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item">Plant Growth</a>
+      <a href="subsidies.html" class="sidebar-nav-item">Farmer Subsidies</a>
+      <a href="water_stress.html" class="sidebar-nav-item">Water Stress AI</a>
+      <a href="farm_inspector.html" class="sidebar-nav-item">Farm Inspector</a>
+      <a href="npk_advisor.html" class="sidebar-nav-item">NPK Advisor</a>
+      <a href="yield_calculator.html" class="sidebar-nav-item">Yield Calculator</a>
+      <a href="dashboard2.html" class="sidebar-nav-item">Orchestration</a>
+      <a href="input_cost.html" class="sidebar-nav-item">Input Cost</a>
+      <a href="weather.html" class="sidebar-nav-item">Weather & Alerts</a>
+      <a href="finance.html" class="sidebar-nav-item">Farm Finance</a>
+      <a href="farmer_education.html" class="sidebar-nav-item">Education</a>
+      <a href="agri_news.html" class="sidebar-nav-item active">News & Trends</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">AGRICULTURE INTELLIGENCE FEED</div>
+        <h1 class="page-title">Latest News, Trends & Market Signals</h1>
+        <p class="page-desc">Stay updated with live agricultural news, government policy announcements, MSP updates, technology trends, seasonal alerts, and crop-specific advisories from trusted sources.</p>
+      </div>
+      <div class="system-health-badge">
+        <div>
+          <div class="sh-label">LAST UPDATED</div>
+          <div class="sh-value" id="lastUpdatedBadge">Loading...</div>
+        </div>
+        <div class="sh-icon">📰</div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS ROW -->
+    <div class="news-stats-row" id="newsStatsRow">
+      <div class="ns-card">
+        <div class="ns-label">MONSOON PROGRESS</div>
+        <div class="ns-value" id="statMonsoon">82%</div>
+        <div class="ns-trend up">↑ Normal Season</div>
+      </div>
+      <div class="ns-card">
+        <div class="ns-label">WHEAT MSP 2025–26</div>
+        <div class="ns-value">₹2,425</div>
+        <div class="ns-trend up">↑ +5.9% from last year</div>
+      </div>
+      <div class="ns-card">
+        <div class="ns-label">PADDY MSP 2025–26</div>
+        <div class="ns-value">₹2,300</div>
+        <div class="ns-trend up">↑ +5.4% from last year</div>
+      </div>
+      <div class="ns-card">
+        <div class="ns-label">UREA PRICE</div>
+        <div class="ns-value">₹266/bag</div>
+        <div class="ns-trend neutral">→ Govt subsidised</div>
+      </div>
+      <div class="ns-card">
+        <div class="ns-label">DAP PRICE</div>
+        <div class="ns-value">₹1,350/bag</div>
+        <div class="ns-trend down">↓ Subsidy applied</div>
+      </div>
+    </div>
+
+    <!-- NEWS FILTER TABS -->
+    <div class="news-filter-tabs">
+      <button class="news-filter-btn active" data-filter="all">📰 All News</button>
+      <button class="news-filter-btn" data-filter="policy">🏛️ Policy & MSP</button>
+      <button class="news-filter-btn" data-filter="market">📈 Market Trends</button>
+      <button class="news-filter-btn" data-filter="tech">🤖 AgriTech</button>
+      <button class="news-filter-btn" data-filter="weather">🌦️ Weather & Crops</button>
+      <button class="news-filter-btn" data-filter="export">🌍 Export & Trade</button>
+    </div>
+
+    <!-- MAIN NEWS LAYOUT -->
+    <div class="news-main-layout">
+
+      <!-- LEFT: NEWS FEED -->
+      <div class="news-feed-col">
+        <div class="news-feed" id="newsFeed">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- RIGHT: TRENDS & SOURCES -->
+      <div class="news-sidebar-col">
+
+        <!-- Trending Topics -->
+        <div class="card ns-widget">
+          <div class="card-title">🔥 Trending Topics</div>
+          <div class="trending-list" id="trendingList">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Trusted Sources -->
+        <div class="card ns-widget mt16">
+          <div class="card-title">📡 Trusted Agri Sources</div>
+          <div class="sources-list">
+            <a href="https://agricoop.nic.in" target="_blank" class="source-link">🏛️ Ministry of Agriculture (DAC)</a>
+            <a href="https://www.icar.org.in" target="_blank" class="source-link">🔬 ICAR — Agri Research</a>
+            <a href="https://www.krishijagran.com" target="_blank" class="source-link">📰 Krishi Jagran News</a>
+            <a href="https://www.agrifarming.in" target="_blank" class="source-link">🌾 AgriFarming.in</a>
+            <a href="https://pib.gov.in" target="_blank" class="source-link">📋 PIB — Govt Press Releases</a>
+            <a href="https://www.nabard.org" target="_blank" class="source-link">🏦 NABARD</a>
+            <a href="https://agmarknet.gov.in" target="_blank" class="source-link">📊 Agmarknet Mandi Data</a>
+            <a href="https://www.kisansuvidha.gov.in" target="_blank" class="source-link">📱 Kisan Suvidha App Portal</a>
+            <a href="https://fasal.gov.in" target="_blank" class="source-link">🌱 FASAL Crop Forecast</a>
+            <a href="https://pmkisan.gov.in" target="_blank" class="source-link">💰 PM-KISAN Portal</a>
+          </div>
+        </div>
+
+        <!-- Seasonal Calendar -->
+        <div class="card ns-widget mt16">
+          <div class="card-title">📅 Seasonal Crop Calendar</div>
+          <div class="season-list">
+            <div class="season-item kharif">
+              <div class="season-badge">Kharif</div>
+              <div class="season-detail">
+                <div class="season-name">Kharif 2025</div>
+                <div class="season-phase">Sowing: June–July | Harvest: Oct–Nov</div>
+                <div class="season-crops">Rice, Cotton, Soybean, Maize, Groundnut</div>
+              </div>
+            </div>
+            <div class="season-item rabi">
+              <div class="season-badge">Rabi</div>
+              <div class="season-detail">
+                <div class="season-name">Rabi 2025–26</div>
+                <div class="season-phase">Sowing: Oct–Dec | Harvest: Mar–Apr</div>
+                <div class="season-crops">Wheat, Mustard, Chickpea, Barley</div>
+              </div>
+            </div>
+            <div class="season-item zaid">
+              <div class="season-badge">Zaid</div>
+              <div class="season-detail">
+                <div class="season-name">Zaid 2026</div>
+                <div class="season-phase">Sowing: Feb–Mar | Harvest: May–Jun</div>
+                <div class="season-crops">Watermelon, Cucumber, Moong, Vegetables</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="agri_news.js"></script>
+</body>
+</html>

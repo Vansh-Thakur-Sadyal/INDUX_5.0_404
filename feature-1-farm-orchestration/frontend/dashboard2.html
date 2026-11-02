@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verdant Intelligence – Landscape Orchestration Report</title>
+  <link rel="stylesheet" href="dashboard2.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">Verdant Intelligence</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+      <a href="plant_growth.html" class="tab">Plant Growth</a>
+      <a href="subsidies.html" class="tab">Farmer Subsidies</a>
+      <a href="water_stress.html" class="tab">Water Stress AI</a>
+      <a href="farm_inspector.html" class="tab">Farm Inspector</a>
+      <a href="npk_advisor.html" class="tab">NPK Advisor</a>
+      <a href="yield_calculator.html" class="tab">Yield Calculator</a>
+      <a href="dashboard2.html" class="tab active">Orchestration</a>
+      <a href="input_cost.html" class="tab">Input Cost</a>
+      <a href="weather.html" class="tab">Weather & Alerts</a>
+      <a href="finance.html" class="tab">Farm Finance</a>
+      <a href="farmer_education.html" class="tab">Education</a>
+      <a href="agri_news.html" class="tab">News & Trends</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon-wrap">
+        <span class="brand-icon">📡</span>
+      </div>
+      <div>
+        <div class="brand-name">SYSTEM HEALTH</div>
+        <div class="brand-sub">Optimal Performance</div>
+      </div>
+    </div>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">Fleet</a>
+      <a href="market.html" class="sidebar-nav-item">Market Details</a>
+      <a href="farm_support.html" class="sidebar-nav-item">Farm Support</a>
+      <a href="plant_growth.html" class="sidebar-nav-item">Plant Growth</a>
+      <a href="subsidies.html" class="sidebar-nav-item">Farmer Subsidies</a>
+      <a href="water_stress.html" class="sidebar-nav-item">Water Stress AI</a>
+      <a href="farm_inspector.html" class="sidebar-nav-item">Farm Inspector</a>
+      <a href="npk_advisor.html" class="sidebar-nav-item">NPK Advisor</a>
+      <a href="yield_calculator.html" class="sidebar-nav-item">Yield Calculator</a>
+      <a href="dashboard2.html" class="sidebar-nav-item active">Orchestration</a>
+      <a href="input_cost.html" class="sidebar-nav-item">Input Cost</a>
+      <a href="weather.html" class="sidebar-nav-item">Weather & Alerts</a>
+      <a href="finance.html" class="sidebar-nav-item">Farm Finance</a>
+      <a href="farmer_education.html" class="sidebar-nav-item">Education</a>
+      <a href="agri_news.html" class="sidebar-nav-item">News & Trends</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- REPORT HEADER -->
+    <div class="report-header">
+      <div class="report-header-left">
+        <h1 class="report-title">Landscape Orchestration Report</h1>
+        <div class="report-meta"><span id="sessionMeta">No run yet</span> &bull; Last Updated <span id="lastUpdated">—</span></div>
+      </div>
+      <div class="status-badge">
+        <div class="status-icon-wrap">✅</div>
+        <div>
+          <div class="status-label">SYSTEM STATUS</div>
+          <div class="status-value">OPTIMAL</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">OVERALL SUCCESS</div>
+        <div class="kpi-value green">—</div>
+        <div class="kpi-sub"><span class="kpi-dot green-dot"></span> Derived from risk score</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">PLAN RISK REDUCTION</div>
+        <div class="kpi-value gold">—</div>
+        <div class="kpi-sub">↗ From optimizer plan</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">RISK LEVEL</div>
+        <div class="kpi-value blue">—</div>
+        <div class="kpi-sub"><span class="kpi-dot blue-dot"></span> From Agent 2 analysis</div>
+      </div>
+    </div>
+
+    <!-- ACTION PLAN -->
+    <div class="section-title">
+      <span class="section-line"></span> Immediate Action Plan
+    </div>
+    <div class="action-row">
+      <div class="action-card">
+        <div class="action-top">
+          <div class="action-label irrigation">🎯 ACTION 1</div>
+          <span class="action-tag queued" id="action-tag-0">—</span>
+        </div>
+        <div class="action-name">—</div>
+        <div class="action-meta" id="action-meta-0">—</div>
+      </div>
+      <div class="action-card">
+        <div class="action-top">
+          <div class="action-label fertilization">🎯 ACTION 2</div>
+          <span class="action-tag high-block" id="action-tag-1">—</span>
+        </div>
+        <div class="action-name">—</div>
+        <div class="action-meta" id="action-meta-1">—</div>
+      </div>
+      <div class="action-card">
+        <div class="action-top">
+          <div class="action-label pesticide">🎯 ACTION 3</div>
+          <span class="action-tag suppressed" id="action-tag-2">—</span>
+        </div>
+        <div class="action-name">—</div>
+        <div class="action-meta" id="action-meta-2">—</div>
+      </div>
+    </div>
+
+    <!-- AGENT REASONING -->
+    <div class="reasoning-bar">
+      <span class="reasoning-icon">🛡️</span>
+      <span>
+        <strong>Agent 3 Reasoning:</strong> Run the pipeline to generate reasoning.
+      </span>
+    </div>
+
+    <!-- AGENT DATA ROW -->
+    <div class="agent-data-row">
+
+      <!-- Agent 1: Current Environment -->
+      <div class="card agent-env">
+        <div class="agent-card-header">
+          <span class="agent-tag">📡 AGENT 1: CURRENT ENVIRONMENT</span>
+          <span class="live-tag">LIVE</span>
+        </div>
+        <div class="env-grid">
+          <div class="env-cell">
+            <div class="env-label">SOIL MOISTURE</div>
+            <div class="env-value">42%</div>
+          </div>
+          <div class="env-cell">
+            <div class="env-label">TEMPERATURE</div>
+            <div class="env-value">28°C</div>
+          </div>
+          <div class="env-cell">
+            <div class="env-label">HUMIDITY</div>
+            <div class="env-value">65%</div>
+          </div>
+          <div class="env-cell">
+            <div class="env-label">RELIABILITY</div>
+            <div class="env-value small-green">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent 2: Risk Intelligence -->
+      <div class="card agent-risk">
+        <div class="agent-card-header">
+          <span class="agent-tag">📈 AGENT 2: RISK INTELLIGENCE</span>
+        </div>
+        <div id="riskBars" style="margin-top:8px">
+          <div style="font-size:11px;color:#888">Run the pipeline to see detected risks.</div>
+        </div>
+        <div class="risk-time-labels" style="margin-top:8px">
+          <span>Each row = one risk found by Agent 2 · bar length &amp; label = its severity</span>
+        </div>
+      </div>
+
+      <!-- Agent 4: Performance Trend -->
+      <div class="card agent-perf">
+        <div class="agent-card-header">
+          <span class="agent-tag">📊 AGENT 4: PERFORMANCE TREND</span>
+          <span class="growth-tag" id="growthTag">—</span>
+        </div>
+        <canvas id="perfChart" width="200" height="90"></canvas>
+        <div class="perf-labels">
+          <span>run the pipeline to build history</span>
+        </div>
+        <div class="risk-time-labels" style="margin-top:6px">
+          <span>Y: success % per run (100 − risk score × 8) · X: run time</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FUTURE STRATEGY -->
+    <div class="future-card">
+      <div class="future-left">
+        <div class="future-icon">🌱</div>
+        <div>
+          <div class="future-title">Future Strategy — Agent 5 Learning</div>
+          <div class="future-desc" id="futureDesc">
+            Run the pipeline — Agent 5 analyzes your run history and its insight appears here.
+          </div>
+        </div>
+      </div>
+      <div class="future-right">
+        <div class="future-rec-label">AGENT 4 MONITORING INSIGHT</div>
+        <div class="future-rec-title" id="futureRecTitle">No insight yet</div>
+        <div class="future-rec-desc" id="futureRecDesc">The monitoring agent's LLM analysis of this run appears here.</div>
+        <div class="future-actions">
+          <button class="apply-btn" id="applyBtn">Apply Strategy</button>
+          <button class="dismiss-btn" id="dismissBtn">Dismiss</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="i18n.js"></script>
+<script src="dashboard2.js"></script>
+</body>
+</html>
+
+
