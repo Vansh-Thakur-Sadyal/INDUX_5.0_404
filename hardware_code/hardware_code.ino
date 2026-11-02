@@ -2,6 +2,8 @@
 #include <SoftwareSerial.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define RE 8
 #define DE 7
@@ -13,10 +15,19 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
+// MAX485 communication
 SoftwareSerial mod(2, 3);
 
-byte requestAll[] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x07, 0x04, 0x08};
-byte requestAlternate[] = {0x01, 0x03, 0x00, 0x08, 0x00, 0x04, 0x45, 0xCC};
+// Modbus requests
+byte requestAll[] = {
+  0x01, 0x03, 0x00, 0x00,
+  0x00, 0x07, 0x04, 0x08
+};
+
+byte requestAlternate[] = {
+  0x01, 0x03, 0x00, 0x08,
+  0x00, 0x04, 0x45, 0xCC
+};
 
 byte response[25];
 
@@ -26,9 +37,56 @@ int ec, n, p, k;
 bool useAlternate = false;
 int responseLength = 0;
 
+
+// --------------------------------
+// BLUETOOTH TRANSMISSION
+// HC-05 connected to D0 and D1
+// --------------------------------
+
+void sendTelemetry() {
+
+  // Same key=value transmission method
+  // as the original Bluetooth code.
+
+  Serial.print(F("N="));
+  Serial.print(n);
+
+  Serial.print(F(",P="));
+  Serial.print(p);
+
+  Serial.print(F(",K="));
+  Serial.print(k);
+
+  Serial.print(F(",TEMP_C="));
+  Serial.print(temperature, 1);
+
+  Serial.print(F(",MOISTURE_PCT="));
+  Serial.print(moisture, 1);
+
+  Serial.print(F(",EC_US_CM="));
+  Serial.print(ec);
+
+  Serial.print(F(",PH="));
+  Serial.print(ph, 1);
+
+  // End transmission
+  Serial.println();
+
+  // Ensure all data is transmitted
+  Serial.flush();
+}
+
+
+// --------------------------------
+// SETUP
+// --------------------------------
+
 void setup() {
 
+  // HC-05 hardware serial
   Serial.begin(9600);
+
+  // MAX485 serial
   mod.begin(4800);
 
   pinMode(RE, OUTPUT);
@@ -36,48 +94,59 @@ void setup() {
 
   digitalWrite(RE, LOW);
   digitalWrite(DE, LOW);
+
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
 
-
-  Serial.println(F("--- 7-in-1 Soil Sensor ---"));
-
-  // OLED INIT
+  // OLED initialization
   if (display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
 
-    Serial.println(F("OLED OK"));
-
     display.clearDisplay();
+
     display.setTextSize(1);
     display.setTextColor(WHITE);
+
     display.setCursor(0, 20);
     display.println("PRESS BUTTON");
-    display.setCursor(10,35);
+
+    display.setCursor(10, 35);
     display.println("TO SCAN");
+
     display.display();
 
     delay(2000);
 
   } else {
 
-    Serial.println(F("OLED Failed"));
+    // No Serial debug output because
+    // hardware Serial is connected to HC-05.
+
   }
 
   testAlternativeAddresses();
 }
 
-void loop()
-{
-  if(digitalRead(BUTTON_PIN)==LOW)
-  {
+
+// --------------------------------
+// MAIN LOOP
+// --------------------------------
+
+void loop() {
+
+  if (digitalRead(BUTTON_PIN) == LOW) {
+
     startScan();
 
-    while(digitalRead(BUTTON_PIN)==LOW)
-    {
+    while (digitalRead(BUTTON_PIN) == LOW) {
       delay(10);
     }
   }
 }
+
+
+// --------------------------------
+// PARSE STANDARD SENSOR DATA
+// --------------------------------
 
 void parseStandardData() {
 
@@ -122,20 +191,33 @@ void parseStandardData() {
   }
 }
 
+
+// --------------------------------
+// PARSE ALTERNATE SENSOR DATA
+// --------------------------------
+
 void parseAlternateData() {
 
   if (responseLength >= 13) {
 
     ec = (response[3] << 8) | response[4];
-    n  = (response[5] << 8) | response[6];
-    p  = (response[7] << 8) | response[8];
-    k  = (response[9] << 8) | response[10];
+
+    n = (response[5] << 8) | response[6];
+
+    p = (response[7] << 8) | response[8];
+
+    k = (response[9] << 8) | response[10];
 
     moisture = -1;
     temperature = -1;
     ph = -1;
   }
 }
+
+
+// --------------------------------
+// ESTIMATE NPK FROM EC
+// --------------------------------
 
 void estimateNPKfromEC() {
 
@@ -144,6 +226,7 @@ void estimateNPKfromEC() {
     n = map(ec, 20, 100, 5, 25);
     p = map(ec, 20, 100, 3, 18);
     k = map(ec, 20, 100, 10, 40);
+
   }
 
   else if (ec < 500) {
@@ -151,6 +234,7 @@ void estimateNPKfromEC() {
     n = map(ec, 100, 500, 25, 80);
     p = map(ec, 100, 500, 18, 60);
     k = map(ec, 100, 500, 40, 150);
+
   }
 
   else {
@@ -164,6 +248,11 @@ void estimateNPKfromEC() {
   p = constrain(p, 3, 150);
   k = constrain(k, 10, 400);
 }
+
+
+// --------------------------------
+// TEST ALTERNATE SENSOR ADDRESS
+// --------------------------------
 
 void testAlternativeAddresses() {
 
@@ -193,19 +282,28 @@ void testAlternativeAddresses() {
     }
   }
 
-  if (idx >= 9) {
+  if (idx >= 11) {
 
     int altN = (altResponse[5] << 8) | altResponse[6];
+
     int altP = (altResponse[7] << 8) | altResponse[8];
+
     int altK = (altResponse[9] << 8) | altResponse[10];
 
     if (altN > 0 || altP > 0 || altK > 0) {
+
       useAlternate = true;
     }
   }
 }
-void startScan()
-{
+
+
+// --------------------------------
+// START SOIL SCANNING
+// --------------------------------
+
+void startScan() {
+
   float moistureSum = 0;
   float temperatureSum = 0;
   float phSum = 0;
@@ -219,30 +317,34 @@ void startScan()
 
   unsigned long scanStart = millis();
 
-  while(millis() - scanStart < 10000)
-  {
-    tone(BUZZER_PIN,1000);
+  while (millis() - scanStart < 10000) {
+
+    tone(BUZZER_PIN, 1000);
     delay(100);
     noTone(BUZZER_PIN);
 
-    memset(response,0,sizeof(response));
+    memset(response, 0, sizeof(response));
 
-    digitalWrite(DE,HIGH);
-    digitalWrite(RE,HIGH);
+    digitalWrite(DE, HIGH);
+    digitalWrite(RE, HIGH);
 
     delay(10);
 
-    if(useAlternate)
-      mod.write(requestAlternate,sizeof(requestAlternate));
-    else
-      mod.write(requestAll,sizeof(requestAll));
+    if (useAlternate) {
+
+      mod.write(requestAlternate, sizeof(requestAlternate));
+
+    } else {
+
+      mod.write(requestAll, sizeof(requestAll));
+    }
 
     mod.flush();
 
     delay(2);
 
-    digitalWrite(DE,LOW);
-    digitalWrite(RE,LOW);
+    digitalWrite(DE, LOW);
+    digitalWrite(RE, LOW);
 
     unsigned long startTime = millis();
 
@@ -250,24 +352,28 @@ void startScan()
 
     int expectedLen = useAlternate ? 13 : 19;
 
-    while(millis()-startTime < 1000 &&
-          responseLength < expectedLen)
-    {
-      if(mod.available())
-      {
+    while (millis() - startTime < 1000 &&
+           responseLength < expectedLen) {
+
+      if (mod.available()) {
+
         response[responseLength++] = mod.read();
       }
     }
 
-    if(responseLength >= 9)
-    {
-      if(useAlternate)
-        parseAlternateData();
-      else
-        parseStandardData();
+    if (responseLength >= 9) {
 
-      if(n==0 && p==0 && k==0 && ec>20)
-      {
+      if (useAlternate) {
+
+        parseAlternateData();
+
+      } else {
+
+        parseStandardData();
+      }
+
+      if (n == 0 && p == 0 && k == 0 && ec > 20) {
+
         estimateNPKfromEC();
       }
 
@@ -283,26 +389,30 @@ void startScan()
       samples++;
     }
 
-    int progress =
-      map(millis()-scanStart,
-          0,
-          10000,
-          0,
-          120);
+    // OLED progress bar
+
+    int progress = map(
+      millis() - scanStart,
+      0,
+      10000,
+      0,
+      120
+    );
 
     display.clearDisplay();
 
     display.setTextSize(1);
 
-    display.setCursor(15,5);
+    display.setCursor(15, 5);
     display.println("SCANNING");
 
-    display.drawRect(4,25,120,12,WHITE);
+    display.drawRect(4, 25, 120, 12, WHITE);
 
-    display.fillRect(4,25,progress,12,WHITE);
+    display.fillRect(4, 25, progress, 12, WHITE);
 
-    display.setCursor(40,45);
-    display.print((millis()-scanStart)/1000);
+    display.setCursor(40, 45);
+
+    display.print((millis() - scanStart) / 1000);
     display.print("/10 s");
 
     display.display();
@@ -310,96 +420,93 @@ void startScan()
     delay(900);
   }
 
-  moisture = moistureSum / samples;
-  temperature = temperatureSum / samples;
-  ph = phSum / samples;
+  // Calculate averages only if readings exist
 
-  ec = ecSum / samples;
-  n = nSum / samples;
-  p = pSum / samples;
-  k = kSum / samples;
+  if (samples > 0) {
 
-  tone(BUZZER_PIN,1500);
+    moisture = moistureSum / samples;
+    temperature = temperatureSum / samples;
+    ph = phSum / samples;
+
+    ec = ecSum / samples;
+    n = nSum / samples;
+    p = pSum / samples;
+    k = kSum / samples;
+
+  } else {
+
+    display.clearDisplay();
+
+    display.setCursor(10, 25);
+    display.println("SENSOR ERROR");
+
+    display.display();
+
+    tone(BUZZER_PIN, 500);
+    delay(500);
+    noTone(BUZZER_PIN);
+
+    return;
+  }
+
+  // Scan completion beep
+
+  tone(BUZZER_PIN, 1500);
   delay(1000);
   noTone(BUZZER_PIN);
 
   printResults();
 }
 
+
+// --------------------------------
+// DISPLAY AND PRINT RESULTS
+// --------------------------------
+
 void printResults() {
-
-  Serial.println(F("============================="));
-
-  if (moisture >= 0) {
-
-    Serial.print(F("Moisture:    "));
-    Serial.print(moisture, 1);
-    Serial.println(F(" %"));
-
-    Serial.print(F("Temperature: "));
-    Serial.print(temperature, 1);
-    Serial.println(F(" C"));
-  }
-
-  Serial.print(F("EC:          "));
-  Serial.print(ec);
-  Serial.println(F(" uS/cm"));
-
-  if (ph >= 0) {
-
-    Serial.print(F("pH:          "));
-    Serial.println(ph, 1);
-  }
-
-  Serial.print(F("N:           "));
-  Serial.print(n);
-  Serial.println(F(" mg/kg"));
-
-  Serial.print(F("P:           "));
-  Serial.print(p);
-  Serial.println(F(" mg/kg"));
-
-  Serial.print(F("K:           "));
-  Serial.print(k);
-  Serial.println(F(" mg/kg"));
-
-  Serial.println(F("============================="));
 
   // OLED DISPLAY
 
   display.clearDisplay();
 
   display.setTextSize(1);
+  display.setTextColor(WHITE);
 
-  display.setCursor(0,0);
+  display.setCursor(0, 0);
   display.print("N:");
   display.print(n);
 
-  display.setCursor(64,0);
+  display.setCursor(64, 0);
   display.print("P:");
   display.print(p);
 
-  display.setCursor(0,12);
+  display.setCursor(0, 12);
   display.print("K:");
   display.print(k);
 
-  display.setCursor(64,12);
+  display.setCursor(64, 12);
   display.print("pH:");
-  display.print(ph,1);
+  display.print(ph, 1);
 
-  display.setCursor(0,24);
+  display.setCursor(0, 24);
   display.print("EC:");
   display.print(ec);
 
-  display.setCursor(0,36);
+  display.setCursor(0, 36);
   display.print("M:");
-  display.print(moisture,1);
+  display.print(moisture, 1);
   display.print("%");
 
-  display.setCursor(0,48);
+  display.setCursor(0, 48);
   display.print("T:");
-  display.print(temperature,1);
+  display.print(temperature, 1);
   display.print("C");
 
-  display.display(); 
+  display.display();
+
+  // --------------------------------
+  // SEND DATA TO HC-05 BLUETOOTH
+  // --------------------------------
+
+  sendTelemetry();
 }
