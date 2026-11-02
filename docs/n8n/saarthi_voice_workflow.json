@@ -1,0 +1,285 @@
+{
+  "name": "Saarthi_Voice_Agent",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "pinData": {},
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "saarthi-outbound-call",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Saarthi asks for an outbound call",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-380, -260],
+      "webhookId": "a1000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c1", "name": "saarthi_base", "value": "https://saarthi.example.com", "type": "string" },
+            { "id": "c2", "name": "saarthi_token", "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN", "type": "string" },
+            { "id": "c3", "name": "twilio_sid", "value": "REPLACE_WITH_TWILIO_ACCOUNT_SID", "type": "string" },
+            { "id": "c4", "name": "twilio_from", "value": "+91XXXXXXXXXX", "type": "string" }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Config A - EDIT ME",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-160, -260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.twilio_sid }}/Calls.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "To", "value": "={{ $json.body.to }}" },
+            { "name": "From", "value": "={{ $json.twilio_from }}" },
+            { "name": "Url", "value": "https://REPLACE_WITH_N8N_HOST/webhook/saarthi-voice" },
+            { "name": "StatusCallback", "value": "https://REPLACE_WITH_N8N_HOST/webhook/saarthi-call-status" },
+            { "name": "StatusCallbackMethod", "value": "POST" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Twilio: create call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [60, -260]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ call_sid: $json.sid, status: $json.status }) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Respond with call_sid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [280, -260]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "saarthi-voice",
+        "responseMode": "responseNode",
+        "options": { "rawBody": false }
+      },
+      "id": "b2000000-0000-4000-8000-000000000001",
+      "name": "Twilio: incoming call",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-380, -40],
+      "webhookId": "b2000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Greeting + keypad language menu. Keep it short: farmers hang up on long menus.\nconst turnUrl = 'https://REPLACE_WITH_N8N_HOST/webhook/saarthi-voice-turn';\nconst twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Gather input=\"speech dtmf\" numDigits=\"2\" timeout=\"6\" speechTimeout=\"auto\" language=\"hi-IN\" action=\"${turnUrl}\" method=\"POST\">\n    <Say language=\"hi-IN\">नमस्ते, मैं सारथी हूँ। हिन्दी के लिए दो दबाइए।</Say>\n    <Say language=\"en-IN\">Hello, this is Saarthi. For English press one, or simply ask your farming question after the beep.</Say>\n  </Gather>\n  <Say language=\"en-IN\">I did not hear anything. Please call again.</Say>\n</Response>`;\nreturn [{ json: { twiml } }];"
+      },
+      "id": "b2000000-0000-4000-8000-000000000002",
+      "name": "Build greeting TwiML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-160, -40]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.twiml }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [ { "name": "Content-Type", "value": "text/xml" } ]
+          }
+        }
+      },
+      "id": "b2000000-0000-4000-8000-000000000003",
+      "name": "Respond TwiML (greeting)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [60, -40]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "saarthi-voice-turn",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c3000000-0000-4000-8000-000000000001",
+      "name": "Twilio: gather result",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-380, 190],
+      "webhookId": "c3000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c1", "name": "saarthi_base", "value": "https://saarthi.example.com", "type": "string" },
+            { "id": "c2", "name": "saarthi_token", "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN", "type": "string" }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c3000000-0000-4000-8000-000000000002",
+      "name": "Config C - EDIT ME",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-160, 190]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.saarthi_base }}/api/calls/turn",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saarthi-Token", "value": "={{ $json.saarthi_token }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ call_sid: $json.body.CallSid, transcript: $json.body.SpeechResult || '', digits: $json.body.Digits || '', phone: $json.body.From, language: $json.body.Language || '' }) }}",
+        "options": { "timeout": 25000 }
+      },
+      "id": "c3000000-0000-4000-8000-000000000003",
+      "name": "Saarthi: run the agents",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [60, 190]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Play the Azure audio when Saarthi produced it; fall back to Twilio <Say> when\n// Azure Speech is not configured, so the call still works.\nconst r = $json;\nconst turnUrl = 'https://REPLACE_WITH_N8N_HOST/webhook/saarthi-voice-turn';\nconst localeByCode = { en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN', mr: 'mr-IN', gu: 'gu-IN', kn: 'kn-IN', ml: 'ml-IN', pa: 'pa-IN', or: 'or-IN', as: 'as-IN', ur: 'ur-IN' };\nconst locale = localeByCode[r.language] || 'en-IN';\nconst escapeXml = (s) => String(s || '').replace(/[<>&'\"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', \"'\": '&apos;', '\"': '&quot;' }[c]));\nconst speak = r.audio_url\n  ? `<Play>${escapeXml(r.audio_url)}</Play>`\n  : `<Say language=\"${locale}\">${escapeXml(r.reply)}</Say>`;\nconst twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  ${speak}\n  <Gather input=\"speech dtmf\" timeout=\"6\" speechTimeout=\"auto\" language=\"${locale}\" action=\"${turnUrl}\" method=\"POST\">\n    <Say language=\"${locale}\">${escapeXml(r.follow_up && r.follow_up[0] ? r.follow_up[0] : 'Do you have another question?')}</Say>\n  </Gather>\n  <Say language=\"${locale}\">Thank you for calling Saarthi.</Say>\n</Response>`;\nreturn [{ json: { twiml } }];"
+      },
+      "id": "c3000000-0000-4000-8000-000000000004",
+      "name": "Build reply TwiML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 190]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.twiml }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [ { "name": "Content-Type", "value": "text/xml" } ]
+          }
+        }
+      },
+      "id": "c3000000-0000-4000-8000-000000000005",
+      "name": "Respond TwiML (answer)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [500, 190]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "saarthi-call-status",
+        "options": {}
+      },
+      "id": "d4000000-0000-4000-8000-000000000001",
+      "name": "Twilio: status callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-380, 420],
+      "webhookId": "d4000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c1", "name": "saarthi_base", "value": "https://saarthi.example.com", "type": "string" },
+            { "id": "c2", "name": "saarthi_token", "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN", "type": "string" }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d4000000-0000-4000-8000-000000000002",
+      "name": "Config D - EDIT ME",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-160, 420]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.saarthi_base }}/api/calls/status-callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Saarthi-Token", "value": "={{ $json.saarthi_token }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ CallSid: $json.body.CallSid, call_id: $json.body.CallSid, status: $json.body.CallStatus, duration: $json.body.CallDuration || null, to: $json.body.To, from: $json.body.From }) }}",
+        "options": {}
+      },
+      "id": "d4000000-0000-4000-8000-000000000003",
+      "name": "Saarthi: record call status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [60, 420]
+    }
+  ],
+  "connections": {
+    "Saarthi asks for an outbound call": {
+      "main": [[{ "node": "Config A - EDIT ME", "type": "main", "index": 0 }]]
+    },
+    "Config A - EDIT ME": {
+      "main": [[{ "node": "Twilio: create call", "type": "main", "index": 0 }]]
+    },
+    "Twilio: create call": {
+      "main": [[{ "node": "Respond with call_sid", "type": "main", "index": 0 }]]
+    },
+    "Twilio: incoming call": {
+      "main": [[{ "node": "Build greeting TwiML", "type": "main", "index": 0 }]]
+    },
+    "Build greeting TwiML": {
+      "main": [[{ "node": "Respond TwiML (greeting)", "type": "main", "index": 0 }]]
+    },
+    "Twilio: gather result": {
+      "main": [[{ "node": "Config C - EDIT ME", "type": "main", "index": 0 }]]
+    },
+    "Config C - EDIT ME": {
+      "main": [[{ "node": "Saarthi: run the agents", "type": "main", "index": 0 }]]
+    },
+    "Saarthi: run the agents": {
+      "main": [[{ "node": "Build reply TwiML", "type": "main", "index": 0 }]]
+    },
+    "Build reply TwiML": {
+      "main": [[{ "node": "Respond TwiML (answer)", "type": "main", "index": 0 }]]
+    },
+    "Twilio: status callback": {
+      "main": [[{ "node": "Config D - EDIT ME", "type": "main", "index": 0 }]]
+    },
+    "Config D - EDIT ME": {
+      "main": [[{ "node": "Saarthi: record call status", "type": "main", "index": 0 }]]
+    }
+  }
+}

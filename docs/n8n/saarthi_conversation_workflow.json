@@ -1,0 +1,751 @@
+[
+ {
+  "id": "SaarthiConv00001",
+  "name": "Saarthi_Conversation_Agent",
+  "nodes": [
+   {
+    "parameters": {
+     "httpMethod": "POST",
+     "path": "saarthi-conv-answer",
+     "responseMode": "responseNode",
+     "options": {}
+    },
+    "id": "e1000000-0000-4000-8000-000000000001",
+    "name": "Twilio: call answered",
+    "type": "n8n-nodes-base.webhook",
+    "typeVersion": 2,
+    "position": [
+     -420,
+     -120
+    ],
+    "webhookId": "e1000000-0000-4000-8000-000000000001"
+   },
+   {
+    "parameters": {
+     "assignments": {
+      "assignments": [
+       {
+        "id": "c1",
+        "name": "saarthi_base",
+        "value": "https://indux5.0.visioncoders.in",
+        "type": "string"
+       },
+       {
+        "id": "c2",
+        "name": "saarthi_token",
+        "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN",
+        "type": "string"
+       },
+       {
+        "id": "c3",
+        "name": "n8n_base",
+        "value": "https://n8n-kmar.srv1804200.hstgr.cloud",
+        "type": "string"
+       },
+       {
+        "id": "c4",
+        "name": "language",
+        "value": "hi",
+        "type": "string"
+       },
+       {
+        "id": "m1",
+        "name": "input_mode",
+        "value": "record",
+        "type": "string"
+       },
+       {
+        "id": "m2",
+        "name": "record_silence",
+        "value": "1",
+        "type": "string"
+       },
+       {
+        "id": "m3",
+        "name": "record_max_seconds",
+        "value": "20",
+        "type": "string"
+       }
+      ]
+     },
+     "includeOtherFields": true,
+     "options": {}
+    },
+    "id": "e1000000-0000-4000-8000-000000000002",
+    "name": "Config - EDIT ME",
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+     -200,
+     -120
+    ]
+   },
+   {
+    "parameters": {
+     "method": "POST",
+     "url": "={{ $json.saarthi_base }}/api/voice/turn",
+     "sendHeaders": true,
+     "headerParameters": {
+      "parameters": [
+       {
+        "name": "X-Saarthi-Token",
+        "value": "={{ $json.saarthi_token }}"
+       }
+      ]
+     },
+     "sendBody": true,
+     "specifyBody": "json",
+     "jsonBody": "={{ JSON.stringify({ phone: String($json.body.Direction || '').startsWith('outbound') ? $json.body.To : $json.body.From, call_id: $json.body.CallSid, transcript: '', language: $json.language, speak: true, direction: $json.body.Direction || 'inbound' }) }}",
+     "options": {
+      "timeout": 30000
+     }
+    },
+    "id": "e1000000-0000-4000-8000-000000000003",
+    "name": "Saarthi: greeting",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "position": [
+     20,
+     -120
+    ]
+   },
+   {
+    "parameters": {
+     "jsCode": "const r = $json;\nconst turnUrl = 'https://n8n-kmar.srv1804200.hstgr.cloud/webhook/saarthi-conv-turn';\nconst mode = (r.input_mode || 'record').toLowerCase();\n/* Seconds of silence that end the caller's turn, and the longest\n   turn we will record. Twilio's minimum silence is 1. */\nconst silence = Math.max(1, parseInt(r.record_silence, 10) || 1);\nconst maxLen = Math.max(5, parseInt(r.record_max_seconds, 10) || 20);\n\n/* The locale Saarthi answered in, which is the one to listen in next.\n   Without this the line keeps LISTENING in the language the caller has stopped\n   speaking, however well the answer came back. */\nconst locale = { hi: 'hi-IN', en: 'en-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN',\n  mr: 'mr-IN', gu: 'gu-IN', kn: 'kn-IN', ml: 'ml-IN', pa: 'pa-IN', or: 'or-IN',\n  as: 'as-IN', ur: 'ur-IN' }[r.language || 'hi'] || 'hi-IN';\nconst listen = r.listen_locale || locale;\n\nconst esc = (s) => String(s || '').replace(/[<>&'\"]/g, (c) => ({ '<': '&lt;',\n  '>': '&gt;', '&': '&amp;', \"'\": '&apos;', '\"': '&quot;' }[c]));\nconst say = r.audio_url ? `<Play>${esc(r.audio_url)}</Play>`\n  : `<Say language=\"${locale}\">${esc(r.reply)}</Say>`;\n\nlet twiml;\nif (mode === 'gather') {\n  /* Twilio's own recognition. Fast, and limited to the one locale this Gather\n     is opened with - which is the whole reason for the other path.\n     actionOnEmptyResult keeps the call alive when the farmer says nothing:\n     Twilio posts back with an empty SpeechResult and Saarthi asks them to\n     repeat, instead of hanging up on a moment of hesitation. */\n  twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Gather input=\"speech\" speechTimeout=\"auto\" speechModel=\"experimental_conversations\" language=\"${listen}\" actionOnEmptyResult=\"true\" action=\"${turnUrl}\" method=\"POST\">\n    ${say}\n  </Gather>\n</Response>`;\n} else {\n  /* The caller's own audio, for Azure to identify and transcribe.\n     - playBeep false: a beep every turn makes a conversation feel like a\n       voicemail, which is not what this is.\n     - timeout: how much silence ends the turn, from record_silence on the\n       Config node. ONE second, not three. Three seconds of dead air after\n       the farmer has already finished is the largest single piece of the\n       wait, on every turn, and the caller spends it wondering whether the\n       line has dropped. One is what a question-and-answer line wants; raise\n       it on the Config node for somebody who thinks out loud.\n     - maxLength 30: nobody asks a farming question for half a minute, and an\n       open microphone that never closes is a bill and a privacy cost.\n     - trim-silence: less to upload, and Azure gets the speech rather than the\n       room. */\n  twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  ${say}\n  <Record action=\"${turnUrl}\" method=\"POST\" maxLength=\"${maxLen}\" timeout=\"${silence}\" playBeep=\"false\" trim=\"trim-silence\" />\n  <!-- Twilio does NOT post to the action when nothing at all was recorded; it\n       falls through to the next verb instead. Without this the call would go\n       quiet the first time somebody hesitated. The Redirect brings the turn\n       back with no transcript and no audio, and Saarthi nudges them. -->\n  <Redirect method=\"POST\">${turnUrl}</Redirect>\n</Response>`;\n}\nreturn [{ json: { twiml } }];"
+    },
+    "id": "e1000000-0000-4000-8000-000000000004",
+    "name": "TwiML: greet and listen",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     240,
+     -120
+    ]
+   },
+   {
+    "parameters": {
+     "respondWith": "text",
+     "responseBody": "={{ $json.twiml }}",
+     "options": {
+      "responseHeaders": {
+       "entries": [
+        {
+         "name": "Content-Type",
+         "value": "text/xml"
+        }
+       ]
+      }
+     }
+    },
+    "id": "e1000000-0000-4000-8000-000000000005",
+    "name": "Respond TwiML (greeting)",
+    "type": "n8n-nodes-base.respondToWebhook",
+    "typeVersion": 1.1,
+    "position": [
+     460,
+     -120
+    ]
+   },
+   {
+    "parameters": {
+     "httpMethod": "POST",
+     "path": "saarthi-conv-turn",
+     "responseMode": "responseNode",
+     "options": {}
+    },
+    "id": "e2000000-0000-4000-8000-000000000001",
+    "name": "Twilio: farmer spoke",
+    "type": "n8n-nodes-base.webhook",
+    "typeVersion": 2,
+    "position": [
+     -420,
+     120
+    ],
+    "webhookId": "e2000000-0000-4000-8000-000000000001"
+   },
+   {
+    "parameters": {
+     "assignments": {
+      "assignments": [
+       {
+        "id": "c1",
+        "name": "saarthi_base",
+        "value": "https://indux5.0.visioncoders.in",
+        "type": "string"
+       },
+       {
+        "id": "c2",
+        "name": "saarthi_token",
+        "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN",
+        "type": "string"
+       },
+       {
+        "id": "c4",
+        "name": "language",
+        "value": "hi",
+        "type": "string"
+       },
+       {
+        "id": "m1",
+        "name": "input_mode",
+        "value": "record",
+        "type": "string"
+       },
+       {
+        "id": "m2",
+        "name": "record_silence",
+        "value": "1",
+        "type": "string"
+       },
+       {
+        "id": "m3",
+        "name": "record_max_seconds",
+        "value": "20",
+        "type": "string"
+       }
+      ]
+     },
+     "includeOtherFields": true,
+     "options": {}
+    },
+    "id": "e2000000-0000-4000-8000-000000000002",
+    "name": "Config turn - EDIT ME",
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+     -200,
+     120
+    ]
+   },
+   {
+    "parameters": {
+     "method": "POST",
+     "url": "={{ $json.saarthi_base }}/api/voice/turn",
+     "sendHeaders": true,
+     "headerParameters": {
+      "parameters": [
+       {
+        "name": "X-Saarthi-Token",
+        "value": "={{ $json.saarthi_token }}"
+       }
+      ]
+     },
+     "sendBody": true,
+     "specifyBody": "json",
+     "jsonBody": "={{ JSON.stringify($json.payload) }}",
+     "options": {
+      "timeout": 45000
+     }
+    },
+    "id": "e2000000-0000-4000-8000-000000000003",
+    "name": "Saarthi: conversational turn",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "position": [
+     880,
+     520
+    ]
+   },
+   {
+    "parameters": {
+     "jsCode": "const r = $json;\nconst turnUrl = 'https://n8n-kmar.srv1804200.hstgr.cloud/webhook/saarthi-conv-turn';\nconst mode = (r.input_mode || 'record').toLowerCase();\n/* Seconds of silence that end the caller's turn, and the longest\n   turn we will record. Twilio's minimum silence is 1. */\nconst silence = Math.max(1, parseInt(r.record_silence, 10) || 1);\nconst maxLen = Math.max(5, parseInt(r.record_max_seconds, 10) || 20);\n\n/* The locale Saarthi answered in, which is the one to listen in next.\n   Without this the line keeps LISTENING in the language the caller has stopped\n   speaking, however well the answer came back. */\nconst locale = { hi: 'hi-IN', en: 'en-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN',\n  mr: 'mr-IN', gu: 'gu-IN', kn: 'kn-IN', ml: 'ml-IN', pa: 'pa-IN', or: 'or-IN',\n  as: 'as-IN', ur: 'ur-IN' }[r.language || 'hi'] || 'hi-IN';\nconst listen = r.listen_locale || locale;\n\nconst esc = (s) => String(s || '').replace(/[<>&'\"]/g, (c) => ({ '<': '&lt;',\n  '>': '&gt;', '&': '&amp;', \"'\": '&apos;', '\"': '&quot;' }[c]));\nconst say = r.audio_url ? `<Play>${esc(r.audio_url)}</Play>`\n  : `<Say language=\"${locale}\">${esc(r.reply)}</Say>`;\n\nlet twiml;\nif (mode === 'gather') {\n  /* Twilio's own recognition. Fast, and limited to the one locale this Gather\n     is opened with - which is the whole reason for the other path.\n     actionOnEmptyResult keeps the call alive when the farmer says nothing:\n     Twilio posts back with an empty SpeechResult and Saarthi asks them to\n     repeat, instead of hanging up on a moment of hesitation. */\n  twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Gather input=\"speech\" speechTimeout=\"auto\" speechModel=\"experimental_conversations\" language=\"${listen}\" actionOnEmptyResult=\"true\" action=\"${turnUrl}\" method=\"POST\">\n    ${say}\n  </Gather>\n</Response>`;\n} else {\n  /* The caller's own audio, for Azure to identify and transcribe.\n     - playBeep false: a beep every turn makes a conversation feel like a\n       voicemail, which is not what this is.\n     - timeout: how much silence ends the turn, from record_silence on the\n       Config node. ONE second, not three. Three seconds of dead air after\n       the farmer has already finished is the largest single piece of the\n       wait, on every turn, and the caller spends it wondering whether the\n       line has dropped. One is what a question-and-answer line wants; raise\n       it on the Config node for somebody who thinks out loud.\n     - maxLength 30: nobody asks a farming question for half a minute, and an\n       open microphone that never closes is a bill and a privacy cost.\n     - trim-silence: less to upload, and Azure gets the speech rather than the\n       room. */\n  twiml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  ${say}\n  <Record action=\"${turnUrl}\" method=\"POST\" maxLength=\"${maxLen}\" timeout=\"${silence}\" playBeep=\"false\" trim=\"trim-silence\" />\n  <!-- Twilio does NOT post to the action when nothing at all was recorded; it\n       falls through to the next verb instead. Without this the call would go\n       quiet the first time somebody hesitated. The Redirect brings the turn\n       back with no transcript and no audio, and Saarthi nudges them. -->\n  <Redirect method=\"POST\">${turnUrl}</Redirect>\n</Response>`;\n}\nreturn [{ json: { twiml } }];"
+    },
+    "id": "e2000000-0000-4000-8000-000000000004",
+    "name": "TwiML: reply and listen",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     240,
+     120
+    ]
+   },
+   {
+    "parameters": {
+     "respondWith": "text",
+     "responseBody": "={{ $json.twiml }}",
+     "options": {
+      "responseHeaders": {
+       "entries": [
+        {
+         "name": "Content-Type",
+         "value": "text/xml"
+        }
+       ]
+      }
+     }
+    },
+    "id": "e2000000-0000-4000-8000-000000000005",
+    "name": "Respond TwiML (answer)",
+    "type": "n8n-nodes-base.respondToWebhook",
+    "typeVersion": 1.1,
+    "position": [
+     460,
+     120
+    ]
+   },
+   {
+    "parameters": {
+     "httpMethod": "POST",
+     "path": "saarthi-conv-ended",
+     "options": {}
+    },
+    "id": "e3000000-0000-4000-8000-000000000001",
+    "name": "Twilio: call ended",
+    "type": "n8n-nodes-base.webhook",
+    "typeVersion": 2,
+    "position": [
+     -420,
+     360
+    ],
+    "webhookId": "e3000000-0000-4000-8000-000000000001"
+   },
+   {
+    "parameters": {
+     "assignments": {
+      "assignments": [
+       {
+        "id": "c1",
+        "name": "saarthi_base",
+        "value": "https://indux5.0.visioncoders.in",
+        "type": "string"
+       },
+       {
+        "id": "c2",
+        "name": "saarthi_token",
+        "value": "REPLACE_WITH_SAARTHI_INBOUND_TOKEN",
+        "type": "string"
+       }
+      ]
+     },
+     "includeOtherFields": true,
+     "options": {}
+    },
+    "id": "e3000000-0000-4000-8000-000000000002",
+    "name": "Config end - EDIT ME",
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+     -200,
+     360
+    ]
+   },
+   {
+    "parameters": {
+     "method": "POST",
+     "url": "={{ $json.saarthi_base }}/api/voice/end",
+     "sendHeaders": true,
+     "headerParameters": {
+      "parameters": [
+       {
+        "name": "X-Saarthi-Token",
+        "value": "={{ $json.saarthi_token }}"
+       }
+      ]
+     },
+     "sendBody": true,
+     "specifyBody": "json",
+     "jsonBody": "={{ JSON.stringify({ call_id: $json.body.CallSid, phone: String($json.body.Direction || '').startsWith('outbound') ? $json.body.To : $json.body.From }) }}",
+     "options": {}
+    },
+    "id": "e3000000-0000-4000-8000-000000000003",
+    "name": "Saarthi: write the call summary",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "position": [
+     20,
+     360
+    ]
+   },
+   {
+    "parameters": {
+     "httpMethod": "POST",
+     "path": "saarthi-conv-callback",
+     "responseMode": "responseNode",
+     "options": {}
+    },
+    "id": "e4000000-0000-4000-8000-000000000001",
+    "name": "Dashboard: call this farmer",
+    "type": "n8n-nodes-base.webhook",
+    "typeVersion": 2,
+    "position": [
+     -420,
+     580
+    ],
+    "webhookId": "e4000000-0000-4000-8000-000000000001"
+   },
+   {
+    "parameters": {
+     "assignments": {
+      "assignments": [
+       {
+        "id": "c3",
+        "name": "twilio_sid",
+        "value": "REPLACE_WITH_TWILIO_ACCOUNT_SID",
+        "type": "string"
+       },
+       {
+        "id": "c4",
+        "name": "twilio_from",
+        "value": "+14154497491",
+        "type": "string"
+       },
+       {
+        "id": "c5",
+        "name": "n8n_base",
+        "value": "https://n8n-kmar.srv1804200.hstgr.cloud",
+        "type": "string"
+       }
+      ]
+     },
+     "includeOtherFields": true,
+     "options": {}
+    },
+    "id": "e4000000-0000-4000-8000-000000000002",
+    "name": "Config outbound - EDIT ME",
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+     -200,
+     580
+    ]
+   },
+   {
+    "parameters": {
+     "method": "POST",
+     "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.twilio_sid }}/Calls.json",
+     "authentication": "predefinedCredentialType",
+     "nodeCredentialType": "twilioApi",
+     "sendBody": true,
+     "contentType": "form-urlencoded",
+     "bodyParameters": {
+      "parameters": [
+       {
+        "name": "To",
+        "value": "={{ $json.body.to }}"
+       },
+       {
+        "name": "From",
+        "value": "={{ $json.twilio_from }}"
+       },
+       {
+        "name": "Url",
+        "value": "={{ $json.n8n_base }}/webhook/saarthi-conv-answer"
+       },
+       {
+        "name": "StatusCallback",
+        "value": "={{ $json.n8n_base }}/webhook/saarthi-conv-ended"
+       },
+       {
+        "name": "StatusCallbackMethod",
+        "value": "POST"
+       }
+      ]
+     },
+     "options": {}
+    },
+    "id": "e4000000-0000-4000-8000-000000000003",
+    "name": "Twilio: place the call",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "position": [
+     20,
+     580
+    ],
+    "credentials": {
+     "twilioApi": {
+      "id": "jX9mHOCEiA0ugAqo",
+      "name": "Twilio account"
+     }
+    }
+   },
+   {
+    "parameters": {
+     "respondWith": "json",
+     "responseBody": "={{ JSON.stringify({ call_sid: $json.sid, status: $json.status }) }}",
+     "options": {}
+    },
+    "id": "e4000000-0000-4000-8000-000000000004",
+    "name": "Respond with call_sid",
+    "type": "n8n-nodes-base.respondToWebhook",
+    "typeVersion": 1.1,
+    "position": [
+     240,
+     580
+    ]
+   },
+   {
+    "parameters": {
+     "conditions": {
+      "options": {
+       "caseSensitive": true,
+       "leftValue": "",
+       "typeValidation": "loose",
+       "version": 2
+      },
+      "conditions": [
+       {
+        "id": "has-recording",
+        "leftValue": "={{ $json.body.RecordingUrl }}",
+        "rightValue": "",
+        "operator": {
+         "type": "string",
+         "operation": "notEmpty",
+         "singleValue": true
+        }
+       }
+      ],
+      "combinator": "and"
+     },
+     "looseTypeValidation": true,
+     "options": {}
+    },
+    "id": "aud00000-0000-4000-8000-00000000f000",
+    "name": "Was it recorded?",
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.2,
+    "position": [
+     220,
+     520
+    ]
+   },
+   {
+    "parameters": {
+     "url": "={{ $json.body.RecordingUrl }}.wav",
+     "authentication": "predefinedCredentialType",
+     "nodeCredentialType": "twilioApi",
+     "options": {
+      "response": {
+       "response": {
+        "responseFormat": "file",
+        "outputPropertyName": "recording"
+       }
+      },
+      "timeout": 6000
+     }
+    },
+    "id": "aud00000-0000-4000-8000-00000000f001",
+    "name": "Twilio: fetch the recording",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "position": [
+     440,
+     620
+    ],
+    "credentials": {
+     "twilioApi": {
+      "id": "jX9mHOCEiA0ugAqo",
+      "name": "Twilio account"
+     }
+    },
+    "onError": "continueRegularOutput",
+    "alwaysOutputData": true,
+    "retryOnFail": true,
+    "maxTries": 3,
+    "waitBetweenTries": 350
+   },
+   {
+    "parameters": {
+     "jsCode": "/* Everything Saarthi needs for one turn, in one place.\n\n   `audio_b64` is the point of it: with the caller's own audio, Azure\n   identifies the language from the sound rather than from a transcript that\n   was written down by whichever engine the line happened to open with. With no\n   audio the turn still works - the server reads the script of the transcript,\n   which settles eleven of the thirteen on its own. */\nconst cfg = $('Config turn - EDIT ME').first().json;\nconst body = cfg.body || {};\nconst item = $input.first();\n\nconst outbound = String(body.Direction || '').startsWith('outbound');\nconst payload = {\n  phone: outbound ? body.To : body.From,\n  call_id: body.CallSid,\n  transcript: body.SpeechResult || '',\n  language: cfg.language || 'hi',\n  resumed: true,\n  speak: true,\n  direction: body.Direction || 'inbound',\n};\n\n/* The recording, as base64.\n\n   NOT `item.binary.recording.data`. That is only the base64 when n8n is\n   holding binaries in memory; with the filesystem store - which is the\n   default here - it is an ID, and sending it produced a cheerful HTTP 422\n   from Azure and a call that quietly stayed in one language.\n   `getBinaryDataBuffer` reads the real bytes either way.\n\n   A recording Twilio had not finished writing yet simply is not here, and the\n   turn carries on without it. */\nconst recording = item.binary && item.binary.recording;\nif (recording) {\n  let bytes = null;\n  try {\n    bytes = await this.helpers.getBinaryDataBuffer(0, 'recording');\n  } catch (err) {\n    bytes = recording.data ? Buffer.from(recording.data, 'base64') : null;\n  }\n  if (bytes && bytes.length > 1000) {\n    payload.audio_b64 = bytes.toString('base64');\n    payload.audio_type = recording.mimeType || 'audio/wav';\n    payload.audio_name = 'turn.wav';\n    payload.audio_bytes = bytes.length;\n  }\n}\n\nreturn [{ json: { saarthi_base: cfg.saarthi_base, saarthi_token: cfg.saarthi_token,\n                  payload } }];"
+    },
+    "id": "aud00000-0000-4000-8000-00000000f002",
+    "name": "Build the turn",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     660,
+     520
+    ]
+   }
+  ],
+  "connections": {
+   "Twilio: call answered": {
+    "main": [
+     [
+      {
+       "node": "Config - EDIT ME",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Config - EDIT ME": {
+    "main": [
+     [
+      {
+       "node": "Saarthi: greeting",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Saarthi: greeting": {
+    "main": [
+     [
+      {
+       "node": "TwiML: greet and listen",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "TwiML: greet and listen": {
+    "main": [
+     [
+      {
+       "node": "Respond TwiML (greeting)",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Twilio: farmer spoke": {
+    "main": [
+     [
+      {
+       "node": "Config turn - EDIT ME",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Config turn - EDIT ME": {
+    "main": [
+     [
+      {
+       "node": "Was it recorded?",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Saarthi: conversational turn": {
+    "main": [
+     [
+      {
+       "node": "TwiML: reply and listen",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "TwiML: reply and listen": {
+    "main": [
+     [
+      {
+       "node": "Respond TwiML (answer)",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Twilio: call ended": {
+    "main": [
+     [
+      {
+       "node": "Config end - EDIT ME",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Config end - EDIT ME": {
+    "main": [
+     [
+      {
+       "node": "Saarthi: write the call summary",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Dashboard: call this farmer": {
+    "main": [
+     [
+      {
+       "node": "Config outbound - EDIT ME",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Config outbound - EDIT ME": {
+    "main": [
+     [
+      {
+       "node": "Twilio: place the call",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Twilio: place the call": {
+    "main": [
+     [
+      {
+       "node": "Respond with call_sid",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Was it recorded?": {
+    "main": [
+     [
+      {
+       "node": "Twilio: fetch the recording",
+       "type": "main",
+       "index": 0
+      }
+     ],
+     [
+      {
+       "node": "Build the turn",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Twilio: fetch the recording": {
+    "main": [
+     [
+      {
+       "node": "Build the turn",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Build the turn": {
+    "main": [
+     [
+      {
+       "node": "Saarthi: conversational turn",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   }
+  },
+  "settings": {
+   "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+ }
+]
