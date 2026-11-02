@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create an account — Saarthi 2.0</title>
+  <link rel="shortcut icon" type="image/png" href="assets/images/logos/favicon.png" />
+  <link rel="stylesheet" href="assets/libs/owl.carousel/dist/assets/owl.carousel.min.css">
+  <link rel="stylesheet" href="assets/libs/aos-master/dist/aos.css">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/site-custom.css" />
+  <link rel="stylesheet" href="assets/css/auth-app.css?v=20260829193207" />
+  <style>
+    .auth-section .sign-in.card {
+      background: rgba(30, 18, 11, 0.76);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
+      backdrop-filter: blur(20px) saturate(120%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      max-width: 560px;
+    }
+    .auth-section .sign-in.card,
+    .auth-section .sign-in.card p,
+    .auth-section .sign-in.card .form-control { color: #F2F5F4; }
+    .auth-section .sign-in.card hr { border-color: rgba(255, 255, 255, 0.18); opacity: 1; }
+    .auth-section .sign-in.card .bg-body {
+      background: transparent !important;
+      color: rgba(242, 245, 244, 0.75);
+    }
+    .auth-section .sign-in.card .form-control {
+      background-color: transparent;
+      border-bottom-color: rgba(255, 255, 255, 0.28) !important;
+      box-shadow: none;
+    }
+    .auth-section .sign-in.card .form-control::placeholder { color: rgba(242, 245, 244, 0.6); }
+    .auth-section .sign-in.card .form-control:focus {
+      border-bottom-color: var(--bs-primary) !important;
+      background-color: transparent;
+      color: #fff;
+    }
+    .auth-section .sign-in.card .btn-auth-cta {
+      background-color: var(--bs-primary);
+      color: var(--bs-secondary);
+      border: 0;
+    }
+    .auth-section .sign-in.card .btn-auth-cta:hover { filter: brightness(0.94); color: var(--bs-secondary); }
+    .auth-section .sign-in.card a.link-light-auth { color: #F2F5F4; }
+    .auth-section .sign-in.card a.link-light-auth:hover { color: var(--bs-primary); }
+  </style>
+</head>
+
+<body>
+
+  <div class="page-wrapper overflow-hidden">
+
+    <section
+      class="auth-section border-top border-primary border-4 d-flex align-items-center justify-content-center min-vh-100 position-relative">
+      <video class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index:0"
+        autoplay muted loop playsinline poster="assets/images/backgrounds/auth-bg-poster.jpg">
+        <source src="assets/images/backgrounds/auth-bg.mp4" type="video/mp4" />
+      </video>
+      <span class="position-absolute top-0 start-0 w-100 h-100" style="background:rgba(18,11,7,.46); z-index:0"></span>
+
+      <div class="container py-3 position-relative" style="z-index:1">
+        <div class="sign-in card mx-auto shadow-lg position-relative" style="z-index:1">
+          <div class="card-body py-8 px-lg-5">
+
+            <a href="index.html" class="mb-6 hstack justify-content-center">
+              <img src="assets/images/logos/visioncoders-white.png" alt="VisionCoders" width="200" class="img-fluid">
+            </a>
+            <p class="text-center fs-3 mb-7" style="color:rgba(242,245,244,.72)">
+              Create your Saarthi 2.0 account
+            </p>
+
+            
+
+            <div class="position-relative hstack justify-content-center">
+              <hr class="my-7 w-100 d-block">
+              <p class="mb-0 fs-3 bg-body px-3 position-absolute top-50 start-50 translate-middle">OR</p>
+            </div>
+
+            <div id="authMsg" class="auth-msg" role="alert"></div>
+
+            <form id="authForm" data-mode="signup" class="d-flex flex-column gap-3" novalidate>
+              <div class="pick-lbl">Choose your account category</div>
+              <div class="roletiles" id="roleTiles" data-mode="signup"></div>
+              <div class="rolenote d-none" id="roleNote"></div>
+
+              <div class="fieldrow d-none" id="rowAdminCode">
+                <label class="lbl" for="upAdminCode">Administrator access code</label>
+                <input type="text" id="upAdminCode" class="form-control border-bottom"
+                       placeholder="From an existing administrator" autocomplete="off">
+              </div>
+
+              <div class="fieldrow d-none" id="rowBusiness">
+                <label class="lbl" for="upBusiness">Business name</label>
+                <input type="text" id="upBusiness" class="form-control border-bottom"
+                       placeholder="Shop or company name">
+              </div>
+
+              <div class="tworow d-none" id="rowVillage">
+                <div class="fieldrow">
+                  <label class="lbl" for="upVillage">Village</label>
+                  <input type="text" id="upVillage" class="form-control border-bottom" placeholder="Village you serve">
+                </div>
+                <div class="fieldrow">
+                  <label class="lbl" for="upDistrict">District</label>
+                  <input type="text" id="upDistrict" class="form-control border-bottom" placeholder="District">
+                </div>
+              </div>
+              <div class="fieldrow d-none" id="rowState">
+                <label class="lbl" for="upState">State</label>
+                <input type="text" id="upState" class="form-control border-bottom" placeholder="State">
+              </div>
+
+              <div class="fieldrow">
+                <label class="lbl" for="upName">Full name</label>
+                <input type="text" id="upName" class="form-control border-bottom"
+                       placeholder="Your full name" autocomplete="name">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="upPhone">Phone number <span style="text-transform:none">(required)</span></label>
+                <input type="text" id="upPhone" class="form-control border-bottom"
+                       placeholder="10-digit phone number" inputmode="tel" autocomplete="tel">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="upEmail">Email <span style="text-transform:none">(optional)</span></label>
+                <input type="email" id="upEmail" class="form-control border-bottom"
+                       placeholder="you@example.com" autocomplete="email">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="upPassword">Password <span style="text-transform:none">(at least 8 characters)</span></label>
+                <input type="password" id="upPassword" class="form-control border-bottom"
+                       placeholder="Create a password" autocomplete="new-password">
+              </div>
+
+              <div class="fieldrow">
+                <label class="lbl" for="capAnswer">
+                  <span id="capQuestion">Security check</span>
+                </label>
+                <div style="display:flex; gap:10px; align-items:center">
+                  <input type="text" id="capAnswer" class="form-control border-bottom"
+                         placeholder="Your answer" inputmode="numeric"
+                         autocomplete="off" style="flex:1">
+                  <a class="link-light-auth" href="javascript:void(0)" id="capRefresh"
+                     title="Give me a different question"
+                     style="white-space:nowrap; font-size:13.5px">New question</a>
+                </div>
+              </div>
+
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-6 fs-4 lh-lg">
+                Sign Up
+              </button>
+            </form>
+
+            <!-- ============================ confirm your email ============ -->
+            <form id="otpForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Confirm your email</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                We emailed a 6-digit code to <b id="otpEmail"></b>. The email also has
+                a one-click link, if that is easier.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="otpCode">6-digit code</label>
+                <input type="text" id="otpCode" class="form-control border-bottom"
+                       placeholder="000000" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Confirm my email
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" id="otpResend">Send a new code</a>
+              </p>
+            </form>
+
+            <!-- ============================ forgot password ============== -->
+            <form id="forgotForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Reset your password</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                Enter your email address and we will send a reset link. It is
+                valid for 30 minutes and works once.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="forgotEmail">Email address</label>
+                <input type="email" id="forgotEmail" class="form-control border-bottom"
+                       placeholder="you@example.com" autocomplete="email">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="forgotCapAnswer">
+                  <span id="forgotCapQuestion">Security check</span>
+                </label>
+                <div style="display:flex; gap:10px; align-items:center">
+                  <input type="text" id="forgotCapAnswer" class="form-control border-bottom"
+                         placeholder="Your answer" inputmode="numeric"
+                         autocomplete="off" style="flex:1">
+                  <a class="link-light-auth" href="javascript:void(0)" id="forgotCapRefresh"
+                     title="Give me a different question"
+                     style="white-space:nowrap; font-size:13.5px">New question</a>
+                </div>
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Email me a reset link
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Back to sign in</a>
+              </p>
+            </form>
+
+            <!-- ============================ set a new password =========== -->
+            <form id="resetForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Set a new password</div>
+              <input type="hidden" id="resetEmail">
+              <input type="hidden" id="resetToken">
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                Choose a new password. Every other device signed into this
+                account will be signed out.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="resetPassword">New password <span style="text-transform:none">(at least 8 characters)</span></label>
+                <input type="password" id="resetPassword" class="form-control border-bottom"
+                       placeholder="New password" autocomplete="new-password">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Save my new password
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Back to sign in</a>
+              </p>
+            </form>
+
+            <p class="text-center mb-1 d-block fw-medium">By creating an account, you agree with our
+              <a class="link-light-auth" href="privacy-policy.html">Privacy</a> and
+              <a class="link-light-auth" href="privacy-policy.html">Policy</a>.
+            </p>
+            <p class="mb-0 fw-medium text-center">Already have an account?
+              <a class="link-light-auth" href="sign-in.html">Sign In</a>
+            </p>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="get-template hstack gap-2">
+    <button class="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
+      id="scrollToTopBtn">
+      <iconify-icon icon="lucide:arrow-up" class="fs-7 text-dark"></iconify-icon>
+    </button>
+  </div>
+
+  <script src="assets/libs/jquery/dist/jquery.min.js"></script>
+  <script src="assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/libs/owl.carousel/dist/owl.carousel.min.js"></script>
+  <script src="assets/libs/aos-master/dist/aos.js"></script>
+  <script src="assets/js/custom.js"></script>
+  <script src="assets/js/auth-app.js?v=20261022010000"></script>
+  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+  <script src="assets/js/site-lang.js?v=20261102124257" data-anchor=".toggle-menu" data-api="/api/i18n"></script>
+</body>
+
+</html>

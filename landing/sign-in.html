@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Saarthi 2.0</title>
+  <link rel="shortcut icon" type="image/png" href="assets/images/logos/favicon.png" />
+  <link rel="stylesheet" href="assets/libs/owl.carousel/dist/assets/owl.carousel.min.css">
+  <link rel="stylesheet" href="assets/libs/aos-master/dist/aos.css">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/site-custom.css" />
+  <link rel="stylesheet" href="assets/css/auth-app.css?v=20260829193207" />
+  <style>
+    /* Auth card: glass tinted from the background photo (#0E1818 / #12201F) */
+    .auth-section .sign-in.card {
+      background: rgba(30, 18, 11, 0.76);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
+      backdrop-filter: blur(20px) saturate(120%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+    .auth-section .sign-in.card,
+    .auth-section .sign-in.card p,
+    .auth-section .sign-in.card .form-control { color: #F2F5F4; }
+    .auth-section .sign-in.card hr { border-color: rgba(255, 255, 255, 0.18); opacity: 1; }
+    .auth-section .sign-in.card .bg-body {
+      background: transparent !important;
+      color: rgba(242, 245, 244, 0.75);
+    }
+    .auth-section .sign-in.card .form-control {
+      background-color: transparent;
+      border-bottom-color: rgba(255, 255, 255, 0.28) !important;
+      box-shadow: none;
+    }
+    .auth-section .sign-in.card .form-control::placeholder { color: rgba(242, 245, 244, 0.6); }
+    .auth-section .sign-in.card .form-control:focus {
+      border-bottom-color: var(--bs-primary) !important;
+      background-color: transparent;
+      color: #fff;
+    }
+    .auth-section .sign-in.card .btn-auth-cta {
+      background-color: var(--bs-primary);
+      color: var(--bs-secondary);
+      border: 0;
+    }
+    .auth-section .sign-in.card .btn-auth-cta:hover { filter: brightness(0.94); color: var(--bs-secondary); }
+    .auth-section .sign-in.card a.link-light-auth { color: #F2F5F4; }
+    .auth-section .sign-in.card a.link-light-auth:hover { color: var(--bs-primary); }
+    /* The farm card carries more than the template's, so let it breathe. */
+    .auth-section .sign-in.card { max-width: 560px; }
+  </style>
+</head>
+
+<body>
+
+  <div class="page-wrapper overflow-hidden">
+
+    <section
+      class="auth-section border-top border-primary border-4 d-flex align-items-center justify-content-center min-vh-100 position-relative">
+      <video class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index:0"
+        autoplay muted loop playsinline poster="assets/images/backgrounds/auth-bg-poster.jpg">
+        <source src="assets/images/backgrounds/auth-bg.mp4" type="video/mp4" />
+      </video>
+      <span class="position-absolute top-0 start-0 w-100 h-100" style="background:rgba(18,11,7,.46); z-index:0"></span>
+
+      <div class="container py-3 position-relative" style="z-index:1">
+        <div class="sign-in card mx-auto shadow-lg position-relative" style="z-index:1">
+          <div class="card-body py-8 px-lg-5">
+
+            <a href="index.html" class="mb-6 hstack justify-content-center">
+              <img src="assets/images/logos/visioncoders-white.png" alt="VisionCoders" width="200" class="img-fluid">
+            </a>
+            <p class="text-center fs-3 mb-7" style="color:rgba(242,245,244,.72)">
+              Sign in to your Saarthi 2.0 dashboard
+            </p>
+
+            
+
+            <div class="position-relative hstack justify-content-center">
+              <hr class="my-7 w-100 d-block">
+              <p class="mb-0 fs-3 bg-body px-3 position-absolute top-50 start-50 translate-middle">OR</p>
+            </div>
+
+            <div id="authMsg" class="auth-msg" role="alert"></div>
+
+            <form id="authForm" data-mode="login" class="d-flex flex-column gap-3" novalidate>
+              <div class="pick-lbl">I am signing in as</div>
+              <div class="roletiles" id="roleTiles" data-mode="login"></div>
+
+              <div class="fieldrow">
+                <label class="lbl" for="inIdentifier">Phone number or email</label>
+                <input type="text" id="inIdentifier" class="form-control border-bottom"
+                       placeholder="Phone number or email" autocomplete="username">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="inPassword">Password</label>
+                <input type="password" id="inPassword" class="form-control border-bottom"
+                       placeholder="Your password" autocomplete="current-password">
+              </div>
+
+              <div class="fieldrow">
+                <label class="lbl" for="capAnswer">
+                  <span id="capQuestion">Security check</span>
+                </label>
+                <div style="display:flex; gap:10px; align-items:center">
+                  <input type="text" id="capAnswer" class="form-control border-bottom"
+                         placeholder="Your answer" inputmode="numeric"
+                         autocomplete="off" style="flex:1">
+                  <a class="link-light-auth" href="javascript:void(0)" id="capRefresh"
+                     title="Give me a different question"
+                     style="white-space:nowrap; font-size:13.5px">New question</a>
+                </div>
+              </div>
+
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-6 fs-4 lh-lg">
+                Sign In
+              </button>
+            </form>
+
+            <!-- ============================ confirm your email ============ -->
+            <form id="otpForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Confirm your email</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                We emailed a 6-digit code to <b id="otpEmail"></b>. The email also has
+                a one-click link, if that is easier.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="otpCode">6-digit code</label>
+                <input type="text" id="otpCode" class="form-control border-bottom"
+                       placeholder="000000" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Confirm my email
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" id="otpResend">Send a new code</a>
+              </p>
+            </form>
+
+
+            <!-- ====================== the code we just emailed =========== -->
+            <form id="signinOtpForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Check your email</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                Your password was correct. To finish signing in, enter the
+                6-digit code we just emailed to <b id="signinOtpTo"></b>.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="signinOtpCode">6-digit code</label>
+                <input type="text" id="signinOtpCode" class="form-control border-bottom"
+                       placeholder="000000" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Sign in
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" id="signinOtpResend">Send a new code</a>
+                <span style="opacity:.4"> &nbsp;·&nbsp; </span>
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Start again</a>
+              </p>
+            </form>
+
+            <!-- ============================ forgot password ============== -->
+            <form id="forgotForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Reset your password</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                Enter your phone number or email. We send one 6-digit code to
+                the email address and the phone number on your account. It is
+                valid for 10 minutes and works once.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="forgotIdentifier">Phone number or email</label>
+                <input type="text" id="forgotIdentifier" class="form-control border-bottom"
+                       placeholder="Phone number or email" autocomplete="username">
+              </div>
+              <div class="fieldrow">
+                <label class="lbl" for="forgotCapAnswer">
+                  <span id="forgotCapQuestion">Security check</span>
+                </label>
+                <div style="display:flex; gap:10px; align-items:center">
+                  <input type="text" id="forgotCapAnswer" class="form-control border-bottom"
+                         placeholder="Your answer" inputmode="numeric"
+                         autocomplete="off" style="flex:1">
+                  <a class="link-light-auth" href="javascript:void(0)" id="forgotCapRefresh"
+                     title="Give me a different question"
+                     style="white-space:nowrap; font-size:13.5px">New question</a>
+                </div>
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Send me a code
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Back to sign in</a>
+              </p>
+            </form>
+
+            <!-- ============================ reset: the code ============== -->
+            <form id="resetOtpForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Enter your code</div>
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                We sent a 6-digit code to <span id="resetSentTo">your account</span>.
+                Check your email and your text messages.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="resetOtpCode">6-digit code</label>
+                <input type="text" id="resetOtpCode" class="form-control border-bottom"
+                       placeholder="000000" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Continue
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" id="resetOtpResend">Send it again</a>
+                &nbsp;&middot;&nbsp;
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Back to sign in</a>
+              </p>
+            </form>
+
+            <!-- ============================ set a new password =========== -->
+            <form id="resetForm" class="d-flex flex-column gap-3 d-none" novalidate>
+              <div class="pick-lbl">Set a new password</div>
+              <input type="hidden" id="resetEmail">
+              <input type="hidden" id="resetToken">
+              <input type="hidden" id="resetTicket">
+              <p class="mb-2" style="color:rgba(242,245,244,.75); font-size:14px">
+                Choose a new password. Every other device signed into this
+                account will be signed out.
+              </p>
+              <div class="fieldrow">
+                <label class="lbl" for="resetPassword">New password <span style="text-transform:none">(at least 8 characters)</span></label>
+                <input type="password" id="resetPassword" class="form-control border-bottom"
+                       placeholder="New password" autocomplete="new-password">
+              </div>
+              <button type="submit"
+                class="btn btn-auth-cta w-100 justify-content-center py-2 fw-medium my-4 fs-4 lh-lg">
+                Save my new password
+              </button>
+              <p class="mb-0 text-center" style="font-size:13.5px">
+                <a class="link-light-auth" href="javascript:void(0)" data-back="1">Back to sign in</a>
+              </p>
+            </form>
+
+            <p class="mb-2 fw-medium text-center">
+              <a class="link-light-auth" href="javascript:void(0)" id="forgotLink">Forgot your password?</a>
+            </p>
+            <p class="mb-0 fw-medium text-center">New here?
+              <a class="link-light-auth" href="sign-up.html">Create an account</a>
+            </p>
+            <p class="text-center mt-3 mb-0" style="color:rgba(242,245,244,.55); font-size:13px">
+              No email address? A village head can register you on your phone number alone.
+            </p>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="get-template hstack gap-2">
+    <button class="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
+      id="scrollToTopBtn">
+      <iconify-icon icon="lucide:arrow-up" class="fs-7 text-dark"></iconify-icon>
+    </button>
+  </div>
+
+  <script src="assets/libs/jquery/dist/jquery.min.js"></script>
+  <script src="assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/libs/owl.carousel/dist/owl.carousel.min.js"></script>
+  <script src="assets/libs/aos-master/dist/aos.js"></script>
+  <script src="assets/js/custom.js"></script>
+  <script src="assets/js/auth-app.js?v=20261022010000"></script>
+  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+  <script src="assets/js/site-lang.js?v=20261102124257" data-anchor=".toggle-menu" data-api="/api/i18n"></script>
+</body>
+
+</html>

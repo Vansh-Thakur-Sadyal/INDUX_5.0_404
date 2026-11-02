@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Map key check</title>
+<!--
+  Does the Google Maps key work ON THIS HOSTNAME?
+
+  Maps JavaScript keys are restricted by HTTP referrer, and that allowlist is
+  per-hostname. The key Saarthi uses came from another site on the same box, so
+  it can be perfectly valid and still be refused here - and the only thing that
+  can tell you is a real page load from this origin, which is why this is a page
+  and not something checked from a terminal.
+
+  It loads the key the dashboard serves, builds a map with it, and reports what
+  Google said. Everything it needs is in this one file.
+-->
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px; background: #0d1a14; color: #e9f3ec;
+         font: 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #9bb3a6; margin: 0 0 20px; }
+  #verdict { padding: 14px 16px; border-radius: 10px; font-weight: 600;
+             margin-bottom: 16px; background: #1b2a22; }
+  #verdict.pass { background: #10361f; color: #86efac; }
+  #verdict.fail { background: #3a1a1a; color: #fca5a5; }
+  #map { height: 300px; border-radius: 10px; background: #16261f; }
+  dl { display: grid; grid-template-columns: 11rem 1fr; gap: 6px 14px;
+       margin: 18px 0 0; }
+  dt { color: #9bb3a6; }
+  dd { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+       font-size: 13px; word-break: break-word; }
+  .note { margin-top: 18px; color: #9bb3a6; font-size: 13.5px; }
+  code { background: #16261f; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Map key check</h1>
+  <p class="sub">Whether the Google Maps key works on <b id="host"></b>.</p>
+
+  <div id="verdict">Checking...</div>
+  <div id="map"></div>
+
+  <dl>
+    <dt>Key served</dt><dd id="key">-</dd>
+    <dt>Library loaded</dt><dd id="lib">-</dd>
+    <dt>Map built</dt><dd id="built">-</dd>
+    <dt>Tiles drawn</dt><dd id="tiles">-</dd>
+    <dt>Google said</dt><dd id="said">-</dd>
+  </dl>
+
+  <p class="note">
+    A failure here is fixed in the Google Cloud console, not in Saarthi.
+    <code>RefererNotAllowedMapError</code> means this hostname has to be added to
+    the key's website restrictions; <code>BillingNotEnabledMapError</code> means
+    billing is off on that Cloud project; <code>InvalidKeyMapError</code> means
+    the key itself is wrong.
+  </p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var said = [];
+  var realError = console.error;
+  console.error = function () {
+    said.push(Array.prototype.join.call(arguments, ' '));
+    realError.apply(console, arguments);
+  };
+  // Google also calls this hook for authentication failures specifically.
+  window.gm_authFailure = function () {
+    said.push('gm_authFailure: the key was refused for this page.');
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  $('host').textContent = location.hostname;
+
+  function finish(pass, message) {
+    var box = $('verdict');
+    box.className = pass ? 'pass' : 'fail';
+    box.textContent = message;
+    $('said').textContent = said.length ? said.join(' | ') : (pass ? 'nothing' : 'nothing - see the browser console');
+  }
+
+  fetch('/api/maps').then(function (r) { return r.json(); }).then(function (body) {
+    var key = body.key || '';
+    $('key').textContent = key ? ('...' + key.slice(-6) + '  (provider: ' + body.provider + ')') : 'none';
+    if (!key) { finish(false, 'No key is configured on the server.'); return; }
+
+    var tag = document.createElement('script');
+    tag.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key)
+      + '&loading=async&v=quarterly';
+    tag.async = true;
+    tag.onerror = function () { finish(false, 'The Maps library could not be downloaded.'); };
+    tag.onload = function () {
+      $('lib').textContent = (window.google && window.google.maps) ? 'yes' : 'no';
+      if (!(window.google && window.google.maps)) {
+        finish(false, 'The Maps library loaded but did not start.');
+        return;
+      }
+      var built = false;
+      try {
+        new google.maps.Map($('map'), {
+          center: { lat: 30.901037, lng: 75.860182 },
+          zoom: 13, mapTypeId: 'hybrid', disableDefaultUI: true,
+        });
+        built = true;
+      } catch (err) {
+        said.push('constructor: ' + err.message);
+      }
+      $('built').textContent = built ? 'yes' : 'no';
+
+      // Give it a moment to fetch imagery, then judge by what is on screen:
+      // a refused key builds a map object perfectly happily and draws nothing.
+      setTimeout(function () {
+        var drawn = $('map').querySelectorAll('img').length;
+        $('tiles').textContent = String(drawn);
+        if (built && drawn > 0 && !said.length) {
+          finish(true, 'Working. Google imagery is drawing on this hostname.');
+        } else {
+          finish(false, 'Not working on this hostname - see "Google said" below.');
+        }
+      }, 4000);
+    };
+    document.head.appendChild(tag);
+  }).catch(function (err) {
+    finish(false, 'Could not read the key from the server: ' + err.message);
+  });
+}());
+</script>
+</body>
+</html>
