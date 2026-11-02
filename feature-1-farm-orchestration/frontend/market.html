@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mandi Market Details & Data.gov.in Intelligence – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="market.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Ask me about vegetable mandi rates, nearest fertilizer shops, or yield calculations!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab active">Market Details</a>
+      <a href="farm_support.html" class="tab">Farm Support</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="api-status-pill" id="apiKeyPill">Agmarknet price feed</span>
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">MARKET TELEMETRY:<br/><span class="active-tag">LIVE GPS SYNC</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">📊 Fleet Dashboard</a>
+      <a href="market.html" class="sidebar-nav-item active">📈 Mandi Prices</a>
+      <a href="farm_support.html" class="sidebar-nav-item">🌿 Farm Support</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">DATA.GOV.IN & AGMARKNET INTEGRATION</div>
+        <h1 class="page-title">Live Mandi Market Prices & Expected Value Analysis</h1>
+        <p class="page-desc">Real-time agricultural commodity prices, expected market value calculations, and nearest Mandi geolocation tracking.</p>
+      </div>
+      <div class="gps-badge-card" id="gpsCard">
+        <div class="gps-icon">📍</div>
+        <div>
+          <div class="gps-label">GPS LOCATION DETECTED</div>
+          <div class="gps-coords" id="gpsCoords">Detecting coordinates...</div>
+        </div>
+        <button class="btn-gps-refresh" id="refreshGpsBtn" title="Re-detect GPS location">⚡ GPS Sync</button>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="market-kpi-row">
+      <div class="card kpi-card-mkt">
+        <div class="kpi-mkt-label">AVG EXPECTED PRICE</div>
+        <div class="kpi-mkt-val green" id="kpiAvgPrice">₹28.40 / kg</div>
+        <div class="kpi-mkt-sub">Across nearest regional mandis</div>
+      </div>
+      <div class="card kpi-card-mkt">
+        <div class="kpi-mkt-label">HIGHEST GAINER</div>
+        <div class="kpi-mkt-val gold" id="kpiTopGainer">Onion (+6.8%)</div>
+        <div class="kpi-mkt-sub">Lasalgaon Mandi</div>
+      </div>
+      <div class="card kpi-card-mkt">
+        <div class="kpi-mkt-label">LOWEST MIN PRICE</div>
+        <div class="kpi-mkt-val blue" id="kpiLowestMin">Potato (₹14.50/kg)</div>
+        <div class="kpi-mkt-sub">Jalandhar Main Mandi</div>
+      </div>
+      <div class="card kpi-card-mkt">
+        <div class="kpi-mkt-label">DATA SOURCE</div>
+        <div class="kpi-mkt-val" id="kpiSource">Data.gov.in Agmarknet</div>
+        <div class="kpi-mkt-sub" id="kpiSourceSub">Live Mandi Feed</div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card filter-bar-card">
+      <div class="filter-inputs">
+        <div class="filter-group">
+          <label>SEARCH CROP / VEGETABLE</label>
+          <input type="text" id="searchInput" list="cropSuggestions" placeholder="Search any crop returned by the API..." class="custom-input"/>
+          <datalist id="cropSuggestions"></datalist>
+        </div>
+        <div class="filter-group">
+          <label>CROP CATEGORY</label>
+          <select id="categorySelect" class="custom-select">
+            <option value="all">All Crops & Commodities</option>
+            <option value="Vegetables">Vegetables</option>
+            <option value="Cereals">Cereals & Grains</option>
+            <option value="Pulses">Pulses & Legumes</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Spices">Spices & Oilseeds</option>
+            <option value="Commercial">Commercial Crops</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>STATE / REGION</label>
+          <select id="stateSelect" class="custom-select">
+            <option value="all">All States</option>
+            <option value="punjab">Punjab</option>
+            <option value="haryana">Haryana</option>
+            <option value="maharashtra">Maharashtra</option>
+            <option value="delhi">Delhi NCR</option>
+            <option value="rajasthan">Rajasthan</option>
+            <option value="madhya pradesh">Madhya Pradesh</option>
+            <option value="uttar pradesh">Uttar Pradesh</option>
+            <option value="gujarat">Gujarat</option>
+            <option value="himachal">Himachal Pradesh</option>
+            <option value="karnataka">Karnataka</option>
+            <option value="tamil nadu">Tamil Nadu</option>
+            <option value="telangana">Telangana</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>SORT BY</label>
+          <select id="sortSelect" class="custom-select">
+            <option value="distance">Nearest Mandi (GPS)</option>
+            <option value="expected_high">Expected Price (High to Low)</option>
+            <option value="expected_low">Expected Price (Low to High)</option>
+            <option value="name">Commodity Name</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="market-record-note" id="marketRecordNote">Loading all crops and commodities…</div>
+
+    <!-- VEGETABLE & COMMODITY CARDS GRID -->
+    <div class="market-grid" id="marketGrid">
+      <!-- Loaded dynamically via JS -->
+      <div class="loading-state">Fetching real-time mandi prices...</div>
+    </div>
+
+  </main>
+</div>
+
+<script src="market.js"></script>
+</body>
+</html>

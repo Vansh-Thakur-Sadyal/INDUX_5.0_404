@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farm Support & Machinery Locator – Agritech Farm</title>
+  <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="farm_support.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- CHATBOT POPUP -->
+<div class="chatbot-popup hidden" id="chatbotPopup">
+  <div class="chatbot-header">
+    <div class="chatbot-header-title">
+      <span class="chatbot-star-icon">✦</span>
+      <span>NEURAL ASSISTANT</span>
+    </div>
+    <button class="chatbot-x-btn" id="chatbotClose" title="Close">✕</button>
+  </div>
+  <div class="chatbot-body" id="chatMessages">
+    <div class="chat-msg-row bot-row">
+      <div class="chat-avatar bot-av"></div>
+      <div class="chat-bubble bot-bubble">Ask me to find nearby fertilizer shops, tractor rentals, or agricultural mandis!</div>
+    </div>
+  </div>
+  <div class="chatbot-footer">
+    <input type="text" class="chat-text-input" id="chatInput" placeholder="Type a command…" autocomplete="off"/>
+    <button class="chat-send-btn" id="chatSend">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<header class="topnav">
+  <div class="topnav-left">
+    <span class="brand">AFO: Orchestration</span>
+    <nav class="top-tabs">
+      <a href="index.html" class="tab">Fleet</a>
+      <a href="market.html" class="tab">Market Details</a>
+      <a href="farm_support.html" class="tab active">Farm Support</a>
+    </nav>
+  </div>
+  <div class="topnav-right">
+    <span class="avatar">👤</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Verdant Intelligence</div>
+        <div class="brand-sub">FARM SERVICES:<br/><span class="active-tag">GPS MAP SYNC</span></div>
+      </div>
+    </div>
+    <button class="chatbot-open-btn" id="openChatbotBtn">💬 Open Chatbot</button>
+    <div class="sidebar-nav-menu">
+      <a href="index.html" class="sidebar-nav-item">📊 Fleet Dashboard</a>
+      <a href="market.html" class="sidebar-nav-item">📈 Mandi Prices</a>
+      <a href="farm_support.html" class="sidebar-nav-item active">🌿 Farm Support</a>
+    </div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-eyebrow">GEOLOCATION & DIRECT MAP REDIRECTION</div>
+        <h1 class="page-title">Nearest Markets, Fertilizer Shops & Farm Machinery</h1>
+        <p class="page-desc">Locate agricultural suppliers, fertilizer & bio-pesticide stores, and farm support equipment rentals nearby. Click any location to launch Google Maps navigation.</p>
+      </div>
+      <div class="gps-badge-card">
+        <div class="gps-icon">🌐</div>
+        <div>
+          <div class="gps-label">USER GPS COORDINATES</div>
+          <div class="gps-coords" id="gpsSupportCoords">Detecting GPS...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPT / REQUEST SELECTION BAR -->
+    <div class="card request-banner-card">
+      <div class="req-banner-title">Select Support Category to Search Nearby Services:</div>
+      <p class="req-banner-sub">Results are fetched based on your active GPS position and will redirect directly to Google Maps navigation upon selection.</p>
+
+      <div class="category-buttons-row">
+        <button class="btn-category-req active" data-type="all">
+          <span class="cat-icon">🔍</span> Show All Services
+        </button>
+        <button class="btn-category-req" data-type="fertilizer">
+          <span class="cat-icon">🌿</span> Fertilizer & Seed Shops
+        </button>
+        <button class="btn-category-req" data-type="machinery">
+          <span class="cat-icon">🚜</span> Farm Machinery & Tractors
+        </button>
+        <button class="btn-category-req" data-type="market">
+          <span class="cat-icon">🏛️</span> Agricultural Mandi Markets
+        </button>
+      </div>
+    </div>
+
+    <!-- SUPPORT CARDS GRID -->
+    <div class="support-grid" id="supportGrid">
+      <div class="loading-state">Select a category above or ask the assistant to view nearby locations...</div>
+    </div>
+
+  </main>
+</div>
+
+<script src="farm_support.js"></script>
+</body>
+</html>
