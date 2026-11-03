@@ -59,6 +59,24 @@ navigation. It retrieves relevant entries from a local feature knowledge
 index using sparse TF-IDF vectors and BM25, then grounds its answer in those
 entries and any crop or soil readings supplied by the page. If the Mistral key
 is unavailable, it returns retrieved feature information directly.
+Feature retrieval uses the user's question rather than unrelated page context.
+Crop diagnosis and fertilizer dosing remain evidence-bounded. Crop-selection
+questions use a deterministic ranking against the NPK Advisor's built-in crop
+ranges, plus the current broad India season; missing readings fall back to a
+short seasonal list and mention missing NPK inputs only when useful. These app ranges are not a
+district-validated agronomy database. A recent HM-10 reading is included when
+available, but current form values take priority. The assistant uses browser
+GPS only when permission is granted and labels date-based season and location
+assumptions. The existing sparse TF-IDF/BM25 index contains app-feature
+descriptions, not a crop-agronomy corpus or similarity scores; crop advice
+therefore uses exact local crop-reference lookup and the deterministic rules
+engine rather than pretending to perform vector retrieval. Comparing vegetable
+prices requires a location and matching live Agmarknet records; sample records
+are never reported as current.
+For local weather enrichment, permitted coordinates are used to fetch
+approximate locality and current/near-term weather from OpenStreetMap Nominatim
+and Open-Meteo. Soil moisture, temperature, soil type, and irrigation are
+included as context but are not assigned crop-fit scores by the app matrix.
 Current-weather questions use Open-Meteo when GPS coordinates or a town/district
 are available. Current mandi prices are only quoted when the live Data.gov.in
 feed returns matching records; built-in prices are sample/reference data and
@@ -66,6 +84,13 @@ are never described by chat as live. The live feed currently has no verified
 market coordinates, so GPS cannot guarantee the nearest live mandi. This
 feature-only project has no account registration/profile store; location is
 shared only after browser GPS permission or when the user types a place.
+
+The reusable RAG and model code is grouped in [`rag_model/`](./rag_model/).
+Copy that folder to another Python project to use the local feature index,
+crop-matching rules, context builder, response guard, Mistral client, and
+standalone demo API. Setup and usage are documented in
+[`rag_model/README.md`](./rag_model/README.md). Do not share API keys; each
+user must configure their own `MISTRAL_API_KEY`.
 
 Plant Growth tracks crop measurements, compares uploaded photos, and keeps
 recent analysis history in the browser. Other included tools cover NPK advice, yield calculations, orchestration reports, input costs, weather, farm finance, farmer education, and agricultural news. The navigation also includes the Government Subsidies portal, Water Stress analysis, and Farm Photo Inspector.

@@ -15,7 +15,11 @@ from html import unescape
 from typing import Optional, Dict, Any, List
 from urllib.parse import parse_qs, unquote, urlparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.dirname(BACKEND_ROOT)
+for import_root in (BACKEND_ROOT, PROJECT_ROOT):
+    if import_root not in sys.path:
+        sys.path.insert(0, import_root)
 
 # Windows consoles default to cp1252, force UTF-8 output.
 for stream in (sys.stdout, sys.stderr):
@@ -24,9 +28,24 @@ for stream in (sys.stdout, sys.stderr):
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from rag_model.agronomy import (
+    exact_crop_reference,
+    rank_crops,
+    seasonal_fallback,
+)
+from rag_model.assistant import (
+    alternative_crop_reply,
+    is_crop_selection_question,
+)
 from agents.orchestrator import AgentOrchestrator
-from assistant_knowledge import list_feature_knowledge, retrieve_feature_knowledge
-from llm_client import mistral_chat
+from rag_model.assistant_knowledge import list_feature_knowledge, retrieve_feature_knowledge
+from rag_model.system_prompt import (
+    AGRI_RAG_JSON_RETRY_INSTRUCTION,
+    AGRI_RAG_SYSTEM_PROMPT,
+)
+from rag_model.context_builder import build_agri_context
+from rag_model.response_guard import concise_response, guard_response
+from rag_model.model_client import mistral_chat
 from api.sos import router as sos_router, start_sos_cleanup, stop_sos_cleanup
 from api.hardware_share import (
     router as hardware_share_router,
@@ -2015,6 +2034,271 @@ def _is_market_price_question(message: str) -> bool:
     return asks_for_price and asks_about_market
 
 
+def _is_lowest_vegetable_price_question(message: str) -> bool:
+    lowered = message.casefold()
+    asks_lowest = any(term in lowered for term in ("lowest", "cheapest", "least expensive"))
+    asks_price = any(term in lowered for term in ("price", "prize", "rate", "cost", "selling"))
+    asks_vegetable = any(
+        term in lowered
+        for term in (
+            "vegetable", "vegetables", "veggie", "veggies",
+            "vegetible", "vegetibles", "vegitable", "vegitible",
+        )
+    )
+    return asks_lowest and asks_price and asks_vegetable
+
+
+def _chat_lowest_vegetable_price_reply(message: str, body: dict) -> dict:
+    location = str(body.get("location") or "").strip()
+    if not location:
+        location_match = re.search(
+            r"\b(?:in|near|at|around)\s+([a-z][a-z .'-]{1,60})",
+            message,
+            re.IGNORECASE,
+        )
+        if location_match:
+            location = re.sub(
+                r"\b(today|tomorrow|now|current|lowest|cheapest|vegetable|vegetables|price|prize|rate|cost|market|mandi)\b.*$",
+                "",
+                location_match.group(1),
+                flags=re.IGNORECASE,
+            ).strip(" ,.")
+
+    lat, lon = body.get("lat"), body.get("lon")
+    try:
+        lat = float(lat) if lat is not None else None
+        lon = float(lon) if lon is not None else None
+        if lat is None or lon is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
+            lat = lon = None
+    except (TypeError, ValueError):
+        lat = lon = None
+
+    gps_locality = ""
+    if lat is not None and lon is not None:
+        gps_locality = _gps_market_area(round(lat, 2), round(lon, 2))
+        if gps_locality:
+            location = gps_locality
+    if not location:
+        return {
+            "reply": (
+                "Which town or district should I check? I need a location to compare "
+                "current vegetable mandi prices; sample prices are not used."
+            ),
+            "action_link": "market.html",
+            "action_text": "Open Market Details",
+        }
+
+    try:
+        market_result = get_market_prices(
+            lat=lat,
+            lon=lon,
+            state=None if lat is not None else location,
+        )
+    except Exception as error:
+        print(f"[WARN] Vegetable price comparison failed: {type(error).__name__}")
+        market_result = {}
+
+    if market_result.get("source") != "Data.gov.in Agmarknet Live API":
+        return {
+            "reply": (
+                f"I couldn't verify current vegetable mandi prices for {location}; "
+                "the available built-in prices are sample data and were not used. "
+                "Please try Market Details again later."
+            ),
+            "action_link": "market.html",
+            "action_text": "Open Market Details",
+        }
+
+    records = market_result.get("data") or []
+    if lat is None:
+        records, _ = _filter_market_records_by_area(
+            records, location, include_state_matches=True
+        )
+
+    vegetable_names = {
+        re.sub(r"[^a-z0-9]+", "", str(item.get("commodity", "")).casefold())
+        for item in MASTER_CROP_DATABASE
+        if item.get("category") == "Vegetables"
+    }
+    vegetable_records = []
+    for item in records:
+        commodity = re.sub(
+            r"[^a-z0-9]+", "", str(item.get("commodity", "")).casefold()
+        )
+        try:
+            modal_price = float(item.get("modal_price"))
+        except (TypeError, ValueError):
+            continue
+        if commodity in vegetable_names and modal_price > 0:
+            vegetable_records.append((modal_price, item))
+
+    if not vegetable_records:
+        return {
+            "reply": (
+                f"The live Agmarknet feed has no matching vegetable price records for "
+                f"{location}. No sample prices were used. Try another nearby town or district."
+            ),
+            "action_link": "market.html",
+            "action_text": "Open Market Details",
+        }
+
+    lowest_price, lowest_record = min(vegetable_records, key=lambda entry: entry[0])
+    return {
+        "reply": (
+            f"Lowest modal vegetable price in the matching live Agmarknet records for "
+            f"{location}: {lowest_record.get('commodity')} at "
+            f"{lowest_record.get('market', 'market')}, {lowest_record.get('district', '')}, "
+            f"{lowest_record.get('state', '')} — ₹{lowest_price:.2f}/kg "
+            f"({lowest_record.get('arrival_date') or 'arrival date not provided'}). "
+            "This is the lowest in the returned matching records, not a guarantee across every market. "
+            "Source: Data.gov.in Agmarknet Live API."
+        ),
+        "action_link": "market.html",
+        "action_text": "View Market Details",
+    }
+
+
+def _is_crop_advice_question(message: str) -> bool:
+    lowered = message.casefold()
+    app_feature_request = any(
+        phrase in lowered
+        for phrase in (
+            "how do i use",
+            "how can i use",
+            "how to open",
+            "how do i open",
+            "what does the app",
+            "what does npk advisor",
+            "what is npk advisor",
+            "app feature",
+        )
+    )
+    if app_feature_request:
+        return False
+
+    asks_plant_diagnosis = any(
+        term in lowered
+        for term in (
+            "yellowing", "yellow leaves", "leaf veins", "between the veins",
+            "wilting", "chlorosis", "leaf spot", "disease", "pest",
+            "deficiency", "deficient", "symptom", "leaves are", "leaves turn",
+        )
+    )
+    asks_crop_or_fertilizer_advice = any(
+        term in lowered
+        for term in (
+            "fertilizer", "fertiliser", "fertilize", "fertilise",
+            "alternative vegetable", "vegetables i can grow",
+            "vegetables can i grow", "what can i grow", "what should i grow",
+            "crop should i grow", "which crop should i grow",
+            "crop to grow", "suitable crop", "best crop to grow",
+        )
+    )
+    return asks_plant_diagnosis or asks_crop_or_fertilizer_advice
+
+
+def _is_alternative_crop_question(message: str) -> bool:
+    lowered = message.casefold()
+    asks_for_alternative = any(
+        term in lowered
+        for term in ("alternative", "another", "different", "other", "instead")
+    )
+    asks_for_crop = any(
+        term in lowered
+        for term in ("crop", "vegetable", "vegetables", "veggie", "veggies", "grow")
+    )
+    return asks_for_alternative and asks_for_crop
+
+
+def _is_crop_selection_question(message: str) -> bool:
+    return is_crop_selection_question(message)
+
+
+def _chat_alternative_crop_reply(body: dict, message: str) -> dict:
+    return alternative_crop_reply(
+        message,
+        body,
+        location_resolver=_gps_market_area,
+        sensor_telemetry=LATEST_HARDWARE_TELEMETRY,
+    )
+
+
+def _is_fertilizer_dose_question(message: str) -> bool:
+    lowered = message.casefold()
+    asks_fertilizer = any(
+        term in lowered for term in ("fertilizer", "fertiliser", "fertilize", "fertilise")
+    )
+    asks_amount = any(
+        term in lowered
+        for term in ("dose", "dosage", "rate", "how much", "application", "apply")
+    )
+    return asks_fertilizer and asks_amount
+
+
+def _chat_crop_advice_web_reply(message: str, body: dict) -> dict:
+    crop = str(body.get("crop") or "").strip()[:100]
+    search_query = " ".join(
+        part
+        for part in (
+            "India agriculture",
+            message,
+            crop,
+            str(body.get("crop_stage") or "")[:80],
+        )
+        if part
+    )
+    try:
+        results = _search_web(search_query, limit=3)
+    except requests.RequestException as error:
+        print(f"[WARN] Crop advice web search failed: {type(error).__name__}")
+        results = []
+
+    relevant_terms = {
+        term
+        for term in re.findall(r"[a-z0-9]+", f"{message} {crop}".casefold())
+        if len(term) > 3
+        and term not in {"what", "with", "from", "should", "there", "between", "give", "list"}
+    }
+    results = [
+        result
+        for result in results
+        if relevant_terms.intersection(
+            set(re.findall(
+                r"[a-z0-9]+",
+                f"{result.get('title', '')} {result.get('snippet', '')}".casefold(),
+            ))
+        )
+    ]
+
+    if not results:
+        return {
+            "reply": (
+                "The app's knowledge base doesn't contain enough agronomy evidence to answer "
+                "that safely, and I couldn't retrieve relevant web results. I won't infer a "
+                "diagnosis, fertilizer dose, or crop recommendation from the available sensor "
+                "values alone. Please consult a local agricultural extension officer or soil lab."
+            ),
+            "action_link": "npk_advisor.html",
+            "action_text": "Open NPK Advisor",
+        }
+
+    lines = [
+        "The app's knowledge base doesn't contain enough agronomy evidence to answer this "
+        "directly. External Web Search returned these relevant excerpts; they are unverified, "
+        "not a diagnosis or fertilizer prescription. Check the original sources and local "
+        "agricultural guidance before acting:"
+    ]
+    lines.extend(
+        f"- [{item['title']}]({item['url']}) — {item['snippet']}"
+        for item in results
+    )
+    return {
+        "reply": "\n".join(lines),
+        "action_link": results[0]["url"],
+        "action_text": "View external source",
+    }
+
+
 def _is_subsidy_question(message: str) -> bool:
     lowered = message.casefold()
     return any(
@@ -2162,7 +2446,8 @@ def chat(body: dict):
     allowed_context_fields = {
         "soil_moisture", "temperature", "humidity", "nitrogen", "phosphorus",
         "potassium", "soil_ph", "soil_ec", "crop_stage", "input_source",
-        "source", "timestamp"
+        "source", "timestamp", "irrigation", "soil_type", "npk_unit", "unit",
+        "season", "crop"
     }
     farm_context = {
         key: value[:300] if isinstance(value, str) else value
@@ -2170,16 +2455,7 @@ def chat(body: dict):
         if key in allowed_context_fields
         and isinstance(value, (str, int, float, bool))
     }
-    retrieved_documents = retrieve_feature_knowledge(
-        " ".join(
-            part for part in (
-                msg,
-                str(body.get("crop") or "")[:100],
-                str(body.get("location") or "")[:150],
-                str(farm_context)
-            )
-        )
-    )
+    retrieved_documents = retrieve_feature_knowledge(msg)
 
     if any(
         phrase in msg.casefold()
@@ -2263,6 +2539,9 @@ def chat(body: dict):
             "action_text": "Open Farmer Subsidies"
         }
 
+    if _is_lowest_vegetable_price_question(msg):
+        return _chat_lowest_vegetable_price_reply(msg, body)
+
     lowered_message = msg.casefold()
     asks_crop_price = (
         _chat_crop_name(msg) is not None
@@ -2274,6 +2553,33 @@ def chat(body: dict):
     )
     if _is_market_price_question(msg) or asks_crop_price:
         return _chat_market_reply(msg, body)
+
+    if _is_alternative_crop_question(msg):
+        return _chat_alternative_crop_reply(
+            {**body, "farm_context": farm_context},
+            msg,
+        )
+
+    if _is_crop_selection_question(msg):
+        return _chat_alternative_crop_reply(
+            {**body, "farm_context": farm_context},
+            msg,
+        )
+
+    if _is_fertilizer_dose_question(msg):
+        return {
+            "reply": (
+                "I can't prescribe a fertilizer dose from this chat. The NPK Advisor can "
+                "compare your entered soil readings with its app guidance, but its estimates "
+                "are not a lab test or a substitute for local agronomist and product-label "
+                "instructions. Confirm a dose with a soil test and local agricultural guidance."
+            ),
+            "action_link": "npk_advisor.html",
+            "action_text": "Open NPK Advisor",
+        }
+
+    if _is_crop_advice_question(msg):
+        return _chat_crop_advice_web_reply(msg, body)
 
     weather_context = _get_live_weather_context(msg, body)
     if weather_context:
@@ -2308,6 +2614,42 @@ def chat(body: dict):
         for document in retrieved_documents
     )
     context_lines = [f"Farm context supplied by the browser (may be incomplete or unverified): {farm_context}"]
+    agronomy_related = any(
+        term in msg.casefold()
+        for term in (
+            "crop", "soil", "npk", "plant", "sow", "seed", "harvest",
+            "fertiliz", "fertilis", "irrigat", "pest", "leaf", "yield",
+        )
+    )
+    agri_context = None
+    if agronomy_related:
+        agri_context = build_agri_context(
+            msg,
+            body,
+            farm_context,
+            location_resolver=_gps_market_area,
+            sensor_telemetry=LATEST_HARDWARE_TELEMETRY,
+        )
+        context_lines.append(f"Agronomy decision context: {agri_context}")
+        exact_reference = exact_crop_reference(msg, agri_context["crop"])
+        if exact_reference:
+            context_lines.append(
+                f"Exact NPK Advisor crop reference: {exact_reference}"
+            )
+        readings = agri_context["readings"]
+        if all(key in readings for key in ("nitrogen", "phosphorus", "potassium")):
+            candidates = rank_crops(
+                readings,
+                agri_context["crop"],
+                agri_context["season"],
+                agri_context["npk_unit"],
+            )
+            context_lines.append(f"Rule-based crop ranking: {candidates}")
+        else:
+            context_lines.append(
+                "Seasonal crop options for this broad season: "
+                f"{seasonal_fallback(agri_context['season'])}"
+            )
     if retrieved_documents:
         context_lines.append(f"Retrieved app knowledge:\n{retrieved_context}")
     if web_results:
@@ -2337,13 +2679,53 @@ def chat(body: dict):
         "and ask for missing details; do not prescribe a dose without a soil test and local label guidance. "
         "Clearly identify a dynamic data source when provided; identify retrieved feature facts as "
         "from the App Feature Knowledge Base; never describe sample data as live. "
-        "Keep the answer practical and concise."
+        "Keep the answer practical and concise. Answer in at most three short sentences "
+        "or three brief bullets. Do not add unrequested context, tips, or disclaimers. "
+        "Do not say 'I'm not sure'; state the missing detail directly."
     )
+    llm_messages = [
+        {
+            "role": "system",
+            "content": (
+                f"{prompt}\n\n{AGRI_RAG_SYSTEM_PROMPT}"
+                if agronomy_related else prompt
+            ),
+        },
+        {"role": "user", "content": f"{msg}\n\n{chr(10).join(context_lines)}"},
+    ]
     try:
-        reply = mistral_chat([
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": f"{msg}\n\n{chr(10).join(context_lines)}"}
-        ])
+        reply = mistral_chat(llm_messages, max_tokens=256)
+        if retrieved_documents:
+            grounded_fallback = concise_response(retrieved_documents[0]["content"])
+        elif web_results:
+            grounded_fallback = concise_response(
+                f"{web_results[0]['title']}. {web_results[0]['snippet']}"
+            )
+        else:
+            grounded_fallback = "I couldn't find a supported answer for that question."
+
+        def retry_structured() -> str:
+            return mistral_chat(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            f"{AGRI_RAG_SYSTEM_PROMPT}\n"
+                            f"{AGRI_RAG_JSON_RETRY_INSTRUCTION}"
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": f"{msg}\n\n{chr(10).join(context_lines)}",
+                    },
+                ],
+                json_mode=True,
+                retries=1,
+                max_tokens=256,
+            )
+
+        reply = guard_response(reply, retry_structured, grounded_fallback)
+        reply = concise_response(reply)
         response = {"reply": reply}
         if retrieved_documents:
             response["action_link"] = retrieved_documents[0]["route"]
@@ -2354,15 +2736,15 @@ def chat(body: dict):
         return response
     except Exception as e:
         print(f"[WARN] Farm assistant could not generate a grounded answer: {e}")
-        documents_text = "\n\n".join(
-            f"{document['name']}: {document['content']}"
-            for document in retrieved_documents
+        documents_text = (
+            concise_response(retrieved_documents[0]["content"])
+            if retrieved_documents else ""
         )
         response = {
             "reply": (
-                "AI text generation is unavailable, so here is the matching app information. "
-                "Check the backend console for the setup or provider error.\n"
-                f"{documents_text}"
+                documents_text
+                if documents_text else
+                "I couldn't generate an answer from the available information."
             )
         }
         if retrieved_documents:

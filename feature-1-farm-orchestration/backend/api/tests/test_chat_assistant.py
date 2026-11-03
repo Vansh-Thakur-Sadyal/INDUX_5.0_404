@@ -85,6 +85,242 @@ class WebSearchTests(unittest.TestCase):
 
 
 class ChatAssistantTests(unittest.TestCase):
+    @patch.object(server, "_gps_market_area", return_value="Gwalior, Madhya Pradesh")
+    @patch.object(server.requests, "get")
+    @patch.object(server, "_search_web")
+    @patch.object(server, "mistral_chat")
+    def test_alternative_crop_question_ranks_from_soil_and_live_local_weather(
+        self, mistral_chat, search_web, get, gps_market_area
+    ):
+        weather = Mock()
+        weather.raise_for_status.return_value = None
+        weather.json.return_value = {
+            "timezone": "Asia/Kolkata",
+            "current": {
+                "time": "2026-11-03T08:30",
+                "temperature_2m": 27.5,
+                "relative_humidity_2m": 62,
+            },
+            "daily": {
+                "time": ["2026-11-03", "2026-11-04", "2026-11-05"],
+                "temperature_2m_min": [18, 19, 18],
+                "temperature_2m_max": [29, 30, 29],
+                "precipitation_sum": [0, 0, 1],
+            },
+        }
+        get.return_value = weather
+        response = server.chat({
+            "message": "give me a list of alternative vegetables i can grow",
+            "crop": "Tomato",
+            "lat": 26.2183,
+            "lon": 78.1828,
+            "farm_context": {
+                "nitrogen": 42,
+                "phosphorus": 28,
+                "potassium": 55,
+                "soil_ph": 6.8,
+                "soil_ec": 1.4,
+                "soil_moisture": 32,
+                "temperature": 29,
+                "soil_type": "Loamy",
+                "irrigation": "Drip",
+            },
+        })
+
+        self.assertIn("Alternatives to Tomato for Rabi", response["reply"])
+        self.assertIn("Onion", response["reply"])
+        self.assertIn("Brinjal (Eggplant)", response["reply"])
+        self.assertNotIn("Tomato", response["reply"].split(":", 1)[1])
+        self.assertNotIn("weather", response["reply"].casefold())
+        self.assertNotIn("humidity", response["reply"].casefold())
+        self.assertNotIn("soil type", response["reply"].casefold())
+        self.assertLess(len(response["reply"]), 160)
+        self.assertEqual(response["action_link"], "npk_advisor.html")
+        search_web.assert_not_called()
+        mistral_chat.assert_not_called()
+        gps_market_area.assert_called_once_with(26.218, 78.183)
+        self.assertEqual(
+            get.call_args.args[0],
+            "https://api.open-meteo.com/v1/forecast",
+        )
+
+    def test_alternative_crop_question_matches_singular_crop_wording(self):
+        response = server.chat({
+            "message": "suggest another crop to grow",
+        })
+
+        self.assertIn("Using broad India Rabi options", response["reply"])
+        self.assertIn("Wheat", response["reply"])
+        self.assertIn("Mustard", response["reply"])
+        self.assertIn("Add N, P, and K readings", response["reply"])
+
+    def test_ambiguous_crop_question_gets_a_concise_seasonal_shortlist(self):
+        response = server.chat({"message": "tell me crops"})
+
+        self.assertIn("Using broad India Rabi options", response["reply"])
+        self.assertIn("Wheat", response["reply"])
+        self.assertIn("Mustard", response["reply"])
+        self.assertIn("Chickpea (Chana)", response["reply"])
+        self.assertNotIn("Which district", response["reply"])
+
+    def test_explicit_kg_per_hectare_values_are_not_compared_as_mg_per_kg(self):
+        response = server.chat({
+            "message": "recommend crops for my field",
+            "farm_context": {
+                "nitrogen": 42,
+                "phosphorus": 28,
+                "potassium": 55,
+                "unit": "kg/ha",
+            },
+        })
+
+        self.assertIn("Using broad India Rabi options", response["reply"])
+        self.assertIn("Share readings in mg/kg", response["reply"])
+        self.assertNotIn("based on your NPK readings", response["reply"])
+
+    def test_exact_crop_name_is_retrieved_and_excluded_from_alternatives(self):
+        response = server.chat({
+            "message": "suggest alternative crops instead of tomato",
+            "farm_context": {
+                "nitrogen": 42,
+                "phosphorus": 28,
+                "potassium": 55,
+                "soil_ph": 6.8,
+            },
+        })
+
+        self.assertIn("Alternatives to Tomato", response["reply"])
+        self.assertNotIn("Tomato", response["reply"].split(":", 1)[1])
+
+    def test_alternative_crop_reply_omits_unrequested_context(self):
+        response = server.chat({
+            "message": "give me a list of alternative vegetables i can grow",
+            "crop": "Tomato",
+            "farm_context": {
+                "nitrogen": 42,
+                "phosphorus": 28,
+                "potassium": 55,
+                "soil_ph": 6.8,
+            },
+        })
+
+        self.assertIn("Alternatives to Tomato for Rabi", response["reply"])
+        self.assertLessEqual(response["reply"].count(","), 2)
+        self.assertNotIn("not sure", response["reply"].casefold())
+        self.assertNotIn("Assumption", response["reply"])
+
+    @patch.object(server, "get_market_prices")
+    def test_lowest_vegetable_price_requires_a_location(self, get_prices):
+        response = server.chat({"message": "tell lowest prize vegetible"})
+
+        get_prices.assert_not_called()
+        self.assertIn("Which town or district", response["reply"])
+        self.assertIn("sample prices are not used", response["reply"])
+        self.assertEqual(response["action_link"], "market.html")
+
+    @patch.object(server, "mistral_chat")
+    @patch.object(server, "get_market_prices")
+    def test_lowest_vegetable_price_uses_only_matching_live_vegetable_records(
+        self, get_prices, mistral_chat
+    ):
+        get_prices.return_value = {
+            "source": "Data.gov.in Agmarknet Live API",
+            "data": [
+                {
+                    "commodity": "Tomato", "market": "Gwalior Mandi",
+                    "district": "Gwalior", "state": "Madhya Pradesh",
+                    "modal_price": 24.0, "arrival_date": "2026-11-02"
+                },
+                {
+                    "commodity": "Potato", "market": "Gwalior Mandi",
+                    "district": "Gwalior", "state": "Madhya Pradesh",
+                    "modal_price": 18.0, "arrival_date": "2026-11-02"
+                },
+                {
+                    "commodity": "Wheat", "market": "Gwalior Mandi",
+                    "district": "Gwalior", "state": "Madhya Pradesh",
+                    "modal_price": 5.0, "arrival_date": "2026-11-02"
+                },
+                {
+                    "commodity": "Potato", "market": "Delhi Mandi",
+                    "district": "Delhi", "state": "Delhi",
+                    "modal_price": 10.0, "arrival_date": "2026-11-02"
+                },
+            ],
+        }
+
+        response = server.chat({
+            "message": "tell me lowest price vegetable in Gwalior",
+        })
+
+        self.assertIn("Potato at Gwalior Mandi", response["reply"])
+        self.assertIn("₹18.00/kg", response["reply"])
+        self.assertNotIn("Wheat", response["reply"])
+        self.assertNotIn("Delhi Mandi", response["reply"])
+        self.assertIn("Data.gov.in Agmarknet Live API", response["reply"])
+        mistral_chat.assert_not_called()
+
+    @patch.object(server, "_search_web", return_value=[
+        {
+            "title": "Tomato leaf yellowing guide",
+            "snippet": "Yellowing between veins can have multiple causes; inspect leaves and soil conditions.",
+            "url": "https://agriculture.example/tomato-yellowing"
+        }
+    ])
+    @patch.object(server, "mistral_chat")
+    def test_crop_advice_shows_external_excerpts_instead_of_generated_diagnosis(
+        self, mistral_chat, search_web
+    ):
+        response = server.chat({
+            "message": "there are yellowing between leaf veins",
+            "crop": "Tomato",
+            "farm_context": {
+                "nitrogen": 42,
+                "phosphorus": 28,
+                "potassium": 55,
+                "soil_ph": 6.8,
+                "soil_ec": 1.4,
+            },
+        })
+
+        self.assertIn("External Web Search", response["reply"])
+        self.assertIn("unverified", response["reply"])
+        self.assertIn("[Tomato leaf yellowing guide]", response["reply"])
+        self.assertIn("https://agriculture.example/tomato-yellowing", response["reply"])
+        self.assertNotIn("45–65", response["reply"])
+        self.assertNotIn("Apply iron chelate", response["reply"])
+        search_web.assert_called_once()
+        mistral_chat.assert_not_called()
+
+    @patch.object(server, "_search_web", return_value=[])
+    @patch.object(server, "mistral_chat")
+    def test_crop_advice_without_evidence_does_not_invent_doses_or_ranges(
+        self, mistral_chat, _search_web
+    ):
+        response = server.chat({
+            "message": "why should I use fertilizer",
+            "crop": "Tomato",
+            "farm_context": {"nitrogen": 42},
+        })
+
+        self.assertIn("doesn't contain enough agronomy evidence", response["reply"])
+        self.assertIn("won't infer a diagnosis, fertilizer dose", response["reply"])
+        self.assertNotIn("10-10-10", response["reply"])
+        mistral_chat.assert_not_called()
+
+    @patch.object(server, "retrieve_feature_knowledge")
+    def test_feature_retrieval_uses_question_not_page_context(self, retrieve):
+        retrieve.return_value = []
+        with patch.object(server, "mistral_chat", side_effect=RuntimeError("no test API key")):
+            server.chat({
+                "message": "show me app features",
+                "crop": "Tomato",
+                "location": "Gwalior",
+                "farm_context": {"nitrogen": 42, "phosphorus": 28},
+            })
+
+        retrieve.assert_called_once_with("show me app features")
+
     def test_market_request_requires_a_crop(self):
         response = server.chat({"message": "What is the mandi price today?"})
 
@@ -447,9 +683,23 @@ class ChatAssistantTests(unittest.TestCase):
     def test_retrieved_feature_knowledge_is_used_without_the_llm(self, _mistral_chat):
         response = server.chat({"message": "How do I use the NPK soil advisor?"})
 
-        self.assertIn("matching app information", response["reply"])
         self.assertIn("NPK Advisor", response["reply"])
+        self.assertNotIn("AI text generation is unavailable", response["reply"])
         self.assertEqual(response["action_link"], "npk_advisor.html")
+
+    @patch.object(
+        server,
+        "mistral_chat",
+        return_value="The advisor compares soil readings. It displays guidance. It supports crops. Here is unrelated detail.",
+    )
+    def test_generated_rag_answer_is_limited_to_three_sentences(self, _mistral_chat):
+        response = server.chat({"message": "What does the NPK Advisor do?"})
+
+        self.assertEqual(
+            response["reply"],
+            "The advisor compares soil readings. It displays guidance. It supports crops.",
+        )
+        self.assertNotIn("unrelated detail", response["reply"])
 
     def test_current_weather_without_location_requests_a_location(self):
         response = server.chat({"message": "What is the weather today?"})

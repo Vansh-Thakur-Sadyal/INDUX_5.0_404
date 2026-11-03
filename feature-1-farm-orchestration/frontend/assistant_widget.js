@@ -136,6 +136,58 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
+    function isAlternativeCropQuestion(message) {
+      return /\b(alternative|another|different|other|instead)\b/i.test(message)
+        && /\b(crop|vegetable|vegetables|veggie|veggies|grow)\b/i.test(message);
+    }
+
+    async function addCropLocation(message, context) {
+      if (!isAlternativeCropQuestion(message)) return context;
+
+      const locationAge = Date.now() - Date.parse(context.location_captured_at || "");
+      const hasFreshLocation = Number.isFinite(context.lat)
+        && Number.isFinite(context.lon)
+        && locationAge >= 0
+        && locationAge < 6 * 60 * 60 * 1000;
+      if (hasFreshLocation) return context;
+      const contextWithoutStaleLocation = { ...context };
+      delete contextWithoutStaleLocation.lat;
+      delete contextWithoutStaleLocation.lon;
+      delete contextWithoutStaleLocation.location_captured_at;
+      if (!navigator.geolocation) return contextWithoutStaleLocation;
+
+      appendMessage("bot", "Checking local weather for crop suggestions. Your browser may ask permission to use your location.");
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 300000
+          });
+        });
+        const location = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          captured_at: new Date().toISOString()
+        };
+        try {
+          localStorage.setItem("farm_assistant_location", JSON.stringify(location));
+        } catch (error) {
+          console.warn("Farm location could not be saved for future assistant requests.", error);
+        }
+        return {
+          ...context,
+          lat: location.lat,
+          lon: location.lon,
+          location_captured_at: location.captured_at
+        };
+      } catch (error) {
+        console.info("Farm location was not available for crop suggestions.", error);
+        appendMessage("bot", "I couldn't access your location, so I can use your saved soil readings but can't check local weather. You can allow GPS or type a town/district.");
+        return contextWithoutStaleLocation;
+      }
+    }
+
     appendMessage("bot", "Ask about mandi prices, crops, soil, weather, or any of the farm tools.");
     launcher.addEventListener("click", () => {
       panel.hidden = false;
@@ -153,7 +205,8 @@
         (position) => {
           localStorage.setItem("farm_assistant_location", JSON.stringify({
             lat: position.coords.latitude,
-            lon: position.coords.longitude
+            lon: position.coords.longitude,
+            captured_at: new Date().toISOString()
           }));
           appendMessage("bot", "Location saved in this browser for nearby mandi questions.");
         },
@@ -169,10 +222,11 @@
       appendMessage("user", message);
       input.value = "";
       try {
+        const context = await addCropLocation(message, window.getFarmAssistantContext());
         const response = await fetch("http://127.0.0.1:8001/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, ...window.getFarmAssistantContext() })
+          body: JSON.stringify({ message, ...context })
         });
         if (!response.ok) throw new Error(`Assistant returned HTTP ${response.status}`);
         const data = await response.json();

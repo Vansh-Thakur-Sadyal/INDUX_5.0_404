@@ -72,6 +72,13 @@ window.renderFarmAssistantMarkdown = function (container, source) {
 
 window.getFarmAssistantContext = function () {
   const context = {};
+  let preferences = {};
+  try {
+    preferences = JSON.parse(localStorage.getItem("farm_assistant_preferences") || "{}");
+  } catch (error) {
+    console.warn("Saved farm assistant preferences could not be read.", error);
+  }
+
   const locationRaw = localStorage.getItem("farm_assistant_location");
   if (locationRaw) {
     try {
@@ -79,6 +86,9 @@ window.getFarmAssistantContext = function () {
       if (Number.isFinite(location.lat) && Number.isFinite(location.lon)) {
         context.lat = location.lat;
         context.lon = location.lon;
+        if (typeof location.captured_at === "string") {
+          context.location_captured_at = location.captured_at;
+        }
       }
     } catch (error) {
       console.warn("Saved farm location could not be read.", error);
@@ -89,6 +99,7 @@ window.getFarmAssistantContext = function () {
     "#inpCrop, #npkCrop, #inspectCropSelect, #cropName, #cropSelect"
   );
   if (cropInput && cropInput.value) context.crop = cropInput.value;
+  else if (preferences.crop) context.crop = preferences.crop;
 
   let farmContext = {};
   const savedState = sessionStorage.getItem("lastFarmState") || localStorage.getItem("lastFarmState");
@@ -129,6 +140,38 @@ window.getFarmAssistantContext = function () {
   }
   const stageInput = document.getElementById("npkStage");
   if (stageInput && stageInput.value) farmContext.crop_stage = stageInput.value;
+  const fieldInputs = {
+    irrigation: "npkIrrigation",
+    soil_type: "npkSoilType"
+  };
+  let preferencesChanged = false;
+  for (const [key, id] of Object.entries(fieldInputs)) {
+    const input = document.getElementById(id);
+    if (input && input.value) {
+      farmContext[key] = input.value;
+      preferences[key] = farmContext[key];
+      preferencesChanged = true;
+    } else if (preferences[key] !== undefined) {
+      farmContext[key] = preferences[key];
+    }
+  }
+  if (cropInput && cropInput.value) {
+    preferences.crop = cropInput.value;
+    preferencesChanged = true;
+  }
+  if (stageInput && stageInput.value) {
+    preferences.crop_stage = stageInput.value;
+    preferencesChanged = true;
+  } else if (preferences.crop_stage) {
+    farmContext.crop_stage = preferences.crop_stage;
+  }
+  if (preferencesChanged) {
+    try {
+      localStorage.setItem("farm_assistant_preferences", JSON.stringify(preferences));
+    } catch (error) {
+      console.warn("Farm assistant preferences could not be saved.", error);
+    }
+  }
   if (Object.keys(readingInputs).some(id => document.getElementById(id))) {
     farmContext.input_source = "currently entered dashboard/NPK form values";
   }
@@ -137,7 +180,10 @@ window.getFarmAssistantContext = function () {
   if (pipelineInputs) {
     try {
       const inputs = JSON.parse(pipelineInputs);
-      for (const key of ["soil_moisture", "temperature", "humidity", "crop"]) {
+      for (const key of [
+        "soil_moisture", "temperature", "humidity", "crop",
+        "irrigation", "soil_type", "previous_crop"
+      ]) {
         if (inputs[key] !== undefined && inputs[key] !== null) farmContext[key] = inputs[key];
       }
       if (!context.crop && inputs.crop) context.crop = inputs.crop;
