@@ -1,4 +1,4 @@
-# Saarthi 2.0
+# Saarthi 
 
 ### A multilingual farming companion, from field data to a grounded advisory
 
