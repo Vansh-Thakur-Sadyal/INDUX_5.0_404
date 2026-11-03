@@ -1,342 +1,451 @@
 # Saarthi 2.0
 
-**Regional-language AI farmer advisory and voice assistant**
-InduX 5.0 - Problem Statement 16 - Theme: Multilingual AI & Language Technologies
-Team VisionCoders - Team ID InduX5-26VU-404
+### A multilingual farming companion, from field data to a grounded advisory
 
-Conversational AI + RAG + **exactly 15 agricultural agents** + 7-parameter soil sensor +
-feature-phone calling, behind one dashboard and one API.
-
-**Live: https://indux5.0.visioncoders.in** - deployed to the Hostinger VPS behind the
-shared Traefik. Redeploy steps and the gotchas of that box: [deploy/DEPLOY.md](deploy/DEPLOY.md).
-
----
-
-## 1. Run it (VS Code or a terminal)
-
-```bat
-run.bat
-```
-
-That creates `.venv`, installs dependencies, and serves **everything on one origin**:
+Saarthi brings a farmer-facing dashboard, conversational AI, retrieval-augmented generation (RAG), **15 agricultural advisory agents**, voice and phone-call integrations, and a 7-parameter soil-sensor path together behind one FastAPI application.
 
 | | |
 |---|---|
-| Dashboard | http://127.0.0.1:8010/ |
-| API docs (Swagger) | http://127.0.0.1:8010/docs |
-| Capability report | http://127.0.0.1:8010/api/keys/status |
+| **Project** | InduX 5.0 · Problem Statement 16 · Multilingual AI & Language Technologies |
+| **Team** | VisionCoders · InduX5-26VU-404 |
+| **Public site** | [indux5.0.visioncoders.in](https://indux5.0.visioncoders.in) |
+| **API** | FastAPI · OpenAPI / Swagger UI at `/docs` |
 
-In VS Code: open this folder, press **F5** and pick *Saarthi: run dashboard + API*
-(`.vscode/launch.json` is set up, `.venv` is the selected interpreter).
+> **Important:** Saarthi provides decision support, not a substitute for local agricultural expertise. Photo results are screening evidence, not a diagnosis. The system intentionally does not prescribe pesticide products, doses, or spray schedules.
 
-Manually:
+---
 
-```bash
-python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements.txt
-cd backend
-../.venv/Scripts/python.exe -m uvicorn app.main:app --port 8010 --reload
+## Contents
+
+- [What Saarthi does](#what-saarthi-does)
+- [Architecture](#architecture)
+- [The 15-agent advisory team](#the-15-agent-advisory-team)
+- [Run locally](#run-locally)
+- [Configuration and integrations](#configuration-and-integrations)
+- [Application surfaces and API](#application-surfaces-and-api)
+- [Tests](#tests)
+- [Repository map](#repository-map)
+- [Safety, privacy, and known limits](#safety-privacy-and-known-limits)
+- [Documentation](#documentation)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## What Saarthi does
+
+- **Answers farm questions** using the farmer's language, farm context, retrieved knowledge, and explicit findings from agricultural agents.
+- **Shows its work:** retrieved sources, dates, units, assumptions, warnings, missing inputs, and simulated or stale data are carried through the advisory.
+- **Supports voice** through browser speech features and optional speech/LLM providers.
+- **Connects feature-phone calls** through n8n and Twilio without storing Twilio credentials in Saarthi.
+- **Accepts soil readings** through the Android/BLE flow and a validated sensor-ingest API; readings can also be simulated for local development.
+- **Screens crop-leaf photos** with a shipped ONNX model, then treats the prediction as evidence for the pest-and-disease agent—not as a final diagnosis.
+- **Lets administrators manage knowledge** in a console with document ingestion, indexing status, retrieval inspection, and query history.
+- **Serves multiple web surfaces** from the same application: public landing site, dashboard, knowledge console, and VisionCoders agency site.
+
+### A question's journey
+
+```mermaid
+flowchart TD
+    U["Farmer asks a question"] --> C["Dashboard or phone-call channel"]
+    C --> S["Load session, language, farm context, and memory"]
+    S --> I["Resolve intent and carry forward relevant context"]
+    I --> D{"Is this a supported direct action?"}
+    D -- Yes --> A["Queue or perform the permitted action"]
+    D -- No --> O["Orchestrator selects agents and dependencies"]
+    O --> G["Gather available evidence in parallel"]
+    G --> R["RAG: retrieve and filter relevant passages"]
+    G --> X["Weather, soil, market, and validated sensor data"]
+    R --> W["Run agent dependency waves"]
+    X --> W
+    W --> V["Agent 15 validates findings, conflicts, and provenance"]
+    V --> L{"Language model configured?"}
+    L -- Yes --> M["Compose a grounded answer"]
+    L -- No --> F["Use the explicit non-LLM response path"]
+    M --> P["Store advisory trace and deliver answer"]
+    F --> P
+    A --> P
 ```
 
-Tests:
+### System overview
 
-```bash
-cd backend
-../.venv/Scripts/python.exe -m pytest -q
+```mermaid
+flowchart LR
+    Farmer["Farmer"]
+    Browser["Web dashboard"]
+    Phone["Feature phone"]
+    Sensor["Soil probe"]
+    Mobile["Android app / BLE"]
+
+    subgraph Saarthi["Saarthi FastAPI application"]
+        Routes["API routes and session handling"]
+        Conversation["Conversation manager"]
+        Orchestrator["Central orchestrator"]
+        Agents["15 agricultural agents"]
+        RAG["Knowledge retrieval"]
+        Models["LLM and ONNX inference"]
+        Store[("SQLite, vector index, cached audio")]
+        Sites["Public site · dashboard · console · agency site"]
+    end
+
+    N8N["n8n"]
+    Twilio["Twilio"]
+    External["Weather · SoilGrids · market data"]
+
+    Farmer --> Browser --> Routes
+    Farmer --> Phone --> Twilio --> N8N --> Routes
+    Sensor --> Mobile --> Routes
+    Routes --> Conversation --> Orchestrator
+    Orchestrator --> Agents
+    Orchestrator --> RAG
+    Orchestrator --> Models
+    Orchestrator --> External
+    Conversation --> Store
+    Agents --> Store
+    RAG --> Store
+    Routes --> Sites
+    Routes --> N8N
+```
+
+### Sensor data path
+
+```mermaid
+flowchart LR
+    Probe["7-in-1 RS485 / Modbus probe"] --> Arduino["Arduino reference bridge"]
+    Arduino --> BLE["HM-10 BLE"]
+    BLE --> App["Android companion"]
+    App -->|"authenticated ingest"| API["POST /api/sensors/ingest"]
+    API --> Validate["Validate ranges, fields, freshness, and provenance"]
+    Validate --> Persist["Store accepted reading"]
+    Persist --> Advisory["Agent 1 and the advisory pipeline"]
+    Validate -->|invalid or stale| Visible["Report dropped fields or stale status"]
 ```
 
 ---
 
-## 2. Keys - `config/api_keys.env`
+## Architecture
 
-This is the only file you edit. **The app runs without any key** and tells you, on the
-dashboard and in the API, exactly what each missing key disables. Nothing is faked to
-cover a gap.
+The application separates the channels and shared capabilities from the agricultural reasoning chain. Conversational AI resolves the turn; the orchestrator gathers shared inputs and coordinates agent dependencies; Agent 15 validates the combined result.
 
-| Key | Powers | Without it |
-|---|---|---|
-| `MISTRAL_API_KEY` | Answer generation + RAG embeddings | Agents and RAG still run; the reply is assembled by the rule engine and says so. Replies stay in English. |
-| `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION` | Microphone (STT) and spoken replies (TTS) in 13 languages | Text chat works; the mic is disabled with a reason. |
-| `N8N_BASE_URL` + `N8N_OUTBOUND_CALL_PATH` | Twilio calls through your n8n | Call requests are recorded as **clearly labelled simulations** and never dialled. |
-| `SAARTHI_INBOUND_TOKEN` | Shared secret n8n and the Android gateway must present | Inbound call/sensor endpoints reject everything (401). |
-| `DATA_GOV_API_KEY` | Live Agmarknet mandi prices | Market answers say prices are unavailable. No price is ever invented. |
-| *(none needed)* | Open-Meteo weather, ISRIC SoilGrids | - |
-
-### Status of this install (13 Oct 2026)
-
-* **Mistral: live.** A working key is in `config/api_keys.env`. Measured against that
-  account: `ministral-14b-latest` answers (default), `ministral-8b-latest` and
-  `ministral-3b-latest` answer (fallback chain), `mistral-small-latest` and
-  `mistral-medium-latest` return **429**, `mistral-large-latest` returns **403**. The client
-  walks the chain automatically and every answer records which model wrote it
-  (`advisory.answer_model`, shown as a tag in the chat).
-* **Azure Speech: deliberately off.** The dashboard greys out the microphone and the
-  "Speak reply" switch and says why; telephony falls back to Twilio `<Say>`. Paste a key
-  and restart to enable voice.
-* The older agritech project's Mistral and Azure keys are dead (**401**) - do not reuse them.
+```mermaid
+flowchart TB
+    Channels["Dashboard · browser voice · phone calls"]
+    Conversation["Conversation management and intent"]
+    Orchestrator["Orchestrator"]
+    subgraph Shared["Shared capabilities (not agricultural agents)"]
+        Retrieval["RAG and knowledge store"]
+        Providers["LLM · speech · translation"]
+        Inputs["Weather · soil · market · sensor services"]
+    end
+    subgraph Chain["Agricultural agents"]
+        A1["Agents 1–14: focused findings"]
+        A15["Agent 15: integrated validation"]
+    end
+    Persist[("Advisories and application data")]
+    Channels --> Conversation --> Orchestrator
+    Orchestrator --> Retrieval
+    Orchestrator --> Providers
+    Orchestrator --> Inputs
+    Orchestrator --> A1 --> A15
+    Retrieval --> A1
+    Inputs --> A1
+    A15 --> Providers
+    A15 --> Persist
+    Conversation --> Persist
+```
 
 ---
 
-## 3. What is where
+## The 15-agent advisory team
 
+The agents are rule-, calculation-, and evidence-driven components. They are coordinated by the orchestrator; the LLM is used to express validated findings, not to replace the agents' calculations.
+
+| # | Agent | Primary responsibility |
+|---:|---|---|
+| 1 | Soil Sensor Acquisition & Data Quality | Validate and qualify sensor readings |
+| 2 | Soil Health & Interpretation | Interpret soil properties and test context |
+| 3 | Crop Suitability & Selection | Compare crop options against known field context |
+| 4 | Crop Growth Stage & Agronomy | Stage-aware crop-management guidance |
+| 5 | Weather & Climate Risk | Use forecast and climate context |
+| 6 | Nutrient Management & Fertiliser | Explain nutrient balance and fertiliser arithmetic |
+| 7 | Irrigation & Water Management | Estimate irrigation needs from available inputs |
+| 8 | Pest & Disease Risk | Present candidate causes and checks |
+| 9 | Weed Management | Provide weed-management guidance |
+| 10 | Seed, Sowing & Establishment | Support sowing and establishment decisions |
+| 11 | Crop Protection & Safe Application | Enforce crop-protection safety boundaries |
+| 12 | Agricultural Market Intelligence | Report available, sourced market information |
+| 13 | Farm Economics & Profitability | Work from the farmer's own cost and price data |
+| 14 | Sustainable Farming & Crop Residue | Support sustainable field decisions |
+| 15 | Integrated Advisory & Validation | Check conflicts, evidence, uncertainty, and provenance |
+
+The registry checks that the implementation contains exactly 15 agents. Agent dependencies are executed in waves where possible; dependent work waits for its required inputs.
+
+---
+
+## Run locally
+
+### Requirements
+
+- Python **3.10 or newer** (Python 3.12 is used by the Docker image).
+- Windows, macOS, or Linux.
+- Internet access is needed for dependency installation and optional external services. The application can start without provider API keys.
+- Optional: Node.js for the standalone frontend JavaScript tests.
+
+### Quick start — Windows
+
+From the project root, run:
+
+```powershell
+.\run.bat
 ```
-backend/app
-  core/        config, 13-language registry, pydantic contracts, SQLite storage
-  llm/         Mistral chat + embeddings (graceful, retrying, test-stubbable)
-  rag/         loaders (PDF/Word/sheet/web), chunking, embeddings, vector store,
-               hybrid retrieval, rank fusion, query rewrite, guardrails, the chain
-  conversation/ intent routing, Hinglish lexicon, session + memory  <- Conversational AI
-  agents/      the 15 agricultural agents + crop reference tables
-  orchestrator.py   selects agents, gathers data once, runs waves, validates
-  sensors/     7-parameter schema, Modbus register decode, validation, simulator
-  speech/      Azure STT/TTS + browser token issuing
-  telephony/   n8n client (Twilio lives in n8n, never here)
-  routers/     the HTTP surface
-frontend/      the dashboard (vanilla HTML/CSS/JS, no build step)
-console/       the knowledge console - feed the bots, watch the chain run
-data/knowledge/  18 agronomy documents - the RAG corpus it ships with
-docs/          n8n + Twilio setup, Arduino sketch, architecture notes
-```
 
-### The knowledge console
+The script creates `.venv` and installs `requirements.txt` the first time, then starts the development server. Open:
 
-Three ways in, all the same page and the same administrator session:
-
-* **Admin > Knowledge** in the dashboard sidebar - embedded, so feeding the bots
-  is part of running the server rather than a different tool
-* `/kb/` on any hostname, for a full screen of it
-* the root of `SAARTHI_CONSOLE_HOST` once that DNS name exists
-
-Upload a PDF, a spreadsheet, a Word file or a web page and both bots can quote it,
-with citations, within seconds. The page shows all six indexing stages as they run
-and whose upload they belong to, the whole library with its state and its
-contributor, and a live block diagram of the seven-stage retrieval chain running
-against a question you type.
-
-Every retrieval is logged - from the console, the dashboard chatbot and the phone
-line alike - so the questions that found nothing are visible as a backlog of gaps.
-Full write-up: [docs/KNOWLEDGE_CONSOLE.md](docs/KNOWLEDGE_CONSOLE.md).
-
-### Telling it to do something, and waking it by name
-
-A sentence can now be an instruction rather than a question. *"mandi bhav
-dikhao"* opens the market page in **216 ms** — nothing is generated, the words
-are fixed — while *"gehu ka bhav kya hai"* still runs the chain and answers with
-a real price. Detection is by rule and never by a model, because a wrong match
-has to be explainable.
-
-**On a phone call it does them too**, and differently, because a call is not a
-screen: "sensor se reading lo" gets an honest "the probe talks to the app, not to
-me", "dobara boliye" repeats the same words, "english mein baat karo" switches
-the call and sticks. It no longer promises to send a report it cannot send.
-
-Say **"Saarthi"** to the dashboard in Chrome, or to the phone with the app
-installed, and it wakes listening - on the phone even from the lock screen, with
-the limits that implies spelled out on the toggle. Full write-up:
-[docs/VOICE_ACTIONS.md](docs/VOICE_ACTIONS.md).
-
-### Two models, each on the job it is better at
-
-The split is measured, not chosen, and the numbers are in
-[`backend/app/llm/router.py`](backend/app/llm/router.py).
-
-| Job | Model | Measured |
-|---|---|---|
-| Phone conversation | `sarvam-105b-conversations` | **286 ms** vs ministral-8b's 755 ms; asked "namaste", ministral-8b replied by asking the caller who they were |
-| Phone answer with figures | `sarvam-105b-conversations`, **checked** | 312 ms, and every figure it speaks is verified against what the agents produced |
-| Query rewriting, Indian languages | `sarvam-105b` | "mera gehu pila ho raha hai" → *"wheat lower leaf chlorosis"*. Mistral gave *"wheat lodging"* - a different problem |
-| Query rewriting, English | `ministral-8b` | half the latency, no Indic advantage to pay for |
-| Answers, citations, reranking, extraction, embeddings | Mistral | citation discipline, JSON mode, and Sarvam has no embedding endpoint |
-| Speech in and out | Sarvam `bulbul` / `saarika` | why it was chosen in the first place |
-
-**Sarvam speaks; it never works anything out.** The agents compute, Sarvam says,
-and `unsupported_figures` checks the spoken reply against the facts it was handed.
-A reply holding a figure nobody supplied is thrown away and Mistral re-phrases it;
-if both invent, the farmer is told plainly that the figure is not known yet. That
-check is why the fast, fluent model can be trusted with a farmer's numbers - asked
-a wheat price with no market data loaded, Sarvam answered "2200 se 2300 rupaye per
-quintal", a price from nowhere.
-
-Median spoken turn: **~400 ms**, against 748 ms when Mistral carried the
-conversation. Each choice is overridable in `config/api_keys.env` without a code
-change.
-
-Dashboard answers are streamed as they are written - first words at 440 ms against
-2.1 s of blank screen before - over `POST /api/chat/stream`.
-
-### The separation the write-up asks for
-
-| Layer | In the 15-agent chain? |
+| Surface | Local address |
 |---|---|
-| Channels (dashboard, call, WhatsApp), Conversational AI, LLM, RAG, orchestrator, sensor transport, delivery | **No** - shared capabilities |
-| Agents 1-15 | **Yes** |
+| Public landing site | <http://127.0.0.1:8010/> |
+| Farmer dashboard | <http://127.0.0.1:8010/app/> |
+| Knowledge console | <http://127.0.0.1:8010/kb/> |
+| VisionCoders site | <http://127.0.0.1:8010/vc/> |
+| API documentation | <http://127.0.0.1:8010/docs> |
+| Health check | <http://127.0.0.1:8010/api/health> |
+| Provider capability status | <http://127.0.0.1:8010/api/keys/status> |
 
-`registry.assert_fifteen()` runs at import and in the test-suite, so the count cannot drift.
+The root URL serves the public landing site; the dashboard is under `/app/`.
 
-| # | Agent | # | Agent |
-|---|---|---|---|
-| 1 | Soil Sensor Acquisition & Data Quality | 9 | Weed Management |
-| 2 | Soil Health & Interpretation | 10 | Seed, Sowing & Establishment |
-| 3 | Crop Suitability & Selection | 11 | Crop Protection & Safe Application |
-| 4 | Crop Growth Stage & Agronomy | 12 | Agricultural Market Intelligence |
-| 5 | Weather & Climate Risk | 13 | Farm Economics & Profitability |
-| 6 | Nutrient Management & Fertiliser | 14 | Sustainable Farming & Crop Residue |
-| 7 | Irrigation & Water Management | 15 | Integrated Advisory & Validation |
-| 8 | Pest & Disease Risk | | |
+### Manual setup — Windows PowerShell
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item config\api_keys.example.env config\api_keys.env
+```
+
+Edit `config\api_keys.env` as needed, then start the application:
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8010 --reload
+```
+
+### Manual setup — macOS / Linux
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install --upgrade pip
+./.venv/bin/python -m pip install -r requirements.txt
+cp config/api_keys.example.env config/api_keys.env
+cd backend
+../.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8010 --reload
+```
+
+### VS Code
+
+Open the project folder in VS Code, then use **Run and Debug** and select **Saarthi: run dashboard + API**. The workspace launch/task configuration uses the project `.venv`.
+
+### Docker
+
+The Docker image builds the API, all static sites, the shipped knowledge corpus, and the ONNX models. The supplied `docker-compose.yml` is tailored to the deployment stack: it expects an existing external Docker network named `edge`, a `config/api_keys.env` file, and a local reverse-proxy setup. For the complete deployment procedure and operational details, see [Deploying Saarthi](deploy/DEPLOY.md); the compose file is not a standalone local profile.
 
 ---
 
-## 3b. Crop disease model (trained here, not bought in)
+## Configuration and integrations
 
-The Pest & Disease page is backed by a real classifier trained on this machine's GPU:
+Copy `config/api_keys.example.env` to `config/api_keys.env` for local use. The real file is ignored by Git. Environment variables override values in the file, which is useful for CI and container deployments.
 
-```
-39,531 leaf images, 32 crop__condition classes
-  PlantDoc 2,459 + Cassava 21,397 + Plant Pathology 2021 15,675
-EfficientNet-B0, trained centrally AND federated (FedAvg over the 3 datasets as clients)
-  -> the better model wins on validation macro recall
-  -> exported to ONNX (~16 MB) and verified against PyTorch before shipping
-  -> served with onnxruntime, so the server needs no PyTorch
-```
+Most integrations are optional. The dashboard and `/api/keys/status` expose which capabilities are configured; missing providers should be treated as unavailable, not as evidence or data.
 
-Everything about it - how the datasets were merged, why multi-label rows were dropped,
-how the confidence threshold was chosen - is in [ml/README.md](ml/README.md), and the
-measured numbers live in `data/models/leaf_disease.json` (written by the export script,
-never hand-edited).
-
-Two properties matter more than the headline accuracy:
-
-* **It refuses.** Below the measured confidence threshold the API returns "undecided"
-  and names no disease. The threshold is the lowest cut-off whose accuracy-when-shown
-  still clears 90%.
-* **It is evidence, not a verdict.** The prediction is handed to Agent 8 as one input;
-  Agent 11 still refuses to name a product or a dose, and the UI labels it a screening
-  aid throughout.
-
-`ml/validate_app_inference.py` re-scores the held-out test split through the *app's*
-ONNX code path and fails if it drifts from the training measurement by more than 3
-points - that is what catches a preprocessing mismatch between training and serving.
-
-## 4. The dashboard (11 screens)
-
-Overview - Soil Health - Weather - Pest & Disease - Market Prices -
-AI Assistant - **Voice Calls** - Sensor Devices - Reports.
-
-A floating chatbot sits on every screen with three switches: **RAG**, **15 agents**,
-**Voice**, plus the language picker and a microphone button.
-
-Every number on screen carries its provenance. A simulated reading is labelled
-`SIMULATED` on the tile, in the API payload, in the agent output and in the advisory
-warnings - it can never be mistaken for a measurement.
-
----
-
-## 5. Calling (Twilio credentials stay in n8n)
-
-```
-farmer's phone -> Twilio -> n8n (your VPS, holds the Twilio credential)
-                              |  POST /api/calls/turn   (X-Saarthi-Token)
-                              v
-                    Saarthi: intent -> agents -> RAG -> Agent 15 -> answer
-                              |  reply text + Azure TTS audio URL
-                              v
-                         n8n -> Twilio <Play> -> farmer hears it
-```
-
-Endpoints Saarthi exposes to n8n:
-
-| Method | Path | Purpose |
+| Setting | Enables | When it is not configured |
 |---|---|---|
-| POST | `/api/calls/turn` | one spoken turn: transcript or DTMF in, reply + audio URL out |
-| POST | `/api/calls/status-callback` | Twilio call status forwarded by n8n |
-| GET | `/api/calls/ivr/languages` | the keypad language menu (1 English, 2 Hindi, ...) |
-| POST | `/api/calls/outbound` | the dashboard asks n8n to dial a farmer back |
-| POST | `/api/calls/simulate` | runs a full call turn locally, labelled simulated |
+| `MISTRAL_API_KEY` | Mistral generation, embeddings, and related language tasks | The app reports the missing capability; retrieval has an offline deterministic embedding fallback |
+| `SARVAM_API_KEY` | Optional Sarvam conversation and speech provider | The configured fallback provider is used where available |
+| `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` | Azure speech-to-text and text-to-speech | Text chat remains available; speech-dependent controls report unavailable |
+| `DATA_GOV_API_KEY` | Live Agmarknet market data | Market responses state that live prices are unavailable |
+| `N8N_BASE_URL`, `N8N_OUTBOUND_CALL_PATH` | Phone-call workflows through n8n/Twilio | Calls remain clearly labelled simulations; Saarthi does not dial directly |
+| `SAARTHI_INBOUND_TOKEN` | Authentication for trusted inbound call/device integrations | Protected integrations reject requests without the expected token |
+| `GOOGLE_MAPS_API_KEY` | Google Maps place lookup and map features | Available fallback map/place behavior is used |
+| `AZURE_TRANSLATOR_KEY` | Optional Azure translation capability | Other language/provider paths remain in effect |
+| `MONGODB_URI` | Optional MongoDB vector-store integration | The built-in local vector store is used |
 
-Setup, with the importable workflow: **[docs/n8n-twilio-setup.md](docs/n8n-twilio-setup.md)**.
+Other supported settings include `N8N_WEBHOOK_TOKEN`, `N8N_OTP_SECRET`, `SAARTHI_HELPLINE_NUMBER`, `SAARTHI_PUBLIC_URL`, `SAARTHI_ADMIN_EMAIL`, `SAARTHI_ADMIN_PHONE`, `SAARTHI_ADMIN_PASSWORD`, `SAARTHI_AGENCY_HOST`, and `SAARTHI_CONSOLE_HOST`. Provider model names, resource IDs, and service paths can also be set in the configuration file; see [the example configuration](config/api_keys.example.env) and [the configuration loader](backend/app/core/config.py).
 
----
+### First administrator
 
-## 6. Sensor path
+If no administrator account exists, the server can create one at startup when `SAARTHI_ADMIN_EMAIL`, `SAARTHI_ADMIN_PHONE`, and `SAARTHI_ADMIN_PASSWORD` are configured. Set a unique, strong password before exposing the service. Knowledge-console API routes require an administrator session.
 
-`7-in-1 RS485 Modbus probe -> Arduino Uno -> HM-10 BLE -> Android app -> POST /api/sensors/ingest`
+### Secrets checklist
 
-* Reference sketch and the BLE packet format: **[docs/arduino-hm10-sketch.ino](docs/arduino-hm10-sketch.ino)**
-* The register map is served at `/api/sensors/register-map` and is marked **provisional**
-  until the sensor manual is confirmed. Arduino Uno is 5 V logic, most HM-10 boards are
-  3.3 V - protect the HM-10 RX pin.
-* Out-of-range values are **dropped, never clamped**. Stale readings are flagged. Missing
-  fields are reported. Simulation covers normal, dry, saline, acidic, nutrient-poor,
-  unusual, missing-fields, out-of-range, stale and disconnected, each reproducible from a
-  seed.
-
----
-
-## 7. Honesty rules built into the code
-
-These are enforced by the agents and covered by tests, not just documented:
-
-* No pesticide name, dose, dilution or spray interval is ever given (Agent 11 escalates).
-* A fertiliser dose is never calculated from sensor NPK values (Agent 6 says so explicitly).
-* No diagnosis from a symptom or a photo - only candidate causes and what to check (Agent 8).
-* No future price, ever; market figures always carry market, date, unit and source (Agent 12).
-* No cost of cultivation is invented - Agent 13 uses the farmer's own numbers.
-* No environmental figure is quantified without measurement (Agent 14).
-* Simulated data, stale data and missing services are surfaced in the answer (Agent 15).
+- Never commit `config/api_keys.env`, tokens, passwords, private certificates, or production data.
+- Replace the example inbound-token placeholder with a random secret before connecting external callers or devices.
+- Store Twilio credentials in n8n; Saarthi calls n8n and should not receive Twilio credentials.
+- Keep `data/storage/` private and backed up appropriately; it contains local application state.
+- On the production host, follow the file ownership and in-place edit instructions in [the deployment guide](deploy/DEPLOY.md).
 
 ---
 
-## 8. Test suite
+## Application surfaces and API
 
+| Path | Purpose |
+|---|---|
+| `/` | Public landing site |
+| `/app/` | Farmer dashboard |
+| `/kb/` | Knowledge console |
+| `/vc/` | VisionCoders agency site |
+| `/docs` | Interactive Swagger / OpenAPI documentation |
+| `/redoc` | ReDoc API documentation |
+| `/api/health` | Health endpoint |
+| `/api/keys/status` | Provider and capability status |
+
+Useful API areas include:
+
+- `/api/chat` and `/api/chat/stream` — text and streamed assistant interactions
+- `/api/pipeline` — run and inspect agricultural advisory work
+- `/api/calls` — call turns and telephony callbacks
+- `/api/sensors` — sensor ingest, status, and register-map endpoints
+- `/api/vision` and `/api/assistant/vision` — image-screening paths
+- `/api/kb` — administrator-only knowledge management
+
+Use `/docs` for the live request and response schemas; it is the source of truth for endpoint details.
+
+### Phone-call integration
+
+```mermaid
+sequenceDiagram
+    participant Farmer
+    participant Twilio
+    participant N8N as n8n workflow
+    participant Saarthi
+    Farmer->>Twilio: Calls the helpline
+    Twilio->>N8N: Call event / speech result
+    N8N->>Saarthi: Authenticated call turn
+    Saarthi->>Saarthi: Resolve intent, retrieve evidence, run agents
+    Saarthi-->>N8N: Grounded reply and optional audio URL
+    N8N-->>Twilio: Continue call with reply
+    Twilio-->>Farmer: Plays or speaks the response
 ```
-711 tests, fully offline (network, LLM and telephony are stubbed)
-  sensors ........ decoding, validation, provenance, 10 simulation scenarios
-  rag/intent ..... ingest, retrieval, topic filters, injection stripping, routing matrix
-  knowledge ...... loaders per format, PII masking, injection refusal, grounding,
-                   rank fusion, per-document diversity, the audience access rule,
-                   the six ingest stages, delete taking its vectors with it
-  streaming ...... no retry on a phone turn, the embedding cache, deltas that
-                   reassemble into the stored answer
-  fusion ......... which model takes which job, the rewriter chosen by the language
-                   of the question, and the figure check: an invented price is
-                   rejected and re-phrased, and with no facts at all no figure may
-                   be spoken
-  voice actions .. an instruction is carried out and a question is not hijacked,
-                   the command queue expires and is scoped to the account, and
-                   "open admin" is a sentence Saarthi does not understand
-  call actions ... a caller is answered in their language, "say that again"
-                   repeats the same words, switching language sticks, and the
-                   bot never promises to send something it cannot send
-  agents ......... all 15 contracts, fertiliser arithmetic, irrigation water balance,
-                   dose refusal, conflict detection
-  orchestrator ... agent selection, dependency order, LLM vs rule engine, memory
-  api/telephony .. every endpoint, token auth, the full n8n call contract
-```
 
-The Android companion in `../App` has 36 of its own, run with
-`gradlew testDebugUnitTest`.
+Saarthi does not store Twilio credentials. See [n8n and Twilio setup](docs/n8n-twilio-setup.md) for workflow setup and the documented call contract.
 
 ---
 
-## 9. Known limits
+## Tests
 
-* Without a Mistral key, replies are English rule-engine prose and retrieval uses the
-  offline hashed embedder - good enough to demo, weaker than `mistral-embed`, and labelled.
-* The ministral models need the language rule repeated as the last line of the prompt or
-  they mirror the farmer's Hinglish, and they will translate a crop name into a different
-  crop (one wrote *turmeric* for *mustard*) unless told to keep crop names in English.
-  Both are handled in `llm/mistral_client.py::language_directive` - if you change that
-  prompt, re-check a Hinglish question and a non-English answer before demoing.
-* Crop profiles cover 8 crops; Agent 3 and Agent 4 refuse rather than guess outside them.
-* No image disease model. The Pest page stores the photo and reasons from your description.
-* A scanned PDF with no text layer cannot be indexed. The console reports it as needing
-  OCR rather than indexing zero characters and looking successful; no OCR engine is
-  bundled.
-* Query rewriting costs roughly half a second, so it is off on the phone line and
-  available in the console and on the dashboard. The keyword normaliser in
-  `conversation/intent.py` covers the common cases for free.
-* The grounding check compares figures and word overlap. It catches a number the model
-  invented; it cannot catch a sentence that is wrong but uses only words from the
-  sources.
-* The n8n workflow in `docs/` is written against the documented Twilio and n8n APIs; it has
-  not been executed against your instance, so import it and test one call before the demo.
+### Backend
+
+Run the backend suite from the project root:
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\python.exe -m pytest -q
+```
+
+On macOS/Linux:
+
+```bash
+cd backend
+../.venv/bin/python -m pytest -q
+```
+
+The suite uses offline fixtures and stubs for external services; do not assume that a passing local test verifies live provider credentials or a deployed n8n workflow.
+
+### Frontend JavaScript tests
+
+With Node.js installed, run the standalone tests from the project root:
+
+```bash
+node --test frontend/ble-parse.test.js frontend/listen-backoff.test.js
+```
+
+---
+
+## Repository map
+
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── agents/       15 agricultural agents and their registry
+│   │   ├── conversation/ intent, turn management, memory, voice actions
+│   │   ├── core/         configuration, accounts, schemas, storage
+│   │   ├── data/         application reference data
+│   │   ├── llm/          Mistral and Sarvam clients and model routing
+│   │   ├── rag/          ingestion, retrieval, filtering, and grounding
+│   │   ├── reports/      PDF and spreadsheet report generation
+│   │   ├── routers/      FastAPI endpoints
+│   │   ├── sensors/      sensor validation and decoding
+│   │   ├── services/     weather, market, places, translation, and more
+│   │   ├── speech/       speech provider integrations
+│   │   ├── telephony/    n8n clients and callback scheduling
+│   │   └── vision/       ONNX crop-disease screening
+│   └── tests/            backend suite and fixtures
+├── config/
+│   └── api_keys.example.env
+├── console/              administrator knowledge-console UI
+├── data/
+│   ├── knowledge/        shipped agronomy knowledge documents
+│   ├── models/           exported ONNX models and model cards
+│   └── storage/          runtime data; ignored by Git
+├── deploy/               deployment helpers and operations guide
+├── docs/                 architecture, voice, sensor, and integration docs
+├── frontend/             farmer dashboard and browser voice/sensor code
+├── landing/              public site and its static assets
+├── agency/               VisionCoders site and assets
+├── ml/                   model preparation, training, and export scripts
+├── requirements.txt
+├── run.bat
+└── run.sh
+```
+
+### Persistence
+
+Runtime SQLite data, vector-index state, and cached audio live under `data/storage/` and are excluded from Git. The checked-in `data/knowledge/` documents and `data/models/` model files are versioned application inputs.
+
+---
+
+## Safety, privacy, and known limits
+
+- **No invented market prices:** market answers depend on available sourced data and identify when live data is unavailable.
+- **No pesticide prescriptions:** the crop-protection safety boundary does not provide product names, doses, dilution instructions, or spray schedules.
+- **Photo screening is not diagnosis:** low-confidence model results can be undecided; a prediction is evidence for further assessment, not a verdict.
+- **Sensor data is validated:** out-of-range values are dropped rather than silently clamped; stale, missing, and simulated readings should remain distinguishable.
+- **Knowledge content affects everyone:** uploaded material can influence future answers. Restrict console access and review sources before sharing content with either bot.
+- **External integrations can fail:** provider status, missing data, and fallback behavior should be checked before a field deployment. Local tests do not verify third-party availability.
+- **Hardware details need verification:** the Arduino/HM-10 sketch and provisional register map are reference material. Confirm the probe manual and electrical levels before connecting hardware; protect 3.3 V BLE inputs from 5 V logic.
+
+---
+
+## Documentation
+
+| Topic | Guide |
+|---|---|
+| System architecture and request flow | [Architecture](docs/ARCHITECTURE.md) |
+| Production deployment and operations | [Deploying Saarthi](deploy/DEPLOY.md) |
+| Knowledge console and ingestion | [Knowledge Console](docs/KNOWLEDGE_CONSOLE.md) |
+| Voice actions and assistant behavior | [Voice actions](docs/VOICE_ACTIONS.md) |
+| Phone calls and n8n/Twilio | [n8n and Twilio setup](docs/n8n-twilio-setup.md), [conversation calls](docs/conversation-calls.md) |
+| Sensor hardware and dashboard integration | [Arduino/HM-10 sketch](docs/arduino-hm10-sketch.ino), [BLE dashboard link](docs/ble-dashboard-link.md) |
+| Model training and export | [ML workflow](ml/README.md) |
+| Android companion specification | [Mobile app specification](docs/mobile-app-spec.md) |
+| Reports and Hindi routing | [Reports and Hindi routing](docs/reports-and-hindi-routing.md) |
+| Accounts and access | [Accounts and access](docs/accounts-and-access.md) |
+
+---
+
+## Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| `run.bat` reports setup failure | Install Python 3.10+ and ensure the Python launcher or `python` is on `PATH`. |
+| Port 8010 is already in use | Stop the other local service or change the Uvicorn port and the matching `SAARTHI_PORT` setting. |
+| Dashboard appears missing at `/` | The public site is at `/`; open the dashboard at `/app/`. |
+| API is up but an integration is unavailable | Check `/api/keys/status`, the configured credentials, and server logs. |
+| Knowledge console opens but management calls fail | Sign in as an administrator; `/api/kb` routes require an administrator session. |
+| Phone calls are simulations | Configure the n8n URL and call webhook path; validate the workflow and inbound token before testing a real call. |
+| Container cannot read configured keys | Confirm the mounted file path and ownership/mode required by the container; see [deployment operations](deploy/DEPLOY.md). |
+| A scanned PDF adds no usable knowledge | The built-in PDF loader reads text layers; scanned documents need OCR before ingestion. |
+
+---
+
+<p align="center">
+  <sub>Built by Team VisionCoders for InduX 5.0 · Problem Statement 16</sub>
+</p>
